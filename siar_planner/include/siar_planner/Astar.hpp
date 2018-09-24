@@ -1,4 +1,4 @@
-#ifndef _ASTAR_HPP_
+               #ifndef _ASTAR_HPP_
 #define _ASTAR_HPP_
 
 #include <unordered_map>
@@ -163,7 +163,7 @@ int AStar::addNode(AStarState st, double comm_x, double comm_ang)
 {
   int id = getCellID(st);
   if (id < 0) {
-    AStarNode &n = nodes[nodes.size()];
+    AStarNode &n = nodes[nodes.size()]; // Adds a new element
     n.id = nodes.size() - 1;
     n.st = st; 
     id = n.id;
@@ -278,10 +278,10 @@ double AStar::getPath(AStarState start, AStarState goal, std::list<AStarNode>& p
           return ret_val;
         }
       } else {
-        double m_w = m.getMinWheel() - ((relax > 1)?wheel_decrease:0);
+        double m_w = m.getMinWheel() - ((relax > 1)?wheel_decrease:0); // Decrease the minimum allowed wheel on the floor 
         n_iter += 100;
-        m_w = (m_w < last_wheel)?last_wheel:m_w;
-        m.setMinWheel(m_w);
+        m_w = (m_w < last_wheel)?last_wheel:m_w; // Check if the allowed wheel is below the maximum
+        m.setMinWheel(m_w); 
         ROS_INFO("Iteration %d. Cont = %d. No solution --> decreasing min wheel to %f", relax, cont, m_w);
       }
       // Open the nodes for relaxation!
@@ -394,7 +394,7 @@ bool AStar::isSameCell(const AStarState& s1, const AStarState& s2) const
       } else
         cellsize = cellsize_rad;
       
-      ret_val = fabs(round(s1.state[i] / cellsize) - round(s2.state[i]/cellsize)) < cellsize;
+      ret_val =  fabs(s1.state[i] - s2.state[i])< cellsize; // La diferencia  // Antes: fabs(round(s1.state[i] / cellsize) - round(s2.state[i]/cellsize)) < cellsize; (cellsize cuadrado?)
     }
   }
   

@@ -18,7 +18,7 @@
     <param name="velocity_file" value="$(find siar_planner)/test/$(arg velocity_file)" />
   </node>
   
-  <node name="test_planner" pkg="siar_planner" type="test_planner" output="screen" if="$(arg debug)" launch-prefix="xterm -e gdb - -args">
+  <node name="test_planner" pkg="siar_planner" type="test_planner" output="screen" if="$(arg debug)" launch-prefix="xterm -e gdb --args">
     <remap from="/altitude_map" to="/map"/>
     <rosparam file="$(find siar_planner)/test/$(arg config)" command="load"  /> 
     <rosparam file="$(find siar_planner)/test/$(arg problem)" command="load"  /> 
