@@ -12,5 +12,5 @@ To compile and execute successfully siar_navegation is also necessary to downloa
 
 And the next ROS packages:
   
- - Costmap 2D, Navigation, libann-dev (sudo apt-get install ros-kinetic-costmap-2d ros-kinetic-navigation libann-dev) 
+ - costmap 2D, navigation, libann-dev (sudo apt-get install ros-kinetic-costmap-2d ros-kinetic-navigation libann-dev) 
  
