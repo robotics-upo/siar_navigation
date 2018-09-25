@@ -152,7 +152,8 @@ namespace siar_controller {
     double m_w_dist, m_w_safe; // Different weights. Respectively: Distance to commanded velocity, safety, collision penalty
     double orig_m_w_dist, orig_m_w_safe; // Different weights. Respectively: Distance to commanded velocity, safety, collision penalty
     
-    bool consider_two_wheels; // Flag: if true considers two wheels when turning in an intersection
+    bool consider_two_wheels, consider_body; // Flags: two_wheels: if true considers two wheels when turning in an intersection 
+					     // Body: checks the body of the platform for positive obstacles
     
     RobotCharacteristics m_model;
     
@@ -229,6 +230,7 @@ CommandEvaluator::CommandEvaluator(ros::NodeHandle& pn):m_model(pn),footprint(NU
   pn.param("min_wheel_l", min_wheel_left, 0.2); // Minimum fragment of the wheel that has to be without obstacle to be collision-free (in relaxed mode)
   pn.param("min_wheel_r", min_wheel_right, 0.2); // Minimum fragment of the wheel that has to be without obstacle to be collision-free (in relaxed mode)
   pn.param("consider_two_wheels", consider_two_wheels, true); // If true --> considers the cost of two wheels when turning in a intersection (if not only considers the one that remains in the floor)
+  pn.param("consider_body", consider_body, true); // If true --> considers the body of the SIAR platform and checks it against positive obstacle
   footprint_params = new SiarFootprint(pn);
   orig_m_w_dist = m_w_dist;
   orig_m_w_safe = m_w_safe;
@@ -295,7 +297,7 @@ double CommandEvaluator::evaluateTrajectory(const geometry_msgs::Twist& v_ini, c
     // Actualize the cost
     cont_footprint += applyFootprint(x, y, th, alt_map, collision);
     
-    if (!collision)
+    if (!collision && consider_body)
       applyFootprint(x, y, th, alt_map, collision, true); // Search for positive collisions too
   }
   
@@ -473,7 +475,7 @@ int CommandEvaluator::applyFootprint(double x, double y, double th,
     if (alt_map.data[index] == positive_obs || (alt_map.data[index] == negative_obs && !apply_collision)) 
       collision = true; // Collision detected! (if applying the collision map, only consider positive obstacles)
     
-    ret_val += abs(alt_map.data[index]); // TODO: check index and coordinate transform
+    ret_val += abs(alt_map.data[index]); 
     
   }
   
@@ -496,8 +498,8 @@ int CommandEvaluator::applyFootprintRelaxed(double x, double y, double th,
   bool right_wheel = false;
   bool left_wheel = false;
   int size = fp.size();
-  int cont_left = ( size) / 2;
-  int cont_right = ( size) /2;
+  int cont_left = (size) / 2;
+  int cont_right = (size) / 2;
   
   for (unsigned int i = 0; i < size && !collision; i++) {
     
@@ -521,11 +523,10 @@ int CommandEvaluator::applyFootprintRelaxed(double x, double y, double th,
         right_wheel = true;
         cont_right--;
         if (min_wheel_right + 0.01 > min_wheel_left || consider_two_wheels) {
-          ret_val += abs(alt_map.data[index]); 
+          ret_val += abs(alt_map.data[index]);
         }
       }
     } 
-    
   }
 
   collision |= ( (double)cont_left / (double)size * 2.0 ) < min_wheel_left;
