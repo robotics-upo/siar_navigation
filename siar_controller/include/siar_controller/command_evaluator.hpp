@@ -82,6 +82,14 @@ namespace siar_controller {
       min_wheel_right = new_min_w_r;
     }
     
+    inline double getMinWheelLeft() const {
+      return min_wheel_left;
+    }
+    
+    inline double getMinWheelRight() const {
+      return min_wheel_right;
+    }
+    
     //! @brief Sets the parameters into the evaluator
     //! @param footprint_p --> has the parameters for width, length and wheel_width
     //! @note The evaluator will delete the footprint_p

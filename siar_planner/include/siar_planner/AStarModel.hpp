@@ -48,6 +48,16 @@ public:
     return -1.0;
   }
   
+  inline void decreaseWheels(double decrement, double last_wheel) {
+    double m_w = m_ce.getMinWheelLeft() - decrement; // Decrease the minimum allowed wheel on the floor 
+    m_w = (m_w < last_wheel)?last_wheel:m_w; // Check if the allowed wheel is below the maximum
+    m_ce.setMinWheelLeft(m_w);
+    // Right wheel
+    m_w = m_ce.getMinWheelRight() - decrement; // Decrease the minimum allowed wheel on the floor 
+    m_w = (m_w < last_wheel)?last_wheel:m_w; // Check if the allowed wheel is below the maximum
+    m_ce.setMinWheelRight(m_w); 
+  }
+  
   inline void setMinWheel(double v) {
     
     m_ce.setMinWheelLeft(v);
