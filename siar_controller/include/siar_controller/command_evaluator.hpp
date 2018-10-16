@@ -59,8 +59,20 @@ namespace siar_controller {
         double length = footprint_params->m_length;
         double w_width = footprint_params->m_wheel_width;
         bool simplified = footprint_params->m_simplified;
+	double x_elec = footprint_params->m_x_elec;
 	delete footprint_params;
-        footprint_params = new SiarFootprint(cellsize, length, width, w_width, simplified);
+        footprint_params = new SiarFootprint(cellsize, length, width, w_width, simplified, x_elec);
+        delete footprint;
+        footprint = NULL;
+    }
+    
+    inline void setWidthElec(double width, double new_elec) {
+        double cellsize = footprint_params->m_cellsize;
+        double length = footprint_params->m_length;
+        double w_width = footprint_params->m_wheel_width;
+        bool simplified = footprint_params->m_simplified;
+	delete footprint_params;
+        footprint_params = new SiarFootprint(cellsize, length, width, w_width, simplified, new_elec);
         delete footprint;
         footprint = NULL;
     }

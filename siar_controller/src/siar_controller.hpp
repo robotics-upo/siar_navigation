@@ -611,7 +611,7 @@ void SiarController::statusCallback(const siar_driver::SiarStatus& msg)
   // Check if the width has changed enough to perform an actualization of the footprint
   double new_width = msg.width - 0.04 + safety_width;
   if (fabs(new_width - _conf.robot_width) > width_thres && cmd_eval != NULL ) {
-    cmd_eval->setWidth(new_width);
+    cmd_eval->setWidthElec(new_width, msg.electronics_x);
     _conf.robot_width = new_width;
     ROS_INFO("Setting new width footprint: %f", new_width);
   }
