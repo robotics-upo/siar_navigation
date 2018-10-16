@@ -46,6 +46,8 @@ protected:
   // Status flag
   bool reverse;
   
+  void goalCB();
+  
   void goalCB(const geometry_msgs::PoseStamped::ConstPtr &msg);
   
   
@@ -61,10 +63,11 @@ protected:
   void calculatePath(const geometry_msgs::PoseStamped &pose);
 };
 
-SiarPlannerActionServer::SiarPlannerActionServer(ros::NodeHandle& nh, ros::NodeHandle& pnh):PFActionServer_(nh_, "pass_fork", boost::bind(&SiarPlannerActionServer::passFork, this, _1), false), 
+SiarPlannerActionServer::SiarPlannerActionServer(ros::NodeHandle& nh, ros::NodeHandle& pnh):PFActionServer_(nh_, "pass_fork", false), 
 a_star(nh, pnh),reverse(false)
 {
   //register the goal and feeback callbacks
+  PFActionServer_.registerGoalCallback(boost::bind(&SiarPlannerActionServer::goalCB, this));
 //   PFActionServer_.registerPreemptCallback(boost::bind(&SiarPlannerActionServer::preemptCB, this, _1));
   
   // Publishers
@@ -120,9 +123,16 @@ void SiarPlannerActionServer::calculatePath(const geometry_msgs::PoseStamped &po
   end_time = start_time + ros::Duration(a_star.getDeltaT() * curr_path.size());
 }
 
-void SiarPlannerActionServer::goalCB(const geometry_msgs::PoseStamped_< std::allocator< void > >::ConstPtr& msg)
-{
+void SiarPlannerActionServer::goalCB(const geometry_msgs::PoseStamped_< std::allocator< void > >::ConstPtr& msg ) {
   calculatePath(*msg);
+}
+
+void SiarPlannerActionServer::goalCB()
+{
+  auto msg = PFActionServer_.acceptNewGoal();
+  ROS_INFO("Accepted new direction: %u", msg->direction);
+  // TODO: Infere the new goal position from the direction to be traversed the gutter
+//   calculatePath(*msg);
 }
 
 bool SiarPlannerActionServer::getCurrentVel(geometry_msgs::Twist& curr_cmd)

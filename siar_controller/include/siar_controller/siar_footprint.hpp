@@ -13,7 +13,7 @@ typedef std::vector<geometry_msgs::Point> FootprintType;
 class SiarFootprint {
 public:
   //! @brief Default constructor
-  SiarFootprint(double cellsize = 0.02, double length = 0.8, double width = 0.56, double wheel_width = 0.06, bool simplified = false);
+  SiarFootprint(double cellsize, double length =0.8, double width=0.8, double wheel_width =0.1, bool simplified = true, double x_elec = 0.0);
   
   //! @brief Constructor from ROS 
   SiarFootprint(ros::NodeHandle &pn);
@@ -31,12 +31,15 @@ public:
   
   void setWidth(double new_width) ;
   
+  void setXElec(double new_elec);
+  
   inline double getWidth() const {
     return m_width;
   }
   
   double m_length, m_width, m_wheel_width;
   bool m_simplified;
+  double m_x_elec;
   
   size_t size, size_2; // Size of matrices
 
@@ -68,8 +71,8 @@ SiarFootprint::SiarFootprint(ros::NodeHandle& pn)
 }
 
 
-SiarFootprint::SiarFootprint(double cellsize, double length , double width, double wheel_width, bool simplified):
-m_length(length),m_width(width), m_wheel_width(wheel_width), m_cellsize(cellsize),m_simplified(simplified)
+SiarFootprint::SiarFootprint(double cellsize, double length , double width, double wheel_width, bool simplified, double x_elec):
+m_length(length),m_width(width), m_wheel_width(wheel_width), m_cellsize(cellsize),m_simplified(simplified),m_x_elec(x_elec)
 {
   init();
 }
@@ -90,10 +93,6 @@ void SiarFootprint::init()
     double y = -m_width/2.0;
     p.x = x;
     for (int j = 0; y < m_width/2.0; y += m_cellsize, j++) {
-      if (i <= 2) {
-        p.y = y;
-        footprint_p_2.push_back(p);
-      }
       if (j < n_cel_wheel || n_width - j <= n_cel_wheel ) {
         p.y = y;
         if (!m_simplified || i%2 == j%2) {
@@ -102,17 +101,30 @@ void SiarFootprint::init()
       }
     }
   }
-  double y = -m_width/2.0;
+  double y = -m_width/2.0 + m_wheel_width;
   
   
   // Then the collision footprint
-  for (int j = 0; y < m_width/2.0; y += m_cellsize, j++) {
+  for (int j = 0; y < m_width/2.0 - m_wheel_width; y += m_cellsize, j++) {
+    //Front part
     p.y = y;
-    p.x = x - m_cellsize;
+    p.x = x;
+    if (m_x_elec > 0.0) 
+      p.x += m_x_elec;
     footprint_p_2.push_back(p);
-    p.x = x - 2.0 * m_cellsize;
+    p.x -= m_cellsize;
     footprint_p_2.push_back(p);
-    p.x = x - 3.0 * m_cellsize;
+    p.x -= m_cellsize;
+    footprint_p_2.push_back(p);
+    
+    //Rear part
+    p.x = -x; 
+    if (m_x_elec < 0.0) 
+      p.x += m_x_elec;
+    footprint_p_2.push_back(p);
+    p.x += m_cellsize;
+    footprint_p_2.push_back(p);
+    p.x += m_cellsize;
     footprint_p_2.push_back(p);
   }  
   footprint_rot = footprint_p;
@@ -197,6 +209,12 @@ void SiarFootprint::addPoints(double x, double y, double th, visualization_msgs:
 void SiarFootprint::setWidth(double new_width)
 {
   m_width = new_width;
+  init();
+}
+
+void SiarFootprint::setXElec(double new_elec)
+{
+  m_x_elec = new_elec;
   init();
 }
 
