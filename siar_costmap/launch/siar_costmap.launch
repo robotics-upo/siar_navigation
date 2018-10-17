@@ -11,10 +11,10 @@
   <arg name="camera_6" default="/back"/>
   <arg name="tilt_compensate" default="false"/>
   <arg name="consider_sign" default="true"/>
-  <arg name="roi_x" default="4"/>
-  <arg name="roi_y" default="4"/>
-  <arg name="roi_w" default="312"/>
-  <arg name="roi_h" default="232"/>
+  <arg name="roi_x" default="6"/>
+  <arg name="roi_y" default="6"/>
+  <arg name="roi_w" default="308"/>
+  <arg name="roi_h" default="228"/>
   <arg name="roi_w2" default="632"/>
   <arg name="roi_h2" default="472"/>
   <arg name="exponential_decay" default="0.2"/>
@@ -79,8 +79,8 @@
     <param name="range_max" value = "$(arg range_max)"/>                                                                     # Max range in meters for point cloud generation
     <param name="roi_x" value="$(arg roi_x)"/>
     <param name="roi_y" value="$(arg roi_y)"/>
-    <param name="roi_w" value="$(arg roi_w2)"/>
-    <param name="roi_h" value="$(arg roi_h2)"/>
+    <param name="roi_w" value="$(arg roi_w)"/>
+    <param name="roi_h" value="$(arg roi_h)"/>
     <param name="down_sampling" value = "4"/>                                                           # Camera down sampling factor. Values: 1, 2 or 4. The bigger the faster.
   </node>
   <node pkg="depth2cloud" type="depth2cloud_node" name="depth2cloud_6" output="screen" >
@@ -91,8 +91,8 @@
     <param name="range_max" value = "$(arg range_max)"/>                                                                     # Max range in meters for point cloud generation
     <param name="roi_x" value="$(arg roi_x)"/>
     <param name="roi_y" value="$(arg roi_y)"/>
-    <param name="roi_w" value="$(arg roi_w2)"/>
-    <param name="roi_h" value="$(arg roi_h2)"/>
+    <param name="roi_w" value="$(arg roi_w)"/>
+    <param name="roi_h" value="$(arg roi_h)"/>
     <param name="down_sampling" value = "4"/>                                                           # Camera down sampling factor. Values: 1, 2 or 4. The bigger the faster.
   </node>
   
