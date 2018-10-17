@@ -106,14 +106,21 @@ void SiarFootprint::init()
   
   // Then the collision footprint
   for (int j = 0; y < m_width/2.0 - m_wheel_width; y += m_cellsize, j++) {
+    //Front part
     p.y = y;
-    p.x = x - m_cellsize + m_x_elec;
+    p.x = x;
+    if (m_x_elec > 0.0) 
+      p.x += m_x_elec;
     footprint_p_2.push_back(p);
     p.x -= m_cellsize;
     footprint_p_2.push_back(p);
     p.x -= m_cellsize;
     footprint_p_2.push_back(p);
-    p.x = -x + m_cellsize + m_x_elec; 
+    
+    //Rear part
+    p.x = -x; 
+    if (m_x_elec < 0.0) 
+      p.x += m_x_elec;
     footprint_p_2.push_back(p);
     p.x += m_cellsize;
     footprint_p_2.push_back(p);
