@@ -216,7 +216,7 @@ double AStar::getPath(AStarState start, AStarState goal, std::list<AStarNode>& p
   
   openSet.insert(start_id);
   int relax = 0;
-  while (allow_relaxation && relax < n_rounds) { // n_rounds is the number of tries (in each try the allowed part of the wheel in the gutter grows)
+  do { // n_rounds is the number of tries (in each try the allowed part of the wheel in the gutter grows)
     int cont = 0;
     while (cont < n_iter && !openSet.empty()) { // n_iter Max. number of nodes to expand for each round
       
@@ -278,11 +278,12 @@ double AStar::getPath(AStarState start, AStarState goal, std::list<AStarNode>& p
           return ret_val;
         }
       } else {
-        double m_w = m.getMinWheel() - ((relax > 1)?wheel_decrease:0); // Decrease the minimum allowed wheel on the floor 
-        n_iter += 100;
-        m_w = (m_w < last_wheel)?last_wheel:m_w; // Check if the allowed wheel is below the maximum
-        m.setMinWheel(m_w); 
-        ROS_INFO("Iteration %d. Cont = %d. No solution --> decreasing min wheel to %f", relax, cont, m_w);
+	if (relax > 1) {
+	  m.decreaseWheels(wheel_decrease, last_wheel);
+	}
+	
+	n_iter += 100;
+        ROS_INFO("Iteration %d. Cont = %d. No solution --> decreasing min wheel", relax, cont);
       }
       // Open the nodes for relaxation!
       for (auto it = closedSet.begin(); it != closedSet.end(); ) {
@@ -294,7 +295,7 @@ double AStar::getPath(AStarState start, AStarState goal, std::list<AStarNode>& p
       ROS_INFO("Openset size = %d",(int) openSet.size());
     }
     
-  } 
+  } while (allow_relaxation && relax < n_rounds);
   m.setMinWheel(original_m_w_); // Restore the original min wheel
   return ret_val;
 }
@@ -348,6 +349,7 @@ int AStar::getBestNode(int mode)
       candidate = nodes.at(*it).fScore;
       if (m.isCollision(nodes[*it].st))
         continue;
+      
     }
     else {
       candidate = nodes.at(*it).fScore;
@@ -357,7 +359,6 @@ int AStar::getBestNode(int mode)
       if (checkExplorationBounds(nodes[*it].st)) {
 	min = candidate;
 	ret_val = *it;
-	
       }
     }
   }

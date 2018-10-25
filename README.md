@@ -9,8 +9,13 @@ To compile and execute successfully siar_navegation is also necessary to downloa
  - function (git clone https://github.com/robotics-upo/functions.git)
  - siar_package (git clone https://github.com/robotics-upo/siar_packages.git)
  - arduimu_v3 (git clone https://github.com/robotics-upo/arduimu_v3.git)
+ - depth2cloud (git clone https://github.com/robotics-upo/depth2cloud.git)
 
-And the next ROS packages:
+The next ROS packages:
   
- - costmap 2D, navigation, libann-dev (sudo apt-get install ros-kinetic-costmap-2d ros-kinetic-navigation libann-dev) 
+ - costmap-2d, navigation.
  
+
+And the next package:
+
+ - libann-dev.
