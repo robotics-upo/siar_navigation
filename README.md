@@ -2,7 +2,7 @@
 Compilation of packages for navigation in sewers with the SIAR platform
 
 
-# Compilation and execution package
+# Compilation and execution package in simulation
 
 To compile and execute successfully siar_navegation is also necessary to download the next packages from GitHub robotics-upo:
  
@@ -13,7 +13,7 @@ To compile and execute successfully siar_navegation is also necessary to downloa
 
 The next ROS packages:
   
- - costmap-2d, navigation.
+ - costmap-2d, navigation, gazebo-ros, gazebo-ros-pkgs , gazebo-ros-control.
  
 
 And the next package:
