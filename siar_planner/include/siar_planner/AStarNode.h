@@ -1,10 +1,10 @@
 #ifndef ASTARNODE__H__
 #define ASTARNODE__H__
-
+#include "NodeState.hpp"
 struct AStarNode
 {
   int id;
-  AStarState st;
+  NodeState st;
   double command_lin;
   double command_ang;
   std::unordered_map<int,double> neighbors;

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(siar_planner)
 
 # set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=c++11)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 # SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -pg" )  # Uncomment for profiling 
 
 ## Add support for C++11, supported in ROS Kinetic and newer
@@ -66,6 +66,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(test_planner src/test_planner.cpp)
 add_executable(siar_planner_node src/siar_planner_node.cpp)
+add_executable(rrt_test src/rrt_test.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -77,11 +78,15 @@ add_executable(siar_planner_node src/siar_planner_node.cpp)
 ## same as for the library above
 add_dependencies(test_planner ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(siar_planner_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(rrt_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(test_planner
   ${catkin_LIBRARIES}
 )
 target_link_libraries(siar_planner_node
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(rrt_test
   ${catkin_LIBRARIES}
 )

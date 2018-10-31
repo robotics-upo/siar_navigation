@@ -1,4 +1,4 @@
-#include "siar_planner/Astar.hpp"
+#include "siar_planner/rrt.hpp"
 #include "ros/ros.h"
 
 using functions::RealVector;
@@ -9,10 +9,10 @@ int main(int argc, char** argv) {
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
   
-  AStar a(nh, pnh);
+  RRT a(nh, pnh);
   
   ROS_INFO("Waiting for map initialization");
-  while (!a.getModel().isInit() && ros::ok()) {
+  while (!a.getModel().isInit() && ros::ok()) { 
     ros::spinOnce();
     sleep(1);
   }
@@ -29,9 +29,9 @@ int main(int argc, char** argv) {
   pnh.param("y_g", y_g, 0.0);
   pnh.param("a_g", a_g, 0.0);
   
-  ROS_INFO("START: (%f, %f, %f)\t\tGOAL: (%f, %f, %f)", x_0, y_0, a_0, x_g,y_g,a_g);
+  ROS_INFO("START: (%f, %f, %f)\t\tGOAL: (%f, %f, %f)", x_0, y_0, a_0, x_g, y_g, a_g);
   
-  NodeState init, goal;
+  NodeState init, goal; 
   RealVector v;
   v.push_back(x_0);v.push_back(y_0);v.push_back(a_0);
   init.state = v;
@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
   v.push_back(x_g);v.push_back(y_g);v.push_back(a_g);
   goal.state = v;
   
-  std::list<AStarNode> path;
+  std::list<RRTNode> path; 
   
   
   
@@ -52,11 +52,11 @@ int main(int argc, char** argv) {
   vis_pub.publish(a.getModel().getMarker(init));
   goal_pub.publish(a.getModel().getMarker(goal, 1));
   
-  ROS_INFO("Calling to getPath");
+  ROS_INFO("Calling to resolve");
   ros::Time t = ros::Time::now();
-  double cost = a.getPath(init, goal, path);
+  double cost = a.resolve(init, goal, path);
   ros::Time t1 = ros::Time::now();
-  if (cost > 0.0) {
+  if (cost > 0.0) { 
     
     ROS_INFO("Path calculated. Expended time: %f. Cost: %f", (t1 - t).toSec(), cost);
     
