@@ -24,6 +24,7 @@ public:
   
   SiarModel &getModel() {return m;}
   
+//   visualization_msgs::Marker getPathMarker(const std::list< RRTNode >& path);
   visualization_msgs::Marker getPathMarker(const std::list< RRTNode >& path);
   
   visualization_msgs::Marker getGraphMarker();
@@ -68,6 +69,7 @@ protected:
   double goal_gap_m, goal_gap_rad;
   
   int samp_cont, samp_goal_rate; //contadores de sampleo
+  
   
   // Random numbers
   std::random_device rd;
@@ -164,6 +166,7 @@ void RRT::clear()
 
 double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
 {
+  
   nodes.clear(); // Incremental algorithm --> the graph is generated in each calculation
   //path.clear(); //crearlo como variable de la clase??
   
@@ -184,19 +187,17 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
   
   double ret_val = -1.0; 
   int relax = 0;
+  
   while (relax < n_rounds && !got_to_goal){
     int cont = 0; 
     while (cont < n_iter && !got_to_goal) { // n_iter Max. number of nodes to expand for each round
-      //std::cout << "hasta aqui funciona inicio" << std::endl;
       NodeState q_rand;
       //if (!(samp_cont%samp_goal_rate == 0)){
       if (!(cont%samp_goal_rate == 0)){
-	//std::cout << "hasta aqui funciona 1" << std::endl;
 	q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
       }
       else{
 	q_rand = goal_node.st; 
-	//std::cout << "hasta aqui funciona 2" << std::endl;
       }     
       RRTNode *q_near = getNearestNode(q_rand);  
       expandNode(q_rand, q_near);
@@ -265,26 +266,29 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
   RRTNode q_new;
   double dist = std::numeric_limits<double>::infinity(); 
   double new_dist;
-  bool new_node = false;
+  bool is_new_node = false;
   
   //from q_near apply random conmands   
   
   for (int i = 0; i < K; i++) {
     NodeState st = q_near->st;
     geometry_msgs::Twist command = m.generateRandomCommand();
+    std::cout << "El comando es " << command <<std::endl;
     double cost = m.integrate(st, command, delta_t, relaxation_mode >= 1); // If relaxation_mode >= 1 --> allow two wheels
     
     if (cost < 0.0) {
+      std::cout << "Colision " <<std::endl;
       // Collision
       // Update??
 //       ROS_INFO("Detected collision. State: %s.\t Command: %f, %f", st.state.toString().c_str(), command.linear.x, command.angular.z);
     } 
     else {
+      std::cout << "Se encuentra nodo sin colision " <<std::endl;
       // get node with minimum distance
-      new_node = true;
+      is_new_node = true;
       new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
       if (new_dist<dist) {
-	q_new.st = st; //esto ha cambiado no? -> si, se pasa por referencia
+	q_new.st = st; 
 	q_new.command_lin = command.linear.x;
 	q_new.command_ang = command.angular.z;
 	dist = new_dist;
@@ -292,65 +296,120 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
     }    
   }
   //check if there is a new node and add it to the graph (unless its the goal)
-  if (new_node){
+  if (is_new_node){
     //check if got to goal
     isGoal(q_new.st);
     //if(dist <= goal_gap_m){
     if(got_to_goal){
       q_near->children.push_back(&goal_node);
-      goal_node.parent = q_near; //como se pasa este valor
-      goal_node.command_lin = q_new.command_lin; //?? esto es correcto? -> creo k si
+      goal_node.parent = q_near; 
+      goal_node.command_lin = q_new.command_lin; 
       goal_node.command_ang = q_new.command_ang;
-      got_to_goal = true;
+      //got_to_goal = true; //?? no se ha usado esto para entrar en el if??
       //nodes.push_back(goal_node);
     }
     else{
-      RRTNode *new_node = new RRTNode(q_new);
+      q_new.parent = q_near;
+      RRTNode *new_node = new RRTNode(q_new); 
       q_near->children.push_back(new_node);
-      q_new.parent = q_near; //como se pasa este valor??
+      /*q_new.parent = q_near;*/ //aqui esta mal
       nodes.push_back(new_node);	
     }
   }
 }
 
 void RRT::isGoal(NodeState st) {
-  got_to_goal = (fabs(st.state[0] - goal_node.st.state[0]) < goal_gap_m) && (fabs(st.state[1]-goal_node.st.state[0]) < goal_gap_m) &&
-            (fabs(st.state[2] - goal_node.st.state[0]) < goal_gap_rad);
+  got_to_goal = (fabs(st.state[0] - goal_node.st.state[0]) < goal_gap_m) && (fabs(st.state[1]-goal_node.st.state[1]) < goal_gap_m) &&
+            (fabs(st.state[2] - goal_node.st.state[2]) < goal_gap_rad);
 }
 
-//std::list<RRTNode> RRT::getPath(std::list<RRTNode> nodes){ //hace falta pasarle argumento?, siendo una variable global
+
 std::list<RRTNode> RRT::getPath(){
   //get path from finished graph
   std::list<RRTNode> path;
   RRTNode* current_node = &goal_node;
   path.push_front(*current_node);
-  while (current_node->parent != NULL) {
-          current_node = current_node->parent;
-          path.push_front(*current_node);
+  while (current_node->parent != NULL) {  
+    current_node = current_node->parent;
+    path.push_front(*current_node);
   }
   return path;
 }
 
-visualization_msgs::Marker RRT::getPathMarker(const std::list< RRTNode >& path) 
+// visualization_msgs::Marker RRT::getPathMarker(const std::list< RRTNode >& path) 
+// {
+//   visualization_msgs::Marker ret;
+//   
+//   int cont = 0;
+//   NodeState st;
+//   for (auto it = path.begin(); it != path.end(); it++, cont++) {
+//     if (cont > 0) { //cuando no lo es??
+//       st = (--it)->st;
+//       it++;
+//     
+//       geometry_msgs::Twist command;
+//       command.linear.x = it->command_lin;
+//       command.angular.z = it->command_ang;
+//     
+//       m.integrate(ret, st, command, 1.0, true);
+//     }
+//   }
+//   
+//   return ret;
+// }
+
+visualization_msgs::Marker RRT::getPathMarker(const std::list< RRTNode >& path)
 {
-  visualization_msgs::Marker ret;
-  
-  int cont = 0;
-  NodeState st;
-  for (auto it = path.begin(); it != path.end(); it++, cont++) {
-    if (cont > 0) { //cuando no lo es??
-      st = (--it)->st;
-      it++;
+  visualization_msgs::Marker m;
+  m.header.frame_id = this->m.getFrameID();
+  m.header.stamp = ros::Time::now();
+  m.ns = "path";
+  m.action = visualization_msgs::Marker::ADD;
+  m.pose.orientation.w = 1.0;
+  m.id = 0;
+  m.points.clear();
+  m.type = visualization_msgs::Marker::POINTS;
+//   m.type = visualization_msgs::Marker::LINE_LIST;
+  // LINE_LIST markers use x scale only (for line width)
+  m.scale.x = 0.05;
+  // Points are green
+  visualization_msgs::Marker::_color_type color;
+  color.r = 0;
+  color.b = 0;
+  color.g = 1.0;
+  color.a = 1.0;
+//   double color_step = 1.0/(double)nodes.size();
+  geometry_msgs::Point p1;
+  //geometry_msgs::Point p2;
+  //for (unsigned int i = 0; i < nodes.size();i++) {
+//   for (auto n : path){  
+  for (auto it = path.begin(); it != path.end(); it++){
+//     auto new_color = color;
+//     new_color.r -= color_step;
+//     new_color.b += color_step;
     
-      geometry_msgs::Twist command;
-      command.linear.x = it->command_lin;
-      command.angular.z = it->command_ang;
+    p1.x = it->st.state[0];
+    p1.y = it->st.state[1];
     
-      m.integrate(ret, st, command, 1.0, true);
-    }
+    m.points.push_back(p1); //es correcto aqui?
+    m.colors.push_back(color);
+    
+//      for (auto child : n->children) {
+//        m.points.push_back(p1);
+//        m.colors.push_back(color);
+// //        
+//        p2.x = child->st.state[0];
+//        p2.y = child->st.state[1];
+// //        
+//        m.points.push_back(p2);
+//        m.colors.push_back(new_color);
+//      }
+   
+//     color = new_color;
+    
   }
   
-  return ret;
+  return m;
 }
 
 visualization_msgs::Marker RRT::getGraphMarker()

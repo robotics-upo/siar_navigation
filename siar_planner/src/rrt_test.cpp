@@ -1,4 +1,5 @@
 #include "siar_planner/rrt.hpp"
+#include "siar_planner/rrt.hpp"
 #include "ros/ros.h"
 
 using functions::RealVector;
@@ -9,7 +10,8 @@ int main(int argc, char** argv) {
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
   
-  RRT a(nh, pnh);
+//   RRT a(nh, pnh);
+  biRRT a(nh, pnh);
   
   ROS_INFO("Waiting for map initialization");
   while (!a.getModel().isInit() && ros::ok()) { 
@@ -46,7 +48,7 @@ int main(int argc, char** argv) {
   ros::Publisher vis_pub = nh.advertise<visualization_msgs::Marker>("init_marker", 2, true);
   ros::Publisher goal_pub = nh.advertise<visualization_msgs::Marker>("goal_marker", 2, true);
   ros::Publisher graph_pub = nh.advertise<visualization_msgs::Marker>("graph_marker", 2, true);
-  ros::Publisher test_pub = nh.advertise<visualization_msgs::Marker>("test_marker", 2, true);
+  ros::Publisher path_pub = nh.advertise<visualization_msgs::Marker>("path_marker", 2, true);
   
   ROS_INFO("Publishing visualization markers (init and goal)");
   vis_pub.publish(a.getModel().getMarker(init));
@@ -55,19 +57,21 @@ int main(int argc, char** argv) {
   ROS_INFO("Calling to resolve");
   ros::Time t = ros::Time::now();
   double cost = a.resolve(init, goal, path);
+  std::cout << "sale del resolve" << std::endl;
   ros::Time t1 = ros::Time::now();
   if (cost > 0.0) { 
     
     ROS_INFO("Path calculated. Expended time: %f. Cost: %f", (t1 - t).toSec(), cost);
     
     visualization_msgs::Marker m = a.getPathMarker(path);
+//     visualization_msgs::Marker m = a.getPathMarker();
     m.header.frame_id = "/map";
-    test_pub.publish(m);
+    path_pub.publish(m);
   } else {
 //     visualization_msgs::Marker m = a.getModel().testIntegration(init, true);
 //     m.header.frame_id = "/map";
 //     ROS_INFO("Points: %d", (int) m.points.size());
-//     test_pub.publish(m);
+//     path_pub.publish(m);
     ROS_INFO("Could not get a path in %f seconds", (t1 - t).toSec());
   }
   
