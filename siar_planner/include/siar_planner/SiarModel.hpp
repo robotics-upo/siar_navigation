@@ -121,6 +121,8 @@ double SiarModel::integrate(visualization_msgs::Marker& m, NodeState& st, geomet
   // Debug:
 //   ROS_INFO("Calling evaluate trajectory. Delta_t = %f. T_hor = %f. ", m_ce.
   
+  m_ce.setDeltaT(T);
+  
   double ret_val;
   if (!relaxed) 
     ret_val = m_ce.evaluateTrajectory(v_ini, cmd, cmd, m_world, m, st.state[0], st.state[1], st.state[2]);
