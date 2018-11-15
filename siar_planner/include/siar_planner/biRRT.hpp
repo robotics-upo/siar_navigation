@@ -44,6 +44,7 @@ protected:
   
   RRTNode goal_node;
   RRTNode start_node;
+  RRTNode *q_final_1, *q_final_2;
   
   
   //new functions
@@ -320,10 +321,10 @@ void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_
     else{
       cost = m.integrate(st, command, -(delta_t), relaxation_mode >= 1); // si direct es false, entonces le paso delta_t <0 a la integracion
       if (cost < 0.0) {
-	std::cout << "Colision " <<std::endl;
+// 	std::cout << "Colision " <<std::endl;
       }
       else{
-	std::cout << "Se encuentra nodo sin colision " <<std::endl;
+// 	std::cout << "Se encuentra nodo sin colision " <<std::endl;
 	// get node with minimum distance
 	is_new_node = true;
 	new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
@@ -343,17 +344,30 @@ void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_
       
     //esto tambien depende, si es direct o no
     if(got_connected){
+      std::cout << "Llego a la conexion " <<std::endl;
       if(direct){
-	q_near->children.push_back(q_closest); //considero q_closest casi igual a q_new
-	q_closest->parent = q_near; 
-	q_closest->command_lin = q_new.command_lin; 
-	q_closest->command_ang = q_new.command_ang;
+	q_final_1->st = q_closest->st;
+	std::cout << "Llego hasta aqui" <<std::endl;
+	q_near->children.push_back(q_final_1); //considero q_closest casi igual a q_new
+	q_final_1->parent = q_near; 
+	q_final_1->command_lin = q_new.command_lin; 
+	q_final_1->command_ang = q_new.command_ang; //no hay que añadirlo al tree pork es igual a q_closest que si esta añadido
+	q_final_2 = q_closest;
+	std::cout << "Llego al final" <<std::endl;
       }
       else{
-	q_closest->children.push_back(q_near); //considero q_closest casi igual a q_new
-	q_near->parent = q_closest; 
+	q_final_2->st = q_closest->st;
+	q_near->children.push_back(q_final_2); //considero q_closest casi igual a q_new
+	q_final_2->parent = q_near; 
 	q_near->command_lin = q_new.command_lin; 
 	q_near->command_ang = q_new.command_ang;
+	q_final_1 = q_closest;
+	std::cout << "Llego al final" <<std::endl;
+	
+// 	q_closest->children.push_back(q_near); //considero q_closest casi igual a q_new
+// 	q_near->parent = q_closest; 
+// 	q_near->command_lin = q_new.command_lin; 
+// 	q_near->command_ang = q_new.command_ang;
       }      
     }
     else{
@@ -364,15 +378,22 @@ void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_
 	tree1.push_back(new_node);
       }
       else{
-	std::cout << "hay un nodo indirecto " <<std::endl;
-	q_near->parent = &q_new;
-	q_near->command_lin = q_new.command_lin; //esto debe recibirlo el hijo, que en este caso es q_near
+// 	std::cout << "hay un nodo indirecto " <<std::endl;
+// 	q_near->parent = &q_new;
+	q_near->command_lin = q_new.command_lin; //esto debe recibirlo el nodo final del desplazamiento normal, que en este caso es q_near
 	q_near->command_ang = q_new.command_ang;
 	q_new.command_lin = 0;
 	q_new.command_ang = 0;
-	RRTNode *new_node = new RRTNode(q_new); 
-	new_node->children.push_back(q_near);
+	
+	q_new.parent = q_near;
+	RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
+	q_near->children.push_back(new_node);
 	tree2.push_back(new_node);
+	
+// 	RRTNode *new_node = new RRTNode(q_new); 
+// 	new_node->children.push_back(q_near);
+// 	q_near->parent = new_node;  //es este el que hay k pasar??
+// 	tree2.push_back(new_node);
       }
     }
   }
@@ -401,18 +422,23 @@ RRTNode* biRRT::areConnected(NodeState st, bool direct) {
     }
   }
   got_connected = (fabs(st.state[0] - q_closest->st.state[0]) < goal_gap_m) && (fabs(st.state[1]-q_closest->st.state[1]) < goal_gap_m) && (fabs(st.state[2] - q_closest->st.state[2]) < goal_gap_rad);
-  return q_closest;	    
+  return q_closest;	 //devuelvo nodo mas cercano del otro arbol   
 }
 
 
 std::list<RRTNode> biRRT::getPath(){
   //get path from finished graph
   std::list<RRTNode> path;
-  RRTNode* current_node = &goal_node;
-  path.push_front(*current_node);
+  RRTNode* current_node = q_final_1;
+  path.push_front(*current_node); //incluyo q_final_1 pork sera el que tenga datos de los comandos. q_final_2 no tiene, solo sirve para enlazar con hijo 'real'
   while (current_node->parent != NULL) {  
     current_node = current_node->parent;
     path.push_front(*current_node);
+  }
+  current_node = q_final_2;
+  while (current_node->parent != NULL) {  
+    current_node = current_node->parent;
+    path.push_back(*current_node);
   }
   return path;
 }
