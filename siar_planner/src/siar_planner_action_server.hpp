@@ -94,7 +94,7 @@ void SiarPlannerActionServer::passFork(const siar_planner::PassForkGoal_< std::a
 }
 
 void SiarPlannerActionServer::calculatePath(const geometry_msgs::PoseStamped &pose) {
-  AStarState start, goal;
+  NodeState start, goal;
   ros::Time t0, t1;
   t0 = ros::Time::now();
   start.state.push_back(0);start.state.push_back(0);start.state.push_back(0);
