@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /Marker1
       Splitter Ratio: 0.5
     Tree Height: 775
   - Class: rviz/Selection
@@ -60,10 +61,10 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /test_marker
+      Marker Topic: /graph_marker
       Name: Marker
       Namespaces:
-        footprint: true
+        rrt: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -91,7 +92,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 15.7351933
+      Distance: 14.8482361
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
