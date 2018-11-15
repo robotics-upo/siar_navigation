@@ -102,6 +102,10 @@ namespace siar_controller {
       return min_wheel_right;
     }
     
+    inline void setDeltaT(double new_delta_t) {
+      m_delta_T = new_delta_t;
+    }
+    
     //! @brief Sets the parameters into the evaluator
     //! @param footprint_p --> has the parameters for width, length and wheel_width
     //! @note The evaluator will delete the footprint_p
@@ -282,7 +286,7 @@ double CommandEvaluator::evaluateTrajectory(const geometry_msgs::Twist& v_ini, c
                                             visualization_msgs::Marker &m, double x, double y, double th)
 {
   double dt = m_delta_T;
-  int steps = m_T / m_delta_T;  
+  int steps = std::abs(m_T / m_delta_T);  //valor absoluto para evaluar tambien delta negativo
   
   setParams(alt_map);
 
@@ -302,13 +306,22 @@ double CommandEvaluator::evaluateTrajectory(const geometry_msgs::Twist& v_ini, c
   bool collision = false;
   for(int i = 0; i <= steps && !collision; i++)
   {
-    computeNewVelocity(lv, av, dt, v_command);
+    computeNewVelocity(lv, av, std::abs(dt), v_command);
     
     // Integrate the model
     double lin_dist = lv * dt;
-    th = th + (av * dt);
-    x = x + lin_dist*cos(th); // Euler 1
-    y = y + lin_dist*sin(th); 
+    //cambio esto valar evaluar dt<0
+    if (dt > 0){
+      th = th + (av * dt);
+      x = x + lin_dist*cos(th); // Euler 1
+      y = y + lin_dist*sin(th);
+    }
+    else{
+      x = x + lin_dist*cos(th); // Euler 1
+      y = y + lin_dist*sin(th);
+      th = th + (av * dt); //actualizo th despues
+    }
+     
     
     // Represent downsampled
     if (i % 10 == 0) 
@@ -340,7 +353,8 @@ double CommandEvaluator::evaluateTrajectoryMinVelocity(const geometry_msgs::Twis
                                                        const nav_msgs::OccupancyGrid& alt_map, visualization_msgs::Marker& m, double x, double y, double th)
 {
   double dt = m_delta_T;
-  int steps = m_T / m_delta_T;
+//   int steps = m_T / m_delta_T;
+  int steps = std::abs(m_T / m_delta_T);  //valor absoluto para evaluar tambien delta negativo
  
   double lv = v_ini.linear.x;
   double av = v_ini.angular.z;
@@ -368,9 +382,20 @@ double CommandEvaluator::evaluateTrajectoryMinVelocity(const geometry_msgs::Twis
     double lin_dist = lv * dt;
     acc_dist += lin_dist;
     t += m_T;
-    th = th + (av * dt);
-    x = x + lin_dist*cos(th); // Euler 1
-    y = y + lin_dist*sin(th); 
+//     th = th + (av * dt);
+//     x = x + lin_dist*cos(th); // Euler 1
+//     y = y + lin_dist*sin(th); 
+    
+    if (dt > 0){
+      th = th + (av * dt);
+      x = x + lin_dist*cos(th); // Euler 1
+      y = y + lin_dist*sin(th);
+    }
+    else{
+      x = x + lin_dist*cos(th); // Euler 1
+      y = y + lin_dist*sin(th);
+      th = th + (av * dt); //actualizo th despues
+    }
     
     // Represent downsampled
     if (i % 5 == 0) 
@@ -412,7 +437,8 @@ double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v
                                                    visualization_msgs::Marker& m, double x, double y, double th)
 {
   double dt = m_delta_T;
-  int steps = m_T / m_delta_T;  
+//   int steps = m_T / m_delta_T; 
+  int steps = std::abs(m_T / m_delta_T);  //valor absoluto para evaluar tambien delta negativo
 
   double lv = v_ini.linear.x;
   double av = v_ini.angular.z;
@@ -436,9 +462,20 @@ double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v
     
     // Integrate the model
     double lin_dist = lv * dt;
-    th = th + (av * dt);
-    x = x + lin_dist*cos(th); // Euler 1
-    y = y + lin_dist*sin(th); 
+//     th = th + (av * dt);
+//     x = x + lin_dist*cos(th); // Euler 1
+//     y = y + lin_dist*sin(th); 
+    
+    if (dt > 0){
+      th = th + (av * dt);
+      x = x + lin_dist*cos(th); // Euler 1
+      y = y + lin_dist*sin(th);
+    }
+    else{
+      x = x + lin_dist*cos(th); // Euler 1
+      y = y + lin_dist*sin(th);
+      th = th + (av * dt); //actualizo th despues
+    }
     
     // Represent downsampled
     if (i % 5 == 0) 
@@ -447,7 +484,7 @@ double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v
     // Actualize the cost
     cont_footprint += applyFootprintRelaxed(x, y, th, alt_map, collision);
     
-    if (!collision)
+    if (!collision && consider_body)
       applyFootprint(x, y, th, alt_map, collision, true); // Search for positive collisions too
   }
   

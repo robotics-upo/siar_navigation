@@ -200,7 +200,8 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
 	q_rand = goal_node.st; 
       }     
       RRTNode *q_near = getNearestNode(q_rand);  
-      expandNode(q_rand, q_near);
+      expandNode(q_rand, q_near, relax);
+//       expandNode(q_rand, q_near);
       cont++;
       //samp_cont++;
     }

@@ -1,10 +1,10 @@
 #include "siar_planner/rrt.hpp"
-#include "siar_planner/rrt.hpp"
+#include "siar_planner/biRRT.hpp"
 #include "ros/ros.h"
 
 using functions::RealVector;
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv){
   
   ros::init(argc, argv, "test_planner");
   ros::NodeHandle nh;
@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
   biRRT a(nh, pnh);
   
   ROS_INFO("Waiting for map initialization");
-  while (!a.getModel().isInit() && ros::ok()) { 
+  while (!a.getModel().isInit() && ros::ok()){ 
     ros::spinOnce();
     sleep(1);
   }
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
   double cost = a.resolve(init, goal, path);
   std::cout << "sale del resolve" << std::endl;
   ros::Time t1 = ros::Time::now();
-  if (cost > 0.0) { 
+  if (cost > 0.0){ 
     
     ROS_INFO("Path calculated. Expended time: %f. Cost: %f", (t1 - t).toSec(), cost);
     
@@ -67,7 +67,8 @@ int main(int argc, char** argv) {
 //     visualization_msgs::Marker m = a.getPathMarker();
     m.header.frame_id = "/map";
     path_pub.publish(m);
-  } else {
+  } 
+  else{
 //     visualization_msgs::Marker m = a.getModel().testIntegration(init, true);
 //     m.header.frame_id = "/map";
 //     ROS_INFO("Points: %d", (int) m.points.size());
