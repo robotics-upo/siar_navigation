@@ -6,7 +6,7 @@
   <arg name="config" default="rrt_test_params.yaml"/>
   <arg name="map" default="test_map_fork.yaml"/>
   <arg name="problem" default="problem_3.yaml"/>
-  <arg name="velocity_file" default=""/>  <!--sin velocidaes, tomare random commands -->
+  <arg name="velocity_file" default="velocityset"/>  <!--sin velocidaes, tomare random commands -->
         
   <!--Start the map server for the path planner-->
   <node name="map_server" pkg="map_server" type="map_server" args="$(find siar_planner)/test/$(arg map)" output="screen"/>

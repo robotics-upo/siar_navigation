@@ -161,9 +161,7 @@ namespace siar_controller {
                        const nav_msgs::OccupancyGrid &alt_map, 
                        bool &collision, bool apply_collision = false);
     
-    int applyFootprintRelaxed(double x, double y, double th, 
-                                     const nav_msgs::OccupancyGrid &alt_map, 
-                                     bool &collision);
+    int applyFootprintRelaxed(double x, double y, double th, const nav_msgs::OccupancyGrid& alt_map, bool& collision);
     
   protected:
     double m_T; // Lookahead time
@@ -176,7 +174,7 @@ namespace siar_controller {
     double m_w_dist, m_w_safe; // Different weights. Respectively: Distance to commanded velocity, safety, collision penalty
     double orig_m_w_dist, orig_m_w_safe; // Different weights. Respectively: Distance to commanded velocity, safety, collision penalty
     
-    bool consider_two_wheels, consider_body; // Flags: two_wheels: if true considers two wheels when turning in an intersection 
+    bool consider_two_wheels, consider_body, allow_positive; // Flags: two_wheels: if true considers two wheels when turning in an intersection 
 					     // Body: checks the body of the platform for positive obstacles
     
     RobotCharacteristics m_model;
@@ -255,6 +253,7 @@ CommandEvaluator::CommandEvaluator(ros::NodeHandle& pn):m_model(pn),footprint(NU
   pn.param("min_wheel_r", min_wheel_right, 0.2); // Minimum fragment of the wheel that has to be without obstacle to be collision-free (in relaxed mode)
   pn.param("consider_two_wheels", consider_two_wheels, true); // If true --> considers the cost of two wheels when turning in a intersection (if not only considers the one that remains in the floor)
   pn.param("consider_body", consider_body, true); // If true --> considers the body of the SIAR platform and checks it against positive obstacle
+  pn.param("allow_positive", allow_positive, false); // If true: the wheel footprint allow traversing positive obstacles (only for testing purposes)
   footprint_params = new SiarFootprint(pn);
   orig_m_w_dist = m_w_dist;
   orig_m_w_safe = m_w_safe;
@@ -446,7 +445,7 @@ double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v
   setParams(alt_map);
   
 //   if (pub) {
-     ROS_INFO("Evaluate trajectory: dt = %f \tsteps=%d \tv_ini_x = %f\t th_dot_ini = %f", m_delta_T, steps, lv, av);
+//      ROS_INFO("Evaluate trajectory: dt = %f \tsteps=%d \tv_ini_x = %f\t th_dot_ini = %f", m_delta_T, steps, lv, av);
 //     ROS_INFO("v_command_x = %f\t th_dot_command = %f", v_command.linear.x, v_command.angular.z);
 //     ROS_INFO("v_max = %f\t a_max = %f", m_model.v_max, m_model.a_max);
 //   }
@@ -566,10 +565,10 @@ int CommandEvaluator::applyFootprintRelaxed(double x, double y, double th,
     if (index < 0) {
       continue;
     }
-    if (alt_map.data[index] == positive_obs) {
+    if (alt_map.data[index] == positive_obs && !allow_positive) {
       collision = true;
       ret_val = -1;
-    } else if (alt_map.data[index] == negative_obs) {
+    } else if (alt_map.data[index] == negative_obs || alt_map.data[index] == positive_obs) {
       if (orig[i].y > 0.0) {
         left_wheel = true;
         cont_left--;
@@ -588,9 +587,9 @@ int CommandEvaluator::applyFootprintRelaxed(double x, double y, double th,
 
   collision |= ( (double)cont_left / (double)size * 2.0 ) < min_wheel_left;
   collision |= ( (double)cont_right / (double)size * 2.0 ) < min_wheel_right;
-  if (collision) {
+//   if (collision) {
 //     ROS_INFO("CommandEvaluator::applyFootprintRelaxed --> COLLISION. Cont_left: %d \t Cont_right: %d \t fp size: %d", cont_left, cont_right, (int)fp.size());
-  }
+//   }
   
   return ret_val;
 }

@@ -173,7 +173,7 @@ double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
   
   tree1.clear(); // Incremental algorithm --> the graph is generated in each calculation
   tree2.clear();
-  //path.clear(); //crearlo como variable de la clase??
+  path.clear(); //crearlo como variable de la clase??
   
   if (!m.isInit()) {
     ROS_ERROR("biRRT::resolve --> The model has not been initialized --> could not calculate a path");
@@ -229,17 +229,15 @@ double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
     
     if(got_connected){ 
       //if got solution, may return path
-      //std::list<RRTNode> path;
       path = getPath(); 
       ret_val = 1;
       ROS_INFO("Iteration %d. Solution found", relax);
-      //create markers for path
-      //getPathMarker(path);      
     }
     else{ 
       //if didnt get a solution, do relaxation
       m.decreaseWheels(wheel_decrease, last_wheel);
       relax++;
+      std::cout << "Numero de nodos en grafo: tree1 : " << tree1.size() << "  tree2: " <<tree2.size() <<std::endl;
       ROS_ERROR("biRRT::resolve -->  could not find a path -->  trying relaxation");    
     }
   }
@@ -320,10 +318,10 @@ void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_
     else{
       cost = m.integrate(st, command, -(delta_t), relaxation_mode >= 1); // si direct es false, entonces le paso delta_t <0 a la integracion
       if (cost < 0.0) {
-	std::cout << "Colision " <<std::endl;
+// 	std::cout << "Colision " <<std::endl;
       }
       else{
-	std::cout << "Se encuentra nodo sin colision " <<std::endl;
+// 	std::cout << "Se encuentra nodo sin colision " <<std::endl;
 	// get node with minimum distance
 	is_new_node = true;
 	new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
@@ -364,7 +362,7 @@ void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_
 	tree1.push_back(new_node);
       }
       else{
-	std::cout << "hay un nodo indirecto " <<std::endl;
+// 	std::cout << "hay un nodo indirecto " <<std::endl;
 	q_near->parent = &q_new;
 	q_near->command_lin = q_new.command_lin; //esto debe recibirlo el hijo, que en este caso es q_near
 	q_near->command_ang = q_new.command_ang;
@@ -566,58 +564,5 @@ visualization_msgs::Marker biRRT::getGraphMarker()
   
   return m;
 }
-
-// visualization_msgs::Marker biRRT::getGraphMarker()
-// {
-//   visualization_msgs::Marker m;
-//   m.header.frame_id = this->m.getFrameID();
-//   m.header.stamp = ros::Time::now();
-//   m.ns = "rrt";
-//   m.action = visualization_msgs::Marker::ADD;
-//   m.pose.orientation.w = 1.0;
-//   m.id = 0;
-//   m.points.clear();
-//   m.type = visualization_msgs::Marker::POINTS;
-// //   m.type = visualization_msgs::Marker::LINE_LIST;
-//   // LINE_LIST markers use x scale only (for line width)
-//   m.scale.x = 0.05;
-//   // Points are green
-//   visualization_msgs::Marker::_color_type color;
-//   color.r = 1.0;
-//   color.b = 0;
-//   color.g = 0;
-//   color.a = 1.0;
-//   double color_step = 1.0/(double)nodes.size();
-//   geometry_msgs::Point p1;
-//   geometry_msgs::Point p2;
-//   //for (unsigned int i = 0; i < nodes.size();i++) {
-//   for (auto n : nodes){  
-//     auto new_color = color;
-//     new_color.r -= color_step;
-//     new_color.b += color_step;
-//     
-//     p1.x = n->st.state[0];
-//     p1.y = n->st.state[1];
-//     
-//     m.points.push_back(p1); //es correcto aqui?
-//     m.colors.push_back(color);
-//     
-// //      for (auto child : n->children) {
-// //        m.points.push_back(p1);
-// //        m.colors.push_back(color);
-// // //        
-// //        p2.x = child->st.state[0];
-// //        p2.y = child->st.state[1];
-// // //        
-// //        m.points.push_back(p2);
-// //        m.colors.push_back(new_color);
-// //      }
-//    
-//     color = new_color;
-//     
-//   }
-//   
-//   return m;
-// }
 
 #endif
