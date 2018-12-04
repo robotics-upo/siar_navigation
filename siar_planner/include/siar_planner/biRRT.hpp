@@ -194,7 +194,7 @@ double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
   double ret_val = -1.0; 
   int relax = 0;
   
-  while (relax < n_rounds && !got_connected){
+  while (relax < n_rounds && !got_connected) {
     int cont = 0; 
     while (cont < n_iter && !got_connected) { // n_iter Max. number of nodes to expand for each round
       NodeState q_rand;

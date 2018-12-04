@@ -74,6 +74,7 @@ protected:
   CommandEvaluator *cmd_eval;
   double width_thres;
   double safety_width;
+  double constant_width;
   
   // Include ways to escape the local minima
   double t_unfeasible,ang_scape_inc, max_t_unfeasible;
@@ -187,6 +188,8 @@ void SiarController::getParameters(ros::NodeHandle& pn)
   pn.param("n_ang", _conf.n_ang, 12);
   pn.param("width_thres", width_thres, 0.02);
   pn.param("safety_width", safety_width, 0.02);
+  pn.param("constant_width", constant_width, 0.6); // Width for op mode 5
+  
   pn.getParam("min_wheel_left", min_wheel_left);
   pn.getParam("min_wheel_right", min_wheel_right);
   
@@ -298,6 +301,12 @@ void SiarController::modeCallback(const std_msgs::Int8& msg)
 {
   operation_mode = msg.data;
   ROS_INFO("Operation mode changed to: %d", operation_mode);
+  
+  if (operation_mode == 5) {
+    ROS_INFO("Setting width to: %f", constant_width);
+    cmd_eval->setWidth(constant_width);
+    _conf.robot_width = constant_width;
+  }
 }
 
 
@@ -608,6 +617,8 @@ void SiarController::copyMarker(visualization_msgs::Marker& dst, const visualiza
 
 void SiarController::statusCallback(const siar_driver::SiarStatus& msg)
 {
+  if (operation_mode == 5)
+    return; // If op mode =5 --> assume constant width
   // Check if the width has changed enough to perform an actualization of the footprint
   double new_width = msg.width - 0.04 + safety_width;
   if (fabs(new_width - _conf.robot_width) > width_thres && cmd_eval != NULL ) {
