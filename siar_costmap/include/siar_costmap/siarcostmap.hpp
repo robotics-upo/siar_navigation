@@ -10,6 +10,7 @@
 #include <pcl_ros/transforms.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <ANN/ANN.h>     
+#include <iostream>
 
 #define SC_POSITIVE_OBS 127
 #define SC_NEGATIVE_OBS -127
@@ -23,17 +24,17 @@ public:
   // Point 2D
   struct Point2D
   {
-    Point2D(void)
+    Point2D(void) // default reference , dont recieve parameters
     {
     }
     
-    Point2D(float _x, float _y)
+    Point2D(float _x, float _y) //Initialize the variables x and y
     {
-      x = _x;
+      x = _x;  
       y = _y;
     }
     
-    Point2D(const Point2D &d)
+    Point2D(const Point2D &d) 
     {
       x = d.x;
       y = d.y;
@@ -320,6 +321,8 @@ public:
             } else 
               m_costmap.data[index] = 0;
           }
+          
+         
         }
         
       }

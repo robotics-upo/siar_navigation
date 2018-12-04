@@ -4,9 +4,9 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "siar_planner/AStarState.hpp"
+#include "siar_planner/NodeState.hpp"
 #include "siar_planner/AStarNode.h"
-#include "siar_planner/AStarModel.hpp"
+#include "siar_planner/SiarModel.hpp"
 
 #include "visualization_msgs/Marker.h"
 
@@ -18,9 +18,9 @@ class AStar
 {
 public:
   AStar(ros::NodeHandle &nh, ros::NodeHandle &pnh);
-  double getPath(AStarState start, AStarState goal, std::list<AStarNode>& path);      
+  double getPath(NodeState start, NodeState goal, std::list<AStarNode>& path);      
   
-  AStarModel &getModel() {return m;}
+  SiarModel &getModel() {return m;}
   
   visualization_msgs::Marker getPathMarker(const std::list< AStarNode >& path);
   
@@ -35,7 +35,7 @@ protected:
 
   void addEdge(int id0, int id1, double cost);
   
-  int addNode(AStarState st, double comm_x = 0.0, double comm_ang = 0.0);
+  int addNode(NodeState st, double comm_x = 0.0, double comm_ang = 0.0);
   void addEdge(int id0, int id1);
   void clear();
   
@@ -46,13 +46,13 @@ protected:
   int getBestNode(int mode = 0);
   
   //! @brief Searchs for a state in the graph and returns its ID if found
-  int getCellID(const AStarState &st) const;
+  int getCellID(const NodeState &st) const;
 
   std::unordered_map<int, AStarNode> nodes;
   
-  bool isGoal(int goal_id, const AStarState &st);
+  bool isGoal(int goal_id, const NodeState &st);
   
-  bool isSameCell(const AStarState& s1, const AStarState& s2) const;
+  bool isSameCell(const NodeState& s1, const NodeState& s2) const;
   
   int K, n_iter, n_rounds;
   double delta_t, cellsize_m, cellsize_rad, cost_weight;
@@ -60,7 +60,7 @@ protected:
   std::unordered_set<int> closedSet;
   std::unordered_set<int> openSet;
   
-  AStarModel m;
+  SiarModel m;
   double goal_gap_m, goal_gap_rad;
   
   // Random numbers
@@ -83,7 +83,7 @@ protected:
   
   //! @brief Adds a velocity to the forward test, the same velocity with opposite angular velocity. Then does the same to backward test but changing the sign of v.x
   void addVelocityToTestSets(const geometry_msgs::Twist &v, std::vector<geometry_msgs::Twist> &set_forward, std::vector<geometry_msgs::Twist> &set_backward);
-  bool checkExplorationBounds(const AStarState& st);
+  bool checkExplorationBounds(const NodeState& st);
 };
 
 AStar::AStar(ros::NodeHandle &nh, ros::NodeHandle &pnh):m(nh, pnh), gen(rd()), dis(0,1)
@@ -159,7 +159,7 @@ void AStar::clear()
 }
 
 inline
-int AStar::addNode(AStarState st, double comm_x, double comm_ang)
+int AStar::addNode(NodeState st, double comm_x, double comm_ang)
 {
   int id = getCellID(st);
   if (id < 0) {
@@ -182,7 +182,7 @@ void AStar::addEdge(int id0, int id1, double cost)
 }
 
 
-double AStar::getPath(AStarState start, AStarState goal, std::list<AStarNode>& path)
+double AStar::getPath(NodeState start, NodeState goal, std::list<AStarNode>& path)
 {
   nodes.clear(); // Incremental algorithm --> the graph is generated in each calculation
   path.clear();
@@ -322,7 +322,7 @@ void AStar::expandNode(int base_id, int relaxation_mode)
 //           std::back_insert_iterator<std::vector<geometry_msgs::Twist> >(test_set_forward));
   
   for (auto it = test_set_forward.begin(); it != test_set_forward.end(); it++) {
-    AStarState st = n.st;
+    NodeState st = n.st;
     geometry_msgs::Twist &command = *it;
     
     double cost = m.integrate(st, command, delta_t, relaxation_mode >= 1); // If relaxation_mode >= 1 --> allow two wheels
@@ -367,12 +367,12 @@ int AStar::getBestNode(int mode)
 }
 
 
-int AStar::getCellID(const AStarState& st) const
+int AStar::getCellID(const NodeState& st) const
 {
   int ret_val = -1;
   
   for (int i = 0; i < nodes.size() && ret_val < 0; i++) {
-    const AStarState &curr_state = nodes.at(i).st;
+    const NodeState &curr_state = nodes.at(i).st;
     
     if ( isSameCell(curr_state, st) ) {
       ret_val = i;
@@ -382,7 +382,7 @@ int AStar::getCellID(const AStarState& st) const
   return ret_val;
 }
 
-bool AStar::isSameCell(const AStarState& s1, const AStarState& s2) const
+bool AStar::isSameCell(const NodeState& s1, const NodeState& s2) const
 {
   bool ret_val = false;
   
@@ -451,7 +451,7 @@ visualization_msgs::Marker AStar::getGraphMarker()
   return m;
 }
 
-bool AStar::isGoal(int goal_id, const AStarState &st) {
+bool AStar::isGoal(int goal_id, const NodeState &st) {
   bool ret_val = true;
   
   functions::RealVector test = st.state;
@@ -472,7 +472,7 @@ visualization_msgs::Marker AStar::getPathMarker(const std::list< AStarNode >& pa
   visualization_msgs::Marker ret;
   
   int cont = 0;
-  AStarState st;
+  NodeState st;
   for (auto it = path.begin(); it != path.end(); it++, cont++) {
     if (cont > 0) {
       st = (--it)->st;
@@ -555,7 +555,7 @@ void AStar::addVelocityToTestSets(const geometry_msgs::Twist& v1, std::vector< g
   }
 }
 
-bool AStar::checkExplorationBounds(const AStarState &st)
+bool AStar::checkExplorationBounds(const NodeState &st)
 {
   bool ret_val = true;
   

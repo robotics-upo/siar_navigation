@@ -1,29 +1,29 @@
-#ifndef ASTAR_MODEL__HPP__
-#define ASTAR_MODEL__HPP__
+#ifndef SIAR_MODEL__HPP__
+#define SIAR_MODEL__HPP__
 
 #include "siar_controller/command_evaluator.hpp"
-#include "siar_planner/AStarState.hpp"
+#include "siar_planner/NodeState.hpp"
 #include "ros/ros.h"
 #include <nav_msgs/OccupancyGrid.h>
 #include <random>
 
-class AStarModel 
+class SiarModel 
 {
 public:
   //! @brief Constructor from NodeHandles
-  AStarModel(ros::NodeHandle &nh, ros::NodeHandle &pn);
+  SiarModel(ros::NodeHandle &nh, ros::NodeHandle &pn);
   
   void occupancyGridCallback(nav_msgs::OccupancyGridConstPtr msg);
   
-  visualization_msgs::Marker testIntegration(AStarState &st, bool relaxed = false);
+  visualization_msgs::Marker testIntegration(NodeState &st, bool relaxed = false);
   
   //! @brief Integrates the model and returns the cost associated with 
   //! @return Negative --> collision. Positive --> Arc's longitude
-  double integrate(AStarState &st, geometry_msgs::Twist &cmd, double T, bool relaxed = false);
+  double integrate(NodeState &st, geometry_msgs::Twist &cmd, double T, bool relaxed = false);
   
   //! @brief Integrates the model and returns the cost associated with 
   //! @return Negative --> collision. Positive --> Arc's longitude
-  double integrate(visualization_msgs::Marker& m, AStarState& st, geometry_msgs::Twist& cmd, double T, bool relaxed);
+  double integrate(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T, bool relaxed);
   
   virtual geometry_msgs::Twist generateRandomCommand();
   
@@ -35,9 +35,9 @@ public:
     }
   }
   
-  visualization_msgs::Marker getMarker(AStarState &st, int id = 0); 
+  visualization_msgs::Marker getMarker(NodeState &st, int id = 0); 
   
-  inline bool isCollision(AStarState &st) {
+  inline bool isCollision(NodeState &st) {
     bool ret_val;
     m_ce.applyFootprint(st.state[0], st.state[1], st.state[2], m_world, ret_val);
     return ret_val;
@@ -89,13 +89,13 @@ protected:
   visualization_msgs::Marker m;
 };
 
-AStarModel::AStarModel(ros::NodeHandle &nh, ros::NodeHandle& pn):m_ce(pn), map_init(false), gen(rd()), dis(-m_ce.getCharacteristics().theta_dot_max, m_ce.getCharacteristics().theta_dot_max)
+SiarModel::SiarModel(ros::NodeHandle &nh, ros::NodeHandle& pn):m_ce(pn), map_init(false), gen(rd()), dis(-m_ce.getCharacteristics().theta_dot_max, m_ce.getCharacteristics().theta_dot_max)
 {
   
-  map_sub = nh.subscribe("/altitude_map", 2, &AStarModel::occupancyGridCallback, this);
+  map_sub = nh.subscribe("/altitude_map", 2, &SiarModel::occupancyGridCallback, this);
 }
 
-void AStarModel::occupancyGridCallback(nav_msgs::OccupancyGridConstPtr msg)
+void SiarModel::occupancyGridCallback(nav_msgs::OccupancyGridConstPtr msg)
 {
   map_init = true;
   m_world = *msg;
@@ -103,23 +103,25 @@ void AStarModel::occupancyGridCallback(nav_msgs::OccupancyGridConstPtr msg)
   
 }
 
-double AStarModel::integrate(AStarState& st, geometry_msgs::Twist& cmd, double T, bool relaxed)
+double SiarModel::integrate(NodeState& st, geometry_msgs::Twist& cmd, double T, bool relaxed)
 {
   return integrate(m, st, cmd, T, relaxed);
 }
 
 
-double AStarModel::integrate(visualization_msgs::Marker& m, AStarState& st, geometry_msgs::Twist& cmd, double T, bool relaxed)
+double SiarModel::integrate(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T, bool relaxed)
 {
   geometry_msgs::Twist v_ini;
   v_ini.linear.x = m_ce.getCharacteristics().v_max;
   
   if (st.state.size() < 3) {
-    ROS_ERROR("AStarModel::integrate --> cannot integrate the model --> too few states. State size: %u", (unsigned int) st.state.size());
+    ROS_ERROR("SiarModel::integrate --> cannot integrate the model --> too few states. State size: %u", (unsigned int) st.state.size());
   }
   
   // Debug:
 //   ROS_INFO("Calling evaluate trajectory. Delta_t = %f. T_hor = %f. ", m_ce.
+  
+  m_ce.setDeltaT(T);
   
   double ret_val;
   if (!relaxed) 
@@ -133,7 +135,7 @@ double AStarModel::integrate(visualization_msgs::Marker& m, AStarState& st, geom
   return ret_val;
 }
 
-geometry_msgs::Twist AStarModel::generateRandomCommand() {
+geometry_msgs::Twist SiarModel::generateRandomCommand() {
   
   geometry_msgs::Twist ret;
   
@@ -144,25 +146,25 @@ geometry_msgs::Twist AStarModel::generateRandomCommand() {
   return ret;
 }
 
-visualization_msgs::Marker AStarModel::getMarker(AStarState& st, int id)
+visualization_msgs::Marker SiarModel::getMarker(NodeState& st, int id)
 {
   visualization_msgs::Marker m;
   
   if (m_ce.getFootprint() != NULL) {
     m_ce.getFootprint()->addPoints(st.state[0], st.state[1], st.state[2], m, id, true, m_world.header.frame_id);
   } else {
-    ROS_ERROR("AStarModel::getMarker: --> Footprint is not initialized");
+    ROS_ERROR("SiarModel::getMarker: --> Footprint is not initialized");
   }
   
   return m;
 }
 
-visualization_msgs::Marker AStarModel::testIntegration(AStarState& st, bool relaxed)
+visualization_msgs::Marker SiarModel::testIntegration(NodeState& st, bool relaxed)
 {
   auto comm = generateRandomCommand();
   double cost = integrate(st, comm, 0.5, relaxed);
   
-  ROS_INFO("AStarModel::testIntegration --> Command = %f, %f --> Cost = %f", comm.linear.x, comm.angular.z, cost);
+  ROS_INFO("SiarModel::testIntegration --> Command = %f, %f --> Cost = %f", comm.linear.x, comm.angular.z, cost);
   
   
   return m;

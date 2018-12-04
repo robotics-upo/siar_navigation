@@ -1,0 +1,5 @@
+{T: 0.4, delta_t: 0.2, goal_gap_m: 0.2, goal_gap_rad: 0.4, K: 20, n_iter: 400, n_rounds: 4, wheel_decrease: 0.05, last_wheel: 0.0, 
+max_x: 5.25, max_y: 5, max_yaw: 3.1415, min_x: -5.25, min_y: -5.0, min_yaw: -3.1415, samp_goal_rate: 4, limit_exploration: 1.2, omega_max: 0.45, positive_obs: 100,
+negative_obs: -127, optimize: false, min_wheel: 0.2, consider_body: false, width: 0.65, allow_positive: true}
+
+
