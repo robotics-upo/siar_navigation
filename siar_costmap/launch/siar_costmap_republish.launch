@@ -7,19 +7,23 @@
   # Starting second into the bag file
 <!--   <arg name="start" default="0" /> -->
   
-  <arg name="tilt_compensate" default="true"/>
+  <arg name="tilt_compensate" default="false"/>
   <arg name="consider_sign" default="true"/>
   <arg name="roi_x" default="3"/>
   <arg name="roi_y" default="3"/>
   <arg name="roi_w" default="314"/>
   <arg name="roi_h" default="234"/>
+  <arg name="roi_w2" default="632"/>
+  <arg name="roi_h2" default="472"/>
   
   <arg name="camera_1" default="/front_left"/>
   <arg name="camera_2" default="/back_left"/>
   <arg name="camera_3" default="/front_right"/>
   <arg name="camera_4" default="/back_right"/>
-  <arg name="camera_5" default="/fron"/>
-  <arg name="camera_6" default="/bac"/>
+  <arg name="camera_5" default="/front"/>
+  <arg name="camera_6" default="/back"/>
+  
+  
   
   # Use simulation time fro TFs
   <param name="use_sim_time" value="true" />
@@ -105,8 +109,8 @@
     <param name="range_max" value = "3.0"/>                                                                     # Max range in meters for point cloud generation
     <param name="roi_x" value="$(arg roi_x)"/>
     <param name="roi_y" value="$(arg roi_y)"/>
-    <param name="roi_w" value="$(arg roi_w)"/>
-    <param name="roi_h" value="$(arg roi_h)"/>
+    <param name="roi_w" value="$(arg roi_w2)"/>
+    <param name="roi_h" value="$(arg roi_h2)"/>
     <param name="down_sampling" value = "1"/>                                                           # Camera down sampling factor. Values: 1, 2 or 4. The bigger the faster.
   </node>
   <node pkg="depth2cloud" type="depth2cloud_node" name="depth2cloud_6" output="screen" >
@@ -117,8 +121,8 @@
     <param name="range_max" value = "3.0"/>                                                                     # Max range in meters for point cloud generation
     <param name="roi_x" value="$(arg roi_x)"/>
     <param name="roi_y" value="$(arg roi_y)"/>
-    <param name="roi_w" value="$(arg roi_w)"/>
-    <param name="roi_h" value="$(arg roi_h)"/>
+    <param name="roi_w" value="$(arg roi_w2)"/>
+    <param name="roi_h" value="$(arg roi_h2)"/>
     <param name="down_sampling" value = "1"/>                                                           # Camera down sampling factor. Values: 1, 2 or 4. The bigger the faster.
   </node>
   <node pkg="siar_costmap" type="costmap_node" name="costmap_node" output="screen" >
@@ -132,7 +136,7 @@
     <param name="hz" value = "5.0"/>							# Costmap update rate
     <param name="obstacle_height" value = "0.1"/>				# Absolute value of obstacle height (or hole depth)
     <param name="obstacle_height_negative" value = "-0.1"/>                               # Absolute value of obstacle height (or hole depth)
-    <param name="exp_decay" value = "7.0"/>					    # Obstacle exponential decay (it is counted in cells)
+    <param name="exp_decay" value = "2"/>					    # Obstacle exponential decay (it is counted in cells)
     <remap from="/costmap_node/costmap" to="/test_costmap"/>
     <param name="tilt_compensate" value="$(arg tilt_compensate)"/>
     <param name="consider_sign" value="$(arg consider_sign)"/>

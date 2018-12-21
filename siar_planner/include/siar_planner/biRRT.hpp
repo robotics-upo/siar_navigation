@@ -183,10 +183,16 @@ void biRRT::clear()
 double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
 {
   
+<<<<<<< HEAD
 //   tree1.clear(); // Incremental algorithm --> the graph is generated in each calculation
 //   tree2.clear();
   clear();
   //path.clear(); //crearlo como variable de la clase??
+=======
+  tree1.clear(); // Incremental algorithm --> the graph is generated in each calculation
+  tree2.clear();
+  path.clear(); //crearlo como variable de la clase??
+>>>>>>> 793a09da564e8c7c3c87d6943000c32515cf0318
   
   if (!m.isInit()) {
     ROS_ERROR("biRRT::resolve --> The model has not been initialized --> could not calculate a path");
@@ -206,7 +212,7 @@ double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
   double ret_val = -1.0; 
   int relax = 0;
   
-  while (relax < n_rounds && !got_connected){
+  while (relax < n_rounds && !got_connected) {
     int cont = 0; 
     while (cont < n_iter && !got_connected) { // n_iter Max. number of nodes to expand for each round
       NodeState q_rand;
@@ -337,17 +343,15 @@ double biRRT::resolve_expand1(NodeState start, NodeState goal, std::list<RRTNode
     
     if(got_connected){ 
       //if got solution, may return path
-      //std::list<RRTNode> path;
       path = getPath(); 
       ret_val = 1;
       ROS_INFO("Iteration %d. Solution found", relax);
-      //create markers for path
-      //getPathMarker(path);      
     }
     else{ 
       //if didnt get a solution, do relaxation
       m.decreaseWheels(wheel_decrease, last_wheel);
       relax++;
+      std::cout << "Numero de nodos en grafo: tree1 : " << tree1.size() << "  tree2: " <<tree2.size() <<std::endl;
       ROS_ERROR("biRRT::resolve -->  could not find a path -->  trying relaxation");    
     }
   }
@@ -772,58 +776,5 @@ visualization_msgs::Marker biRRT::getGraphMarker()
   
   return m;
 }
-
-// visualization_msgs::Marker biRRT::getGraphMarker()
-// {
-//   visualization_msgs::Marker m;
-//   m.header.frame_id = this->m.getFrameID();
-//   m.header.stamp = ros::Time::now();
-//   m.ns = "rrt";
-//   m.action = visualization_msgs::Marker::ADD;
-//   m.pose.orientation.w = 1.0;
-//   m.id = 0;
-//   m.points.clear();
-//   m.type = visualization_msgs::Marker::POINTS;
-// //   m.type = visualization_msgs::Marker::LINE_LIST;
-//   // LINE_LIST markers use x scale only (for line width)
-//   m.scale.x = 0.05;
-//   // Points are green
-//   visualization_msgs::Marker::_color_type color;
-//   color.r = 1.0;
-//   color.b = 0;
-//   color.g = 0;
-//   color.a = 1.0;
-//   double color_step = 1.0/(double)nodes.size();
-//   geometry_msgs::Point p1;
-//   geometry_msgs::Point p2;
-//   //for (unsigned int i = 0; i < nodes.size();i++) {
-//   for (auto n : nodes){  
-//     auto new_color = color;
-//     new_color.r -= color_step;
-//     new_color.b += color_step;
-//     
-//     p1.x = n->st.state[0];
-//     p1.y = n->st.state[1];
-//     
-//     m.points.push_back(p1); //es correcto aqui?
-//     m.colors.push_back(color);
-//     
-// //      for (auto child : n->children) {
-// //        m.points.push_back(p1);
-// //        m.colors.push_back(color);
-// // //        
-// //        p2.x = child->st.state[0];
-// //        p2.y = child->st.state[1];
-// // //        
-// //        m.points.push_back(p2);
-// //        m.colors.push_back(new_color);
-// //      }
-//    
-//     color = new_color;
-//     
-//   }
-//   
-//   return m;
-// }
 
 #endif
