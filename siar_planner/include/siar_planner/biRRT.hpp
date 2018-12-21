@@ -20,7 +20,8 @@ public:
   
   ~biRRT();
   
-  double resolve(NodeState start, NodeState goal, std::list<RRTNode>& path);      
+  double resolve(NodeState start, NodeState goal, std::list<RRTNode>& path); 
+  double resolve_expand1(NodeState start, NodeState goal, std::list<RRTNode>& path);
   
   SiarModel &getModel() {return m;}
   
@@ -31,25 +32,31 @@ public:
   
   double getDeltaT() const {return delta_t;}
   
+  std::list<RRTNode *> tree1;
+  std::list<RRTNode *> tree2;
+  
+  
 protected:
   biRRT();
   
   void clear();
   
-  std::list<RRTNode *> tree1;
-  std::list<RRTNode *> tree2;
+//   std::list<RRTNode *> tree1;
+//   std::list<RRTNode *> tree2;
   
   RRTNode* areConnected(NodeState st, bool direct);
   bool got_connected = false;
   
   RRTNode goal_node;
   RRTNode start_node;
-  RRTNode *q_final_1, *q_final_2;
+  RRTNode *q_final_1 = NULL;
+  RRTNode *q_final_2 = NULL;
   
   
   //new functions
   NodeState getRandomState(double max_x, double max_y, double max_yaw, double min_x, double min_y, double min_yaw);
   RRTNode *getNearestNode(NodeState q_rand, bool primary_tree);
+  RRTNode *getNearestNode1(NodeState q_rand);
   void expandNode(const NodeState& q_rand, RRTNode* q_near, int relaxation_mode = 0, bool direct = true);
   std::list<RRTNode> getPath();
   void expandNearestNodes();
@@ -70,6 +77,7 @@ protected:
   double goal_gap_m, goal_gap_rad;
   
   int samp_cont, samp_goal_rate; //contadores de sampleo
+  bool tree_num;
   
   
   // Random numbers
@@ -166,14 +174,18 @@ void biRRT::clear()
 {
   tree1.clear();
   tree2.clear();
+  q_final_1 = NULL;
+  q_final_2 = NULL;
+  got_connected = false;
 }
 
 
 double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
 {
   
-  tree1.clear(); // Incremental algorithm --> the graph is generated in each calculation
-  tree2.clear();
+//   tree1.clear(); // Incremental algorithm --> the graph is generated in each calculation
+//   tree2.clear();
+  clear();
   //path.clear(); //crearlo como variable de la clase??
   
   if (!m.isInit()) {
@@ -202,8 +214,12 @@ double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
 	q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
 	RRTNode *q_near = getNearestNode(q_rand, true);  
         expandNode(q_rand, q_near, relax, true);
-	q_near = getNearestNode(q_rand, false);
-	expandNode(q_rand, q_near, relax, false);
+	if(!got_connected){
+	  q_near = getNearestNode(q_rand, false);
+	  expandNode(q_rand, q_near, relax, false);
+	}
+// 	q_near = getNearestNode(q_rand, false);
+// 	expandNode(q_rand, q_near, relax, false);
       }
       else{
 // 	expandNearestNodes();
@@ -223,7 +239,98 @@ double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
 	}
 	//aqui llamo a expandNode
 	expandNode(q_closest2->st, q_closest1, relax, true); //expansion de q_closest1 que pertenece a tree1 hacia tree2
-	expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1	
+// 	expandNode(q_closest1->st, q_closest2, relax, false);
+	if(!got_connected){
+	  expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1
+// 	  expandNode(q_closest2->st, q_closest1, relax, true);
+	}
+// 	expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1	
+      }     
+      cont++;
+    }
+    
+    if(got_connected){ 
+      //if got solution, may return path
+      //std::list<RRTNode> path;
+      path = getPath(); 
+      ret_val = 1;
+      ROS_INFO("Iteration %d. Solution found", relax);
+      //create markers for path
+      //getPathMarker(path);      
+    }
+    else{ 
+      //if didnt get a solution, do relaxation
+      m.decreaseWheels(wheel_decrease, last_wheel);
+      relax++;
+      ROS_ERROR("biRRT::resolve -->  could not find a path -->  trying relaxation");    
+    }
+  }
+  std::cout << "Numero de nodos totales: " << tree1.size()+tree2.size() <<std::endl;
+  std::cout << "Numero de nodos en path: " << path.size() <<std::endl;
+  return ret_val; 
+}
+
+
+double biRRT::resolve_expand1(NodeState start, NodeState goal, std::list<RRTNode>& path)
+{
+  
+//   tree1.clear(); // Incremental algorithm --> the graph is generated in each calculation
+//   tree2.clear();
+  clear();
+  //path.clear(); //crearlo como variable de la clase??
+  
+  if (!m.isInit()) {
+    ROS_ERROR("biRRT::resolve --> The model has not been initialized --> could not calculate a path");
+    return -1.0;
+  }
+  
+  
+  //RRTNode start_node; //modificar addnode para hacer esto
+  start_node.st = start;
+  tree1.push_back(new RRTNode(start_node)); 
+  
+  //RRTNode goal_node;
+  goal_node.st = goal;
+  tree2.push_back(new RRTNode(goal_node));
+  //nodes.push_back(goal_node); //este nodo no se incluira en la lista
+  
+  double ret_val = -1.0; 
+  int relax = 0;
+  
+  while (relax < n_rounds && !got_connected){
+    int cont = 0; 
+    while (cont < n_iter && !got_connected) { // n_iter Max. number of nodes to expand for each round
+      NodeState q_rand;
+      if (!(cont%samp_goal_rate == 0)){
+	q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
+	
+	RRTNode *q_near = getNearestNode1(q_rand);  
+        expandNode(q_rand, q_near, relax, tree_num);
+      }
+      else{
+// 	expandNearestNodes();
+	double dist = std::numeric_limits<double>::infinity();
+	RRTNode *q_closest1 = NULL;  
+	RRTNode *q_closest2 = NULL;
+	double new_dist;
+	for (auto n1: tree1){ 
+	  for (auto n2: tree2){
+	    new_dist = sqrt(pow(n1->st.state[0] - n2->st.state[0],2) + pow(n1->st.state[1] - n2->st.state[1],2)); 
+	    if (new_dist < dist){
+	      q_closest1 = n1; 
+	      q_closest2 = n2; 
+	      dist = new_dist;
+	    }
+	  }
+	}
+	//aqui llamo a expandNode
+	expandNode(q_closest2->st, q_closest1, relax, true); //expansion de q_closest1 que pertenece a tree1 hacia tree2
+// 	expandNode(q_closest1->st, q_closest2, relax, false);
+	if(!got_connected){
+	  expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1
+// 	  expandNode(q_closest2->st, q_closest1, relax, true);
+	}
+// 	expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1	
       }     
       cont++;
     }
@@ -285,6 +392,30 @@ RRTNode* biRRT::getNearestNode(NodeState q_rand, bool primary_tree) {
   return q_near;
 }
 
+RRTNode* biRRT::getNearestNode1(NodeState q_rand) {
+  RRTNode *q_near = NULL; 
+  double dist = std::numeric_limits<double>::infinity(); 
+  double new_dist;
+//   TODO hacer una busqueda más eficiente  
+  for (auto n: tree1){ 
+    new_dist = sqrt(pow(q_rand.state[0] - n->st.state[0],2) + pow(q_rand.state[1] - n->st.state[1],2)); 
+    if (new_dist < dist) {
+      q_near = n; 
+      dist = new_dist;
+      tree_num = true;
+    }
+  } 
+  for (auto n: tree2){ 
+    new_dist = sqrt(pow(q_rand.state[0] - n->st.state[0],2) + pow(q_rand.state[1] - n->st.state[1],2)); 
+    if (new_dist < dist) {
+      q_near = n; 
+      dist = new_dist;
+      tree_num = false;
+    }
+  }   
+  return q_near;
+}
+
 void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mode, bool direct){
   RRTNode q_new;
   double dist = std::numeric_limits<double>::infinity(); 
@@ -339,63 +470,103 @@ void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_
   }
   //check if there is a new node and add it to the graph (unless its the goal)
   if (is_new_node){
-    //check if got to goal
     RRTNode *q_closest = areConnected(q_new.st, direct); //este q_closest solo lo uso si got_connected=true; si es direct, q_closest sera un hijo, si no, sera un padre
-      
-    //esto tambien depende, si es direct o no
-    if(got_connected){
-      std::cout << "Llego a la conexion " <<std::endl;
-      if(direct){
-	q_final_1->st = q_closest->st;
-	std::cout << "Llego hasta aqui" <<std::endl;
-	q_near->children.push_back(q_final_1); //considero q_closest casi igual a q_new
-	q_final_1->parent = q_near; 
-	q_final_1->command_lin = q_new.command_lin; 
-	q_final_1->command_ang = q_new.command_ang; //no hay que añadirlo al tree pork es igual a q_closest que si esta añadido
+    
+    if(direct){
+      q_new.parent = q_near;
+      RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
+      q_near->children.push_back(new_node);
+      tree1.push_back(new_node);
+      if(got_connected){
+	q_final_1 = new_node;
 	q_final_2 = q_closest;
-	std::cout << "Llego al final" <<std::endl;
       }
-      else{
-	q_final_2->st = q_closest->st;
-	q_near->children.push_back(q_final_2); //considero q_closest casi igual a q_new
-	q_final_2->parent = q_near; 
-	q_near->command_lin = q_new.command_lin; 
-	q_near->command_ang = q_new.command_ang;
+    }     
+    else{
+// 	std::cout << "hay un nodo indirecto " <<std::endl;
+      q_near->command_lin = q_new.command_lin; //esto debe recibirlo el nodo final del desplazamiento normal, que en este caso es q_near
+      q_near->command_ang = q_new.command_ang;
+      q_new.command_lin = 0;
+      q_new.command_ang = 0;
+      
+      q_new.parent = q_near;
+      RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
+      q_near->children.push_back(new_node);
+      tree2.push_back(new_node);
+      if(got_connected){
+	q_final_2 = new_node;
 	q_final_1 = q_closest;
-	std::cout << "Llego al final" <<std::endl;
-	
-// 	q_closest->children.push_back(q_near); //considero q_closest casi igual a q_new
-// 	q_near->parent = q_closest; 
-// 	q_near->command_lin = q_new.command_lin; 
-// 	q_near->command_ang = q_new.command_ang;
       }      
     }
-    else{
-      if(direct){
-	q_new.parent = q_near;
-	RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
-	q_near->children.push_back(new_node);
-	tree1.push_back(new_node);
-      }
-      else{
-// 	std::cout << "hay un nodo indirecto " <<std::endl;
-// 	q_near->parent = &q_new;
-	q_near->command_lin = q_new.command_lin; //esto debe recibirlo el nodo final del desplazamiento normal, que en este caso es q_near
-	q_near->command_ang = q_new.command_ang;
-	q_new.command_lin = 0;
-	q_new.command_ang = 0;
-	
-	q_new.parent = q_near;
-	RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
-	q_near->children.push_back(new_node);
-	tree2.push_back(new_node);
-	
-// 	RRTNode *new_node = new RRTNode(q_new); 
-// 	new_node->children.push_back(q_near);
-// 	q_near->parent = new_node;  //es este el que hay k pasar??
+      
+//     //esto tambien depende, si es direct o no
+//     if(got_connected){
+//       std::cout << "Llego a la conexion " <<std::endl;
+//       if(direct){
+// 	std::cout << "Llego hasta aqui 1 " << q_closest->st.state[0] <<std::endl;
+// // 	q_final_1->st = q_closest->st;
+// 	RRTNode prueba = *q_closest;
+// 	std::cout << "Llego hasta aqui 1" <<std::endl;
+// // 	*q_final_1 = *q_closest;
+// 	q_final_1 = &prueba;
+// // 	q_final_1 = new RRTNode(q_closest);
+// // 	q_final_1->st = q_new.st;
+// 	std::cout << "Llego hasta aqui 1" <<std::endl;
+// 	q_near->children.push_back(q_final_1); //considero q_closest casi igual a q_new
+// 	q_final_1->parent = q_near; 
+// 	q_final_1->command_lin = q_new.command_lin; 
+// 	q_final_1->command_ang = q_new.command_ang; //no hay que añadirlo al tree pork es igual a q_closest que si esta añadido
+// 	q_final_2 = q_closest;
+// 	std::cout << "Llego al final" <<std::endl;
+//       }
+//       else{
+// 	std::cout << "Llego hasta aqui 2 " << q_closest->st.state[0] << std::endl;
+// // 	q_final_2->st = q_closest->st;
+// 	RRTNode prueba = *q_closest;
+// 	std::cout << "Llego hasta aqui 2" <<std::endl;
+// 	q_final_2 = &prueba;
+// // 	*q_final_2 = *q_closest;
+// // 	q_final_2->st = q_new.st;
+// 	std::cout << "Llego hasta aqui 2" <<std::endl;
+// 	q_near->children.push_back(q_final_2); //considero q_closest casi igual a q_new
+// 	q_final_2->parent = q_near; 
+// 	q_near->command_lin = q_new.command_lin; 
+// 	q_near->command_ang = q_new.command_ang;
+// 	q_final_1 = q_closest;
+// 	std::cout << "Llego al final" <<std::endl;
+// 	
+// // 	q_closest->children.push_back(q_near); //considero q_closest casi igual a q_new
+// // 	q_near->parent = q_closest; 
+// // 	q_near->command_lin = q_new.command_lin; 
+// // 	q_near->command_ang = q_new.command_ang;
+//       }      
+//     }
+//     else{
+//       if(direct){
+// 	q_new.parent = q_near;
+// 	RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
+// 	q_near->children.push_back(new_node);
+// 	tree1.push_back(new_node);
+//       }
+//       else{
+// // 	std::cout << "hay un nodo indirecto " <<std::endl;
+// // 	q_near->parent = &q_new;
+// 	q_near->command_lin = q_new.command_lin; //esto debe recibirlo el nodo final del desplazamiento normal, que en este caso es q_near
+// 	q_near->command_ang = q_new.command_ang;
+// 	q_new.command_lin = 0;
+// 	q_new.command_ang = 0;
+// 	
+// 	q_new.parent = q_near;
+// 	RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
+// 	q_near->children.push_back(new_node);
 // 	tree2.push_back(new_node);
-      }
-    }
+// 	
+// // 	RRTNode *new_node = new RRTNode(q_new); 
+// // 	new_node->children.push_back(q_near);
+// // 	q_near->parent = new_node;  //es este el que hay k pasar??
+// // 	tree2.push_back(new_node);
+//       }
+//     }
   }
 }
 
@@ -428,18 +599,27 @@ RRTNode* biRRT::areConnected(NodeState st, bool direct) {
 
 std::list<RRTNode> biRRT::getPath(){
   //get path from finished graph
+//   std::cout << "Entra en getpath " <<std::endl;
+  std::cout << "Nodos en arbol de start: " << tree1.size() << std::endl;
+  std::cout << "Nodos en arbol de goal: " << tree2.size() << std::endl;
   std::list<RRTNode> path;
   RRTNode* current_node = q_final_1;
+//   std::cout << "hasta aqui 1 " <<std::endl;
   path.push_front(*current_node); //incluyo q_final_1 pork sera el que tenga datos de los comandos. q_final_2 no tiene, solo sirve para enlazar con hijo 'real'
+//   std::cout << "hasta aqui 2 " <<std::endl;
   while (current_node->parent != NULL) {  
     current_node = current_node->parent;
     path.push_front(*current_node);
   }
+//   std::cout << "hasta aqui 3 " <<std::endl;
   current_node = q_final_2;
+  path.push_front(*current_node);
+//   std::cout << "hasta aqui 4 " <<std::endl;
   while (current_node->parent != NULL) {  
     current_node = current_node->parent;
     path.push_back(*current_node);
   }
+//   std::cout << "sale de getpath " <<std::endl;
   return path;
 }
 

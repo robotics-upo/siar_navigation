@@ -290,9 +290,11 @@ double CommandEvaluator::evaluateTrajectory(const geometry_msgs::Twist& v_ini, c
   
   setParams(alt_map);
 
-  double lv = v_ini.linear.x;
-  double av = v_ini.angular.z;
-  
+//   double lv = v_ini.linear.x;
+//   double av = v_ini.angular.z;
+  double lv = v_command.linear.x; //de momento uso esto, ya que la v_ini que se tomaba no tenia mucha logica en el calculo de computeNewVelocity
+  double av = v_command.angular.z;
+//   
 //   if (pub) {
 //     ROS_INFO("Evaluate trajectory: dt = %f \tsteps=%d \tv_ini_x = %f\t th_dot_ini = %f", m_delta_T, steps, lv, av);
 //     ROS_INFO("v_command_x = %f\t th_dot_command = %f", v_command.linear.x, v_command.angular.z);
@@ -304,9 +306,9 @@ double CommandEvaluator::evaluateTrajectory(const geometry_msgs::Twist& v_ini, c
   initializeFootprint(alt_map);
 
   bool collision = false;
-  for(int i = 0; i <= steps && !collision; i++)
+  for(int i = 0; i < steps && !collision; i++)
   {
-    computeNewVelocity(lv, av, std::abs(dt), v_command);
+//     computeNewVelocity(lv, av, std::abs(dt), v_command);
     
     // Integrate the model
     double lin_dist = lv * dt;
@@ -315,10 +317,13 @@ double CommandEvaluator::evaluateTrajectory(const geometry_msgs::Twist& v_ini, c
       th = th + (av * dt);
       x = x + lin_dist*cos(th); // Euler 1
       y = y + lin_dist*sin(th);
+//       th = th + (av * dt);
     }
     else{
+//       th = th + (av * dt);
       x = x + lin_dist*cos(th); // Euler 1
       y = y + lin_dist*sin(th);
+//       y = y + lin_dist*sin(std::abs(th));
       th = th + (av * dt); //actualizo th despues
     }
      
@@ -440,13 +445,15 @@ double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v
 //   int steps = m_T / m_delta_T; 
   int steps = std::abs(m_T / m_delta_T);  //valor absoluto para evaluar tambien delta negativo
 
-  double lv = v_ini.linear.x;
-  double av = v_ini.angular.z;
+//   double lv = v_ini.linear.x;
+//   double av = v_ini.angular.z;
+  double lv = v_command.linear.x; //de momento uso esto, ya que la v_ini que se tomaba no tenia mucha logica en el calculo de computeNewVelocity
+  double av = v_command.angular.z;
   
   setParams(alt_map);
   
 //   if (pub) {
-     ROS_INFO("Evaluate trajectory: dt = %f \tsteps=%d \tv_ini_x = %f\t th_dot_ini = %f", m_delta_T, steps, lv, av);
+//      ROS_INFO("Evaluate trajectory: dt = %f \tsteps=%d \tv_ini_x = %f\t th_dot_ini = %f", m_delta_T, steps, lv, av);
 //     ROS_INFO("v_command_x = %f\t th_dot_command = %f", v_command.linear.x, v_command.angular.z);
 //     ROS_INFO("v_max = %f\t a_max = %f", m_model.v_max, m_model.a_max);
 //   }
@@ -458,7 +465,7 @@ double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v
   bool collision = false;
   for(int i = 0; i <= steps && !collision; i++)
   {
-    computeNewVelocity(lv, av, dt, v_command);
+//     computeNewVelocity(lv, av, dt, v_command);
     
     // Integrate the model
     double lin_dist = lv * dt;
@@ -474,6 +481,7 @@ double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v
     else{
       x = x + lin_dist*cos(th); // Euler 1
       y = y + lin_dist*sin(th);
+//       y = y + lin_dist*sin(std::abs(th));
       th = th + (av * dt); //actualizo th despues
     }
     
