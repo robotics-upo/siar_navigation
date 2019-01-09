@@ -194,7 +194,7 @@ void SiarController::getParameters(ros::NodeHandle& pn)
   pn.getParam("min_wheel_right", min_wheel_right);
   
   markers.markers.reserve(_conf.n_lin * (_conf.n_ang + 1) * 2 + 20);
-  ang_vel_inc = model.a_max * _conf.delta_T / (float)_conf.n_ang;
+  ang_vel_inc = model.a_max * _conf.delta_T / (float)_conf.n_ang;  // dynamic constrains
   lin_vel_dec = model.a_max_theta * _conf.delta_T/ (float)_conf.n_lin;
   
   initializeDiscreteTestSet();
@@ -320,9 +320,10 @@ void SiarController::loop() {
       // Fully autonomous mode TODO: Check it!!
       cmd_vel_msg = planned_cmd;
     }
-    if (!occ_received) {
+    else if (!occ_received) {
       ROS_INFO("SiarController --> Warning: no altitude map");
-    } else if (!computeCmdVel(cmd_vel_msg, last_command)) {
+    } 
+    else if (!computeCmdVel(cmd_vel_msg, last_command)) {
       if (fabs(user_command.linear.x) >= lin_vel_dec) {
         // The USER wants to go
         t_unfeasible +=_conf.T;
@@ -331,21 +332,18 @@ void SiarController::loop() {
         // Stop the robot 
         cmd_vel_msg.angular.z = 0.0;
         cmd_vel_msg.linear.x = 0.0;
-      } else {
+	} 
+	else {
         cmd_vel_msg.angular.z = 0.0;
         cmd_vel_msg.linear.x = 0.0;
         t_unfeasible = 0.0;
-      } 
-    } else {
+	} 
+    } 
+    else {
       t_unfeasible = 0.0; // A valid command has been generated --> restart the time counter
-      if (operation_mode != 1) {
-        //cmd_vel_msg.angular.z *= 0.4;
-        //cmd_vel_msg.linear.x *= 0.4;
-      } else {
-        double mult = fabs(user_command.linear.x / model.v_max);
-	cmd_vel_msg.angular.z *= mult;
-	cmd_vel_msg.linear.x *= mult;
-      }
+      double mult = fabs(user_command.linear.x / model.v_max);
+      cmd_vel_msg.angular.z *= -mult * 2;
+      cmd_vel_msg.linear.x *= mult;
     }
   } 
   
