@@ -71,6 +71,7 @@ protected:
   double delta_t, cellsize_m, cellsize_rad;
   double wheel_decrease, last_wheel;
   double max_x, max_y, max_yaw, min_x, min_y, min_yaw; //de que tipo serian?
+  double x_g, y_g, x_0, y_0;
   
   
   SiarModel m;
@@ -128,10 +129,6 @@ biRRT::biRRT(ros::NodeHandle &nh, ros::NodeHandle &pnh):m(nh, pnh), gen(rd()), d
     max_y = 1;
   }
   
-  if (!pnh.getParam("max_yaw", max_yaw)) {
-    max_yaw = 1;
-  }
-  
   if (!pnh.getParam("min_x", min_x)) { //ver estos valores
     min_x = 0;
   }
@@ -143,6 +140,31 @@ biRRT::biRRT(ros::NodeHandle &nh, ros::NodeHandle &pnh):m(nh, pnh), gen(rd()), d
   if (!pnh.getParam("min_yaw", min_yaw)) {
     min_yaw = 0;
   }
+  
+  if (!pnh.getParam("max_yaw", max_yaw)) {
+    max_yaw = 1;
+  }
+  
+//   pnh.param("x0", x_0, 0.0);
+//   pnh.param("y0", y_0, 0.0); 
+//   pnh.param("x_g", x_g, 0.0);
+//   pnh.param("y_g", y_g, 0.0);
+//   if (x_0 > x_g) {
+//     max_x = 1;
+//     min_x = 0;
+//   }
+//   else {
+//     max_x = 1;
+//     min_x = 0;
+//   }
+//   if (y_0 > y_g) {
+//     max_y = 1;
+//     min_y = 0;
+//   }
+//   else {
+//     max_y = 1;
+//     min_y = 0;
+//   }
   
   if (!pnh.getParam("samp_goal_rate", samp_goal_rate)) {
     samp_goal_rate = 10;
@@ -174,6 +196,7 @@ void biRRT::clear()
 {
   tree1.clear();
   tree2.clear();
+  //path.clear(); //crearlo como variable de la clase??
   q_final_1 = NULL;
   q_final_2 = NULL;
   got_connected = false;
@@ -183,16 +206,12 @@ void biRRT::clear()
 double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
 {
   
-<<<<<<< HEAD
+
 //   tree1.clear(); // Incremental algorithm --> the graph is generated in each calculation
 //   tree2.clear();
   clear();
   //path.clear(); //crearlo como variable de la clase??
-=======
-  tree1.clear(); // Incremental algorithm --> the graph is generated in each calculation
-  tree2.clear();
-  path.clear(); //crearlo como variable de la clase??
->>>>>>> 793a09da564e8c7c3c87d6943000c32515cf0318
+
   
   if (!m.isInit()) {
     ROS_ERROR("biRRT::resolve --> The model has not been initialized --> could not calculate a path");

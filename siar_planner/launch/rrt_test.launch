@@ -3,17 +3,13 @@
 <!--         <master auto="true"/> -->
 <!--         <param name="/use_sim_time" value="true" /> -->
   <arg name="debug" default="false"/>
-<<<<<<< HEAD
-  <arg name="config" default="rrt_params_23.yaml"/>
-  <arg name="map" default="test_map_fork.yaml"/>
-  <arg name="problem" default="problem_7.yaml"/>
+
+  <arg name="config" default="rrt_params_1.yaml"/>
+  <arg name="map" default="test_map_5.yaml"/>
+  <arg name="problem" default="problem_3.yaml"/>
   <arg name="velocity_file" default=""/>  <!--sin velocidaes, tomare random commands -->
   <!--<arg name="output_file" default="$(find siar_planner)/output_files/rrt_params_1.txt"/>-->
-=======
-  <arg name="config" default="rrt_test_params.yaml"/>
-  <arg name="map" default="test_map_1.yaml"/>
-  <arg name="problem" default="problem_1.yaml"/>
->>>>>>> 793a09da564e8c7c3c87d6943000c32515cf0318
+
         
   <!--Start the map server for the path planner-->
   <node name="map_server" pkg="map_server" type="map_server" args="$(find siar_planner)/test/$(arg map)" output="screen"/>
@@ -22,22 +18,20 @@
     <remap from="/altitude_map" to="/map"/>
     <rosparam file="$(find siar_planner)/test/$(arg config)" command="load"  /> 
     <rosparam file="$(find siar_planner)/test/$(arg problem)" command="load"  /> 
-<<<<<<< HEAD
+
     <param name="velocity_file" value="$(find siar_planner)/test/$(arg velocity_file)" />
-    <param name="output_file" type="string" value="$(find siar_planner)/output_files/rrt_params_46.txt" />
-=======
->>>>>>> 793a09da564e8c7c3c87d6943000c32515cf0318
+    <param name="output_file" type="string" value="$(find siar_planner)/output_files/rrt_params_.txt" />
+
   </node>
   
   <node name="rrt_test" pkg="siar_planner" type="rrt_test" output="screen" if="$(arg debug)" launch-prefix="xterm -e gdb --args">
     <remap from="/altitude_map" to="/map"/>
     <rosparam file="$(find siar_planner)/test/$(arg config)" command="load"  /> 
     <rosparam file="$(find siar_planner)/test/$(arg problem)" command="load"  /> 
-<<<<<<< HEAD
+
     <param name="velocity_file" value="$(find siar_planner)/test/$(arg velocity_file)" />
-    <param name="output_file" type="string" value="$(find siar_planner)/output_files/rrt_params_46.txt" />
-=======
->>>>>>> 793a09da564e8c7c3c87d6943000c32515cf0318
+    <param name="output_file" type="string" value="$(find siar_planner)/output_files/rrt_params_.txt" />
+
   </node>
   
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find siar_planner)/test/test.rviz"/>
