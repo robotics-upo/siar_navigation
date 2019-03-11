@@ -1,17 +1,26 @@
 #include "siar_planner/rrt.hpp"
 #include "siar_planner/biRRT.hpp"
 #include "ros/ros.h"
+// #include <functions/functions.h>
+#include <iostream>
+#include <sstream>
+// #include <iomanip>
+#include <string.h>
 
 using functions::RealVector;
+// using namespace std;
 
 int main(int argc, char** argv){
   
   ros::init(argc, argv, "test_planner");
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
+
+  std::ofstream ofs;
+  std::string output_file;
   
-//   RRT a(nh, pnh);
-  biRRT a(nh, pnh);
+  RRT a(nh, pnh);
+//   biRRT a(nh, pnh);
   
   ROS_INFO("Waiting for map initialization");
   while (!a.getModel().isInit() && ros::ok()){ 
@@ -30,6 +39,9 @@ int main(int argc, char** argv){
   pnh.param("x_g", x_g, 0.0);
   pnh.param("y_g", y_g, 0.0);
   pnh.param("a_g", a_g, 0.0);
+  
+  pnh.param("output_file", output_file, std::string ("~/test.txt"));
+//   pnh.param("output_file", output_file);
   
   ROS_INFO("START: (%f, %f, %f)\t\tGOAL: (%f, %f, %f)", x_0, y_0, a_0, x_g, y_g, a_g);
   
@@ -57,6 +69,7 @@ int main(int argc, char** argv){
   ROS_INFO("Calling to resolve");
   ros::Time t = ros::Time::now();
   double cost = a.resolve(init, goal, path);
+//   double cost = a.resolve_expand1(init, goal, path);
   std::cout << "sale del resolve" << std::endl;
   ros::Time t1 = ros::Time::now();
   if (cost > 0.0){ 
@@ -78,6 +91,30 @@ int main(int argc, char** argv){
   
   graph_pub.publish(a.getGraphMarker());
   
+  ofs.open(output_file.c_str(), std::ofstream::app);
+//   std::cout << "Guardado en archivo de salida: " << output_file << std::endl;
+//   if (ofs.is_open()) {
+//     std::cout << "Guardado en archivo de salida: " << output_file << std::endl;
+//     ofs << "Tiempo de ejecucion: " << (t1 - t).toSec() << std::endl 
+//     << "Nodos en árbol de start: " << a.tree1.size() << std::endl 
+//     << "Nodos en árbol de goal: " << a.tree2.size() << std::endl
+//     << "Nodos totales: " << a.tree1.size() + a.tree2.size() << std::endl
+//     << "Nodos en path: " << path.size() << std::endl << std::endl;
+// //     std::cout << "escribe texto" << std::endl;
+//   } 
+  if (ofs.is_open()) {
+    std::cout << "Guardado en archivo de salida: " << output_file << std::endl;
+    ofs << (t1 - t).toSec() << ","  
+//     << a.tree1.size() << ","
+//     << a.tree2.size() << ","
+//     << a.tree1.size() + a.tree2.size() << ","
+    << path.size() << std::endl;
+//     std::cout << "escribe texto" << std::endl;
+  } 
+  else {
+    std::cout << "No se puede abrir el archivo de salida" << std::endl;
+  }
+  ofs.close();
   
   
   ros::spin();

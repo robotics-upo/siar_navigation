@@ -11,7 +11,7 @@
   <arg name="camera_6" default="/asusXtion_backLeft"/>
   <arg name="tilt_compensate" default="false"/>
   <arg name="consider_sign" default="true"/>
-  <arg name="exp_decay" default="0.15"/>
+  <arg name="exp_decay" default="19"/>
   
   <arg name="range_min" default="0.35"/>
   <arg name="range_max" default="5.0"/>

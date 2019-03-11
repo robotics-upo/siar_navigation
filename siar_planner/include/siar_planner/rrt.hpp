@@ -274,17 +274,17 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
   for (int i = 0; i < K; i++) {
     NodeState st = q_near->st;
     geometry_msgs::Twist command = m.generateRandomCommand();
-    std::cout << "El comando es " << command <<std::endl;
+//     std::cout << "El comando es " << command <<std::endl;
     double cost = m.integrate(st, command, delta_t, relaxation_mode >= 1); // If relaxation_mode >= 1 --> allow two wheels
     
     if (cost < 0.0) {
-      std::cout << "Colision " <<std::endl;
+//       std::cout << "Colision " <<std::endl;
       // Collision
       // Update??
 //       ROS_INFO("Detected collision. State: %s.\t Command: %f, %f", st.state.toString().c_str(), command.linear.x, command.angular.z);
     } 
     else {
-      std::cout << "Se encuentra nodo sin colision " <<std::endl;
+//       std::cout << "Se encuentra nodo sin colision " <<std::endl;
       // get node with minimum distance
       is_new_node = true;
       new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
