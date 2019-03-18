@@ -207,10 +207,8 @@ void SiarController::getParameters(ros::NodeHandle& pn)
   pn.getParam("n_interpols", n_interpols);
   file_test_set_init = false;
   // Adjust the velocity and other date according to v_mult
-  pn.param("v_mult", _conf.v_mult, 1.0);
-  initializeTestSetFromFile(velocityset_filename, n_interpols, _conf.v_mult);
-  _conf.delta_T /= _conf.v_mult;
-  _conf.T_hor /= _conf.v_mult;
+  pn.param("ang_mult", _conf.v_mult, 1.0);
+  initializeTestSetFromFile(velocityset_filename, n_interpols, 1.0);
   
   cmd_eval = new CommandEvaluator(_conf.w_dist, _conf.w_safe, _conf.T_hor, model, _conf.delta_T, p); // TODO: insert the footprint related data (now only default values)
   
@@ -342,7 +340,7 @@ void SiarController::loop() {
     else {
       t_unfeasible = 0.0; // A valid command has been generated --> restart the time counter
       double mult = fabs(user_command.linear.x / model.v_max);
-      cmd_vel_msg.angular.z *= -mult * 2;
+      cmd_vel_msg.angular.z *= -mult * _conf.v_mult;
       cmd_vel_msg.linear.x *= mult;
     }
   } 

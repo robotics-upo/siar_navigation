@@ -1,4 +1,4 @@
-               #ifndef _ASTAR_HPP_
+#ifndef _ASTAR_HPP_
 #define _ASTAR_HPP_
 
 #include <unordered_map>
