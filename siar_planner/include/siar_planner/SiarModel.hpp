@@ -20,14 +20,20 @@ public:
   //! @brief Integrates the model and returns the cost associated with 
   //! @return Negative --> collision. Positive --> Arc's longitude
   double integrate(NodeState &st, geometry_msgs::Twist &cmd, double T, bool relaxed = false);
+  double integrateTransition(NodeState &st, geometry_msgs::Twist &cmd, double T, bool relaxed = false);
   
   //! @brief Integrates the model and returns the cost associated with 
   //! @return Negative --> collision. Positive --> Arc's longitude
   double integrate(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T, bool relaxed);
+  double integrateTransition(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T, bool relaxed);
   
   virtual geometry_msgs::Twist generateRandomCommand();
   
   inline bool isInit() const {return map_init;}
+
+  // inline double costWheelsQnew() const {return cost_wheels;}
+  double costWheelsQnear(double x, double y, double th);
+
   
   inline std::string getFrameID() const {
     if (map_init) {
@@ -74,6 +80,7 @@ public:
 protected:
   nav_msgs::OccupancyGrid m_world;
   siar_controller::CommandEvaluator m_ce;
+  double cost_wheels, cost_wheels_q_near;
   
   bool map_init;
   
@@ -134,6 +141,57 @@ double SiarModel::integrate(visualization_msgs::Marker& m, NodeState& st, geomet
   
   return ret_val;
 }
+
+double SiarModel::integrateTransition(NodeState& st, geometry_msgs::Twist& cmd, double T, bool relaxed)
+{
+  return integrate(m, st, cmd, T, relaxed);
+}
+
+double SiarModel::integrateTransition(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T, bool relaxed)
+{
+  geometry_msgs::Twist v_ini;
+  v_ini.linear.x = m_ce.getCharacteristics().v_max;
+  
+  if (st.state.size() < 3) {
+    ROS_ERROR("SiarModel::integrate --> cannot integrate the model --> too few states. State size: %u", (unsigned int) st.state.size());
+  }
+  
+  m_ce.setDeltaT(T);
+  double ret_val;
+  ret_val = m_ce.evaluateTrajectoryTransition(v_ini, cmd, cmd, m_world, m, st.state[0], st.state[1], st.state[2]); 
+  st.state = m_ce.getLastState();
+  cost_wheels = m_ce.getCostWheelsQnew();
+  
+  return ret_val;
+}
+
+double SiarModel::costWheelsQnear(double x, double y, double th){
+
+  bool collision = false;
+  bool collision_wheels=false;
+
+  double cost_wheels_q_near = m_ce.applyFootprintTransition(x,  y, th, m_world, collision, collision_wheels); 
+
+  return cost_wheels_q_near;
+}
+
+// double SiarModel::integrate(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T, bool relaxed)
+// {
+//   geometry_msgs::Twist v_ini;
+//   double ret_val;
+
+//   if (st.state.size() < 3) {
+//     ROS_ERROR("SiarModel::integrate --> cannot integrate the model --> too few states. State size: %u", (unsigned int) st.state.size());
+//   }
+
+//   v_ini.linear.x = m_ce.getCharacteristics().v_max;
+//   m_ce.setDeltaT(T);
+//   ret_val = m_ce.evaluateTrajectoryTransition(v_ini, cmd, cmd, m_world, m, st.state[0], st.state[1], st.state[2]);
+//   st.state = m_ce.getLastState();
+    
+//   return ret_val;
+// }
+
 
 geometry_msgs::Twist SiarModel::generateRandomCommand() {
   
