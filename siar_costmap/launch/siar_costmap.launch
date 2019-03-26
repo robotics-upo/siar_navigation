@@ -53,10 +53,10 @@
     <remap from="cloud" to="$(arg camera_3)/point_cloud"/>                                                   # Topic name for output point cloud
     <param name="range_min" value = "$(arg range_min)"/>                                                                     # Min range in meters for point cloud generation
     <param name="range_max" value = "$(arg range_max)"/>                                                                     # Max range in meters for point cloud generation
-    <param name="roi_x" value="$(arg roi_x)"/>
-    <param name="roi_y" value="$(arg roi_y)"/>
-    <param name="roi_w" value="$(arg roi_w)"/>
-    <param name="roi_h" value="$(arg roi_h)"/>
+    <param name="roi_x" value="50"/>
+    <param name="roi_y" value="20"/>
+    <param name="roi_w" value="220"/>
+    <param name="roi_h" value="200"/>
     <param name="down_sampling" value = "2"/>                                                           # Camera down sampling factor. Values: 1, 2 or 4. The bigger the faster.
   </node>
   <node pkg="depth2cloud" type="depth2cloud_node" name="depth2cloud_back_right" output="screen" >
