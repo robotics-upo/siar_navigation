@@ -67,6 +67,30 @@ Visualization Manager:
         rrt: true
       Queue Size: 100
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /goal_marker
+      Name: Marker
+      Namespaces:
+        footprint: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /init_marker
+      Name: Marker
+      Namespaces:
+        footprint: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /path_marker
+      Name: MarkerArray
+      Namespaces:
+        footprint: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -107,10 +131,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.49539733
+      Pitch: 1.20979667
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.16039765
+      Yaw: 3.11539984
     Saved: ~
 Window Geometry:
   Displays:

@@ -49,11 +49,12 @@ protected:
   NodeState getRandomState(double max_x, double max_y, double max_yaw, double min_x, double min_y, double min_yaw);
   RRTNode *getNearestNode(NodeState q_rand, bool primary_tree);
   RRTNode *getNearestNode1(NodeState q_rand);
-  void expandNode(const NodeState& q_rand, RRTNode* q_near, int relaxation_mode = 0, bool direct = true);
+  void expandNode1(const NodeState& q_rand, RRTNode* q_near, int relaxation_mode = 0, bool direct = true);
+  void expandNode2(const NodeState& q_rand, RRTNode* q_near, int relaxation_mode = 0, bool direct = true);
   std::list<RRTNode> getPath();
   void expandNearestNodes();
-  bool transitionTest (NodeState q_near, NodeState q_new, NodeState q_rand);
   bool transitionTest1 (NodeState q_near, NodeState q_new, NodeState q_rand);
+  bool transitionTest2 (NodeState q_near, NodeState q_new, NodeState q_rand);
   void calculateCost(NodeState q_near, NodeState q_new, NodeState q_rand,double &cost_Qnear,double &cost_Qnew);
   double K_normal = 1000000; //(cost_initial - cost_goal)/2
   double Temp = 1*exp (-6); //* exp(-3);
@@ -190,13 +191,13 @@ double tbiRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path
         ROS_INFO("q_rand es X = %f, Y = %f , th = %f", q_rand.state[0],q_rand.state[1],q_rand.state[2]);  
 	      RRTNode *q_near = getNearestNode(q_rand, true);  //This function only allow to select the q_near for one of the two tree with the BOOL value (this case tree from start)
         ROS_INFO("q_near es X = %f, Y = %f , th = %f", q_near->st.state[0],q_near->st.state[1],q_near->st.state[2]); 
-        expandNode(q_rand, q_near, relax, true);         //The BOOL value allow to change de simbol (+ o -) of m_delta_T to change the direction of the velocity in the evaluateTrajectory (here +)
+        expandNode1(q_rand, q_near, relax, true);         //The BOOL value allow to change de simbol (+ o -) of m_delta_T to change the direction of the velocity in the evaluateTrajectory (here +)
 	      if(!got_connected){                              //got_cnected is TRU if the to tree connected
 	        q_near = getNearestNode(q_rand, false);        //This function only allow to select the q_near for one of the two tree with the BOOL value (this case tree from goal)
-          ROS_INFO("ARBOL 1");
+          ROS_INFO("ARBOL 2");
           ROS_INFO("q_rand es X = %f, Y = %f , th = %f", q_rand.state[0],q_rand.state[1],q_rand.state[2]); 
           ROS_INFO("q_near es X = %f, Y = %f , th = %f", q_near->st.state[0],q_near->st.state[1],q_near->st.state[2]); 
-          expandNode(q_rand, q_near, relax, false);      //The BOOL value allow to change de simbol (+ o -) of m_delta_T to change the direction of the velocity in the evaluateTrajectory (here -)
+          expandNode2(q_rand, q_near, relax, false);      //The BOOL value allow to change de simbol (+ o -) of m_delta_T to change the direction of the velocity in the evaluateTrajectory (here -)
 
         }
       }
@@ -218,9 +219,9 @@ double tbiRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path
          ROS_INFO("El nodo n_1 es X = %f, Y = %f , th = %f", q_closest1->st.state[0],q_closest1->st.state[1],q_closest1->st.state[2]);  
          ROS_INFO("El nodo n_2 es X = %f, Y = %f , th = %f", q_closest2->st.state[0],q_closest2->st.state[1],q_closest2->st.state[2]);  
         //aqui llamo a expandNode
-        expandNode(q_closest2->st, q_closest1, relax, true); //expansion de q_closest1 que pertenece a tree1 hacia tree2
+        expandNode1(q_closest2->st, q_closest1, relax, true); //expansion de q_closest1 que pertenece a tree1 hacia tree2
         if(!got_connected){
-          expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1
+          expandNode2(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1
         }
       }     
       cont++;
@@ -239,73 +240,6 @@ double tbiRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path
   }
   std::cout << "Numero de nodos totales: " << tree1.size()+tree2.size() <<std::endl;
   std::cout << "Numero de nodos en path: " << path.size() <<std::endl;
-  return ret_val; 
-}
-
-
-double tbiRRT::resolve_expand1(NodeState start, NodeState goal, std::list<RRTNode>& path)
-{ 
-  clear();
-
-  if (!m.isInit()) {
-    ROS_ERROR("biRRT::resolve --> The model has not been initialized --> could not calculate a path");
-    return -1.0;
-  }
-  start_node.st = start;
-  tree1.push_back(new RRTNode(start_node)); 
-  goal_node.st = goal;
-  tree2.push_back(new RRTNode(goal_node));
-  
-  double ret_val = -1.0; 
-  int relax = 0;
-  
-  while (relax < n_rounds && !got_connected){
-    int cont = 0; 
-    while (cont < n_iter && !got_connected) { // n_iter Max. number of nodes to expand for each round
-      NodeState q_rand;
-      if (!(cont%samp_goal_rate == 0)){
-	      q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
-    	  RRTNode *q_near = getNearestNode1(q_rand);  
-        expandNode(q_rand, q_near, relax, tree_num);
-      }
-      else{
-        // 	expandNearestNodes();
-        double dist = std::numeric_limits<double>::infinity();
-        RRTNode *q_closest1 = NULL;  
-        RRTNode *q_closest2 = NULL;
-        double new_dist;
-        for (auto n1: tree1){ 
-          for (auto n2: tree2){
-            new_dist = sqrt(pow(n1->st.state[0] - n2->st.state[0],2) + pow(n1->st.state[1] - n2->st.state[1],2)); 
-            if (new_dist < dist){
-              q_closest1 = n1; 
-              q_closest2 = n2; 
-              dist = new_dist;  
-            }
-          }
-        }
-        expandNode(q_closest2->st, q_closest1, relax, true); //expansion de q_closest1 que pertenece a tree1 hacia tree2
-        if(!got_connected){
-          expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1
-        }
-      }     
-      cont++;
-    }
-    if(got_connected){ 
-      //if got solution, may return path
-      path = getPath(); 
-      ret_val = 1;
-      ROS_INFO("Iteration %d. Solution found", relax);
-    }
-    else{ 
-      //if didnt get a solution, do relaxation
-      m.decreaseWheels(wheel_decrease, last_wheel);
-      relax++;
-      std::cout << "Numero de nodos en grafo: tree1 : " << tree1.size() << "  tree2: " <<tree2.size() <<std::endl;
-      ROS_ERROR("biRRT::resolve -->  could not find a path -->  trying relaxation");    
-    }
-  }
-  std::cout << "Numero de nodos en grafo: " << tree1.size()+tree2.size() <<std::endl;
   return ret_val; 
 }
 
@@ -368,65 +302,51 @@ RRTNode* tbiRRT::getNearestNode1(NodeState q_rand) {
   return q_near;
 }
 
-void tbiRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mode, bool direct){
+  void tbiRRT::expandNode1(const NodeState &q_rand, RRTNode *q_near, int relaxation_mode, bool direct){
   RRTNode q_new;
   double dist = std::numeric_limits<double>::infinity(); 
   double new_dist;
   bool is_new_node = false;
-
-  bool ret_transition = false; 
+  bool ret_transition1 = false; 
   
   //from q_near apply random conmands   
+  
   for (int i = 0; i < K; i++) {
-    ROS_ERROR("Evaluando Iteracion: %i / %i para diferentes velocidades", i+1 , K);
     NodeState st = q_near->st;
     geometry_msgs::Twist command = m.generateRandomCommand();
     //     std::cout << "El comando es " << command <<std::endl;
-    double cost;
-    if (direct){
-      cost_wheels_Qnew = m.integrateTransition(st, command, delta_t, relaxation_mode >= 1); // If relaxation_mode >= 1 --> allow two wheels 
-      ret_transition = transitionTest (q_near->st, st, q_rand);
-      if (!ret_transition) {
-
+      ROS_INFO("En arbol 1 el q_near es X = %f, Y = %f , th = %f", q_near->st.state[0],q_near->st.state[1],q_near->st.state[2]); 
+      double cost = m.integrate(st, command, delta_t, relaxation_mode >= 1); // If relaxation_mode >= 1 --> allow two wheels
+      ROS_INFO("En arbol 1 el st, posible new nodo es X = %f, Y = %f , th = %f", st.state[0],st.state[1],st.state[2]);  
+      ret_transition1 = transitionTest1 (q_near->st, st, q_rand);
+      if (!ret_transition1) {
+        // 	std::cout << "Colision " <<std::endl;
       }
       else{
-      	is_new_node = true;
-	      new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
-	      if (new_dist<dist) {
-          q_new.st = st; 
-          q_new.command_lin = command.linear.x;
-          q_new.command_ang = command.angular.z;
-          dist = new_dist; 
-	      }
-      }
-    }
-    else{
-      cost_wheels_Qnew = m.integrateTransition(st, command, -(delta_t), relaxation_mode >= 1); // si direct es false, entonces le paso delta_t <0 a la integracion
-      ret_transition = transitionTest (q_near->st, st, q_rand);
-      if (!ret_transition) {
-      }
-      else{
+        // 	std::cout << "Se encuentra nodo sin colision " <<std::endl;
+	      // get node with minimum distance
 	      is_new_node = true;
 	      new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
         if (new_dist<dist) {
           q_new.st = st; 
-          q_near->command_lin = command.linear.x; //este dato se almacena en el hijo
-          q_near->command_ang = command.angular.z;
-          dist = new_dist;
+          q_new.command_lin = command.linear.x;
+          q_new.command_ang = command.angular.z;
+          dist = new_dist; 
         }
       }
-    }  
+      // ROS_INFO("En arbol 1 el st, new nodo es X = %f, Y = %f , th = %f", q_new.st.state[0],q_new.st.state[1],q_new.st.state[2]);  
   }
   //check if there is a new node and add it to the graph (unless its the goal)
   if (is_new_node){
     RRTNode *q_closest = areConnected(q_new.st, direct); //este q_closest solo lo uso si got_connected=true; si es direct, q_closest sera un hijo, si no, sera un padre
+    
     if(direct){
       q_new.parent = q_near;
       RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
       q_near->children.push_back(new_node);
       tree1.push_back(new_node);
       if(got_connected){
-      	q_final_1 = new_node;
+	      q_final_1 = new_node;
 	      q_final_2 = q_closest;
       }
     }     
@@ -447,43 +367,103 @@ void tbiRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation
       }      
     }
   }
-}                                                           
+}        
 
+void tbiRRT::expandNode2(const NodeState &q_rand, RRTNode *q_near, int relaxation_mode, bool direct){
+  RRTNode q_new;
+  double dist = std::numeric_limits<double>::infinity(); 
+  double new_dist;
+  bool is_new_node = false;
+  bool ret_transition2 = false; 
 
-bool tbiRRT::transitionTest (NodeState q_near, NodeState q_new, NodeState q_rand){ // Retorna un true o false diciendo si se acepta o no la configuracion
-
-  // ROS_ERROR ("We ARE inside of the TRANSITION");
-  double transition_probability;
   
+  for (int i = 0; i < K; i++) {
+    NodeState st = q_near->st;
+    geometry_msgs::Twist command = m.generateRandomCommand();
+    //     std::cout << "El comando es " << command <<std::endl;
+
+       ROS_INFO("En arbol 2 el q_near es X = %f, Y = %f , th = %f", q_near->st.state[0],q_near->st.state[1],q_near->st.state[2]); 
+      double cost = m.integrate(st, command, -(delta_t), relaxation_mode >= 1); // si direct es false, entonces le paso delta_t <0 a la integracion
+       ROS_INFO("En arbol 2 el st, posible new nodo es X = %f, Y = %f , th = %f", st.state[0],st.state[1],st.state[2]);  
+      ret_transition2 = transitionTest2 (q_near->st, st, q_rand);
+      if (!ret_transition2) {
+          // 	std::cout << "Colision " <<std::endl;
+      }
+      else{
+        // 	std::cout << "Se encuentra nodo sin colision " <<std::endl;
+        // get node with minimum distance
+        is_new_node = true;
+        new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
+        if (new_dist<dist) {
+          q_new.st = st; 
+          q_near->command_lin = command.linear.x; //este dato se almacena en el hijo
+          q_near->command_ang = command.angular.z;
+          dist = new_dist;
+        }
+      }
+      // ROS_INFO("En arbol 2 el st, new nodo es X = %f, Y = %f , th = %f", q_new.st.state[0],q_new.st.state[1],q_new.st.state[2]); 
+  }
+  //check if there is a new node and add it to the graph (unless its the goal)
+  if (is_new_node){
+    RRTNode *q_closest = areConnected(q_new.st, direct); //este q_closest solo lo uso si got_connected=true; si es direct, q_closest sera un hijo, si no, sera un padre
+    
+    if(direct){
+      q_new.parent = q_near;
+      RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
+      q_near->children.push_back(new_node);
+      tree1.push_back(new_node);
+      if(got_connected){
+	      q_final_1 = new_node;
+	      q_final_2 = q_closest;
+      }
+    }     
+    else{
+      // 	std::cout << "hay un nodo indirecto " <<std::endl;
+      q_near->command_lin = q_new.command_lin; //esto debe recibirlo el nodo final del desplazamiento normal, que en este caso es q_near
+      q_near->command_ang = q_new.command_ang;
+      q_new.command_lin = 0;
+      q_new.command_ang = 0;
+      
+      q_new.parent = q_near;
+      RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
+      q_near->children.push_back(new_node);
+      tree2.push_back(new_node);
+      if(got_connected){
+	      q_final_2 = new_node;
+	      q_final_1 = q_closest;
+      }      
+    }
+  }
+}                            
+
+
+bool tbiRRT::transitionTest1 (NodeState q_near, NodeState q_new, NodeState q_rand){ // Retorna un true o false diciendo si se acepta o no la configuracion
+
+  ROS_ERROR ("We ARE inside of the TRANSITION");
+  double transition_probability;
   std::uniform_real_distribution<> dis_2(0,1);
   double random_prob = dis_2(gen);
   double cost_max = 1000;
   calculateCost(q_near, q_new, q_rand, cost_Qnear, cost_Qnew);
-
   double dist_Qnear_Qnew = sqrt(pow(q_near.state[0] - q_new.state[0],2) + pow(q_near.state[1] - q_new.state[1],2));;
   double slope_cost = (cost_Qnew - cost_Qnear)/dist_Qnear_Qnew;
-
-
   if (slope_cost > 0){
     transition_probability = exp (-(slope_cost)/(K_normal * Temp)); 
   }
   else {
     transition_probability = 1;
-  }
-
-  
+  }  
   if (cost_Qnew > cost_max){
-    //  ROS_ERROR("Can't be apply the transitionTest --> The cost_Qnew of new_node exceeds the maximum cost");
+    ROS_ERROR("Can't be apply the transitionTest --> The cost_Qnew of new_node exceeds the maximum cost");
     return 0;
   } 
   if(cost_Qnew < cost_Qnear ){ 
-    //  ROS_ERROR("cost_Qnew < cost_Qnear, por lo tanto transition probability = 1, se acepta inmediatamente la configuracion");   
+    ROS_ERROR("cost_Qnew < cost_Qnear, por lo tanto transition probability = 1, se acepta inmediatamente la configuracion");   
     return 1;
   }
   if (random_prob < transition_probability){
     Temp = Temp/ alfa;
     nFail = 0;
-
     return 1;
   }
   else{
@@ -495,7 +475,48 @@ bool tbiRRT::transitionTest (NodeState q_near, NodeState q_new, NodeState q_rand
     {
       nFail = nFail+1 ; 
     }
+    return 0;
+  }
+}
 
+bool tbiRRT::transitionTest2 (NodeState q_near, NodeState q_new, NodeState q_rand){ // Retorna un true o false diciendo si se acepta o no la configuracion
+
+  ROS_ERROR ("We ARE inside of the TRANSITION");
+  double transition_probability;
+  std::uniform_real_distribution<> dis_2(0,1);
+  double random_prob = dis_2(gen);
+  double cost_max = 1000;
+  calculateCost(q_near, q_new, q_rand, cost_Qnear, cost_Qnew);
+  double dist_Qnear_Qnew = sqrt(pow(q_near.state[0] - q_new.state[0],2) + pow(q_near.state[1] - q_new.state[1],2));;
+  double slope_cost = (cost_Qnew - cost_Qnear)/dist_Qnear_Qnew;
+  if (slope_cost > 0){
+    transition_probability = exp (-(slope_cost)/(K_normal * Temp)); 
+  }
+  else {
+    transition_probability = 1;
+  }  
+  if (cost_Qnew > cost_max){
+    ROS_ERROR("Can't be apply the transitionTest --> The cost_Qnew of new_node exceeds the maximum cost");
+    return 0;
+  } 
+  if(cost_Qnew < cost_Qnear ){ 
+    ROS_ERROR("cost_Qnew < cost_Qnear, por lo tanto transition probability = 1, se acepta inmediatamente la configuracion");   
+    return 1;
+  }
+  if (random_prob < transition_probability){
+    Temp = Temp/ alfa;
+    nFail = 0;
+    return 1;
+  }
+  else{
+    if (nFail > nFailmax){  // Set in 0 and 20 respectively
+      Temp = Temp * 10 *alfa;
+      nFail = 0;  
+    }
+    else
+    {
+      nFail = nFail+1 ; 
+    }
     return 0;
   }
 }
@@ -540,6 +561,7 @@ RRTNode* tbiRRT::areConnected(NodeState st, bool direct) {
   ROS_INFO("El q_closest del arbol %d es X = %f, Y = %f , th = %f", !direct, q_closest->st.state[0],q_closest->st.state[1],q_closest->st.state[2]);  
   ROS_INFO("El q_new del arbol %d es X = %f, Y = %f , th = %f",direct , st.state[0],st.state[1],st.state[2]);  
   got_connected = (fabs(st.state[0] - q_closest->st.state[0]) < goal_gap_m) && (fabs(st.state[1]-q_closest->st.state[1]) < goal_gap_m) && (fabs(st.state[2] - q_closest->st.state[2]) < goal_gap_rad);
+  ROS_INFO("The value of GOT_CONNECTED is: %d",got_connected);
   return q_closest;	 //devuelvo nodo mas cercano del otro arbol   
 }
 
