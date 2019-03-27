@@ -16,14 +16,14 @@
 #endif
 
 namespace siar_controller {
-  
+
   struct RobotCharacteristics {
     double a_max;
     double v_max;
     double theta_dot_max;
     double a_max_theta;
     double v_min;
-    
+
     RobotCharacteristics () {
       a_max = 1.0;
       a_max_theta = 1.0;
@@ -31,9 +31,9 @@ namespace siar_controller {
       v_max = 0.5;
       v_min = 0.05;
     }
-    
+
     // Model parameters
-    RobotCharacteristics (ros::NodeHandle &pn) 
+    RobotCharacteristics (ros::NodeHandle &pn)
     {
       pn.param("a_max", a_max, 0.5);
       pn.param("a_max_theta", a_max_theta, 1.0);
@@ -42,13 +42,13 @@ namespace siar_controller {
       pn.param("v_min", v_min, 0.05);
     }
   };
-  
+
   class CommandEvaluator {
   public:
     CommandEvaluator(double w_dist, double w_safe, double T, const RobotCharacteristics &model, double delta_T = 0.1, SiarFootprint *footprint_p = NULL);
-    
+
     CommandEvaluator(ros::NodeHandle &pn);
-    
+
     inline void setWeightDistance(double w_d) {
       m_w_dist = w_d;
 
@@ -65,7 +65,7 @@ namespace siar_controller {
         delete footprint;
         footprint = NULL;
     }
-    
+
     inline void setWidthElec(double width, double new_elec) {
         double cellsize = footprint_params->m_cellsize;
         double length = footprint_params->m_length;
@@ -76,41 +76,41 @@ namespace siar_controller {
         delete footprint;
         footprint = NULL;
     }
- 
+
     inline void setWeightSafe(double w_s) {
       m_w_safe = w_s;
     }
-    
+
     inline void restoreWeights() {
       m_w_dist = orig_m_w_dist;
       m_w_safe = orig_m_w_safe;
     }
-    
+
     inline void setMinWheelLeft(double new_min_w_l) {
       min_wheel_left = new_min_w_l;
     }
-    
+
     inline void setMinWheelRight(double new_min_w_r) {
       min_wheel_right = new_min_w_r;
     }
-    
+
     inline double getMinWheelLeft() const {
       return min_wheel_left;
     }
-    
+
     inline double getMinWheelRight() const {
       return min_wheel_right;
     }
-    
+
     inline void setDeltaT(double new_delta_t) {
       m_delta_T = new_delta_t;
     }
-    
+
     //! @brief Sets the parameters into the evaluator
     //! @param footprint_p --> has the parameters for width, length and wheel_width
     //! @note The evaluator will delete the footprint_p
     void setParameters(double w_dist, double w_safe, double T, const RobotCharacteristics &model, double delta_T = 0.1, SiarFootprint *footprint_p = NULL);
-    
+
     //! @brief Simulates the trajectory during T and generates a cost according to the cost map
     //! @retval -1.0 --> Collision  . If not collision --> cost of the trajectory (related to risk and difference with respect the user command)
     //! @param v_ini Initial velocity of the vehicle
@@ -118,15 +118,15 @@ namespace siar_controller {
     //! @param operator_command User's commanded velocity (to evaluate the cost of the difference v_command and operator_command)
     //! @param alt_map Perceived altitude map of the environment
     //! @param m (out) Marker that can be used for representing the trajectory in RViz.
-    double evaluateTrajectory(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command, 
+    double evaluateTrajectory(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command,
                               const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map,
                               visualization_msgs::Marker &m, double x = 0.0, double y = 0.0, double th = 0.0);
-    
+
     //! @brief Same as EvaluateTrajectory, but when a collision is detected, it returns the minimum command without velocity that holds the same trajectory (same radius of curvature)
-    double evaluateTrajectoryMinVelocity(const geometry_msgs::Twist& v_ini, geometry_msgs::Twist& v_command, 
-                                         const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map, 
+    double evaluateTrajectoryMinVelocity(const geometry_msgs::Twist& v_ini, geometry_msgs::Twist& v_command,
+                                         const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map,
                                          visualization_msgs::Marker& m, double x = 0.0, double y = 0.0, double th = 0.0);
-    
+
     //! @brief Simulates the trajectory during T and generates a cost according to the cost map
     //! @retval -1.0 --> Collision  . If not collision --> cost of the trajectory (related to risk and difference with respect the user command)
     //! @param v_ini Initial velocity of the vehicle
@@ -134,28 +134,28 @@ namespace siar_controller {
     //! @param operator_command User's commanded velocity (to evaluate the cost of the difference v_command and operator_command)
     //! @param alt_map Perceived altitude map of the environment
     //! @param m (out) Marker that can be used for representing the trajectory in RViz.
-    double evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command, 
+    double evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command,
                               const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map,
                               visualization_msgs::Marker &m, double x = 0.0, double y = 0.0, double th = 0.0);
-                              
-    double evaluateTrajectoryTransition(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command, 
-                                                   const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map, 
+
+    double evaluateTrajectoryTransition(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command,
+                                                   const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map,
                                                    visualization_msgs::Marker& m, double x, double y, double th);
 
     inline double getCostWheelsQnew() const {return cost_wheels;}
 
     //! @brief Destructor
     ~CommandEvaluator();
-    
+
     //! @brief Gets the characteristics of the model
     inline RobotCharacteristics getCharacteristics() const {return m_model;}
-    
+
     inline SiarFootprint *getFootprint() {return footprint;}
-    
+
     void initializeFootprint(const nav_msgs::OccupancyGrid& alt_map);
-    
+
     inline functions::RealVector getLastState() const {return last_state;}
-    
+
      //! @brief Applies the footprint in the altitude map
     //! @param x X coord
     //! @param y Y coord
@@ -163,14 +163,14 @@ namespace siar_controller {
     //! @param alt_map The altitude map
     //! @param collision (Out parameter) Will become true if a collision is detected
     //! @param apply_collision If false, the wheel part of the footprint is used. If true, the collision part is used (and only positive obstacles are considered)
-    int applyFootprint(double x, double y, double th, 
-                       const nav_msgs::OccupancyGrid &alt_map, 
+    int applyFootprint(double x, double y, double th,
+                       const nav_msgs::OccupancyGrid &alt_map,
                        bool &collision, bool apply_collision = false);
-    
+
     int applyFootprintRelaxed(double x, double y, double th, const nav_msgs::OccupancyGrid& alt_map, bool& collision);
 
     double applyFootprintTransition(double x, double y, double th, const nav_msgs::OccupancyGrid &alt_map, bool &collision, bool &collision_wheels);
-    
+
   protected:
     double m_T; // Lookahead time
     double m_delta_T; // Timestep
@@ -179,20 +179,20 @@ namespace siar_controller {
     int positive_obs, negative_obs;
     double min_wheel_left, min_wheel_right;
     double cost_wheels;
-    
+
     double m_w_dist, m_w_safe; // Different weights. Respectively: Distance to commanded velocity, safety, collision penalty
     double orig_m_w_dist, orig_m_w_safe; // Different weights. Respectively: Distance to commanded velocity, safety, collision penalty
-    
-    bool consider_two_wheels; // Flags: two_wheels: if true considers two wheels when turning in an intersection 
+
+    bool consider_two_wheels; // Flags: two_wheels: if true considers two wheels when turning in an intersection
 					     // Body: checks the body of the platform for positive obstacles
-    
+
     RobotCharacteristics m_model;
-    
+
     SiarFootprint *footprint, *footprint_params;
-    
+
     functions::RealVector last_state;
-    
-    
+
+
     //! @brief Actualizes the value of linear and angular velocities according to the model of the vehicle
     //! @param v Linear velocity (in-out) (m/s)
     //! @param w Angular velocity (in-out) (rad/s)
@@ -202,9 +202,9 @@ namespace siar_controller {
         v = std::min(com.linear.x, v + m_model.a_max * dt * boost::math::sign(com.linear.x - v));
         w = std::min(com.angular.z, w + m_model.a_max_theta * dt * boost::math::sign(com.angular.z - w));
       }
-    
+
     inline void setParams(const nav_msgs::OccupancyGrid &alt_map) {
-      rotate = alt_map.info.origin.orientation.w < 0.9999; 
+      rotate = alt_map.info.origin.orientation.w < 0.9999;
       origin_x = alt_map.info.origin.position.x;
       origin_y = alt_map.info.origin.position.y;
       m_divRes = 1.0 / alt_map.info.resolution;
@@ -212,15 +212,15 @@ namespace siar_controller {
       total_points = alt_map.info.height * width;
 //       if (rotate)
 //         ROS_INFO("Set params: Rotated map");
-//       else 
+//       else
 //         ROS_INFO("Set params: Straight map");
     }
-    
-    
+
+
     inline int point2index(double x, double y)
         {
           int ret_val;
-          
+
           if (!rotate) {
             int i = (x - origin_x)*m_divRes;
             int j = (y - origin_y)*m_divRes;
@@ -229,18 +229,18 @@ namespace siar_controller {
             // From siar costmap
             ret_val =  ((int)((x-origin_x)*m_divRes))*width + width - (int)((y+origin_y)*m_divRes); //(int)(((x-origin_x)*m_divRes + 1)*width) - (int)((y - origin_y)*m_divRes);
           }
-          
+
           if (ret_val >= total_points) {
             ret_val = -1;
           }
-          
+
           return ret_val;
         }
   };
 
 CommandEvaluator::CommandEvaluator(double w_dist, double w_safe, double T, const RobotCharacteristics &model, double delta_T, SiarFootprint *footprint_p):footprint(NULL), footprint_params(NULL)
 {
-  
+
   setParameters(w_dist, w_safe, T, model, delta_T, footprint_p);
   orig_m_w_dist = w_dist;
   orig_m_w_safe = w_safe;
@@ -251,7 +251,7 @@ CommandEvaluator::CommandEvaluator(double w_dist, double w_safe, double T, const
 
 CommandEvaluator::CommandEvaluator(ros::NodeHandle& pn):m_model(pn),footprint(NULL)
 {
-  
+
   pn.param("w_dist", m_w_dist, 1.0);
   pn.param("w_safe", m_w_safe, 1.0);
   pn.param("delta_T", m_delta_T, 0.2);
@@ -264,7 +264,7 @@ CommandEvaluator::CommandEvaluator(ros::NodeHandle& pn):m_model(pn),footprint(NU
   footprint_params = new SiarFootprint(pn);
   orig_m_w_dist = m_w_dist;
   orig_m_w_safe = m_w_safe;
-  
+
   ROS_INFO("Created the evaluator. Positive obstacle: %d", positive_obs);
 }
 
@@ -287,20 +287,20 @@ CommandEvaluator::~CommandEvaluator()
   delete footprint_params;
 }
 
-double CommandEvaluator::evaluateTrajectory(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command, 
+double CommandEvaluator::evaluateTrajectory(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command,
                                             const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map,
                                             visualization_msgs::Marker &m, double x, double y, double th)
 {
   double dt = m_delta_T;
   int steps = std::abs(m_T / m_delta_T);  //valor absoluto para evaluar tambien delta negativo
-  
+
   setParams(alt_map);
 
   double lv = v_command.linear.x; //de momento uso esto, ya que la v_ini que se tomaba no tenia mucha logica en el calculo de computeNewVelocity
   double av = v_command.angular.z;
 
   int cont_footprint = 0;
-  
+
   // Initialize the footprint if needed:
   initializeFootprint(alt_map);
 
@@ -320,18 +320,18 @@ double CommandEvaluator::evaluateTrajectory(const geometry_msgs::Twist& v_ini, c
       y = y + lin_dist*sin(th);
       th = th + (av * dt); //th is update after
     }
-         
+
     // Represent downsampled
-    if (i % 10 == 0) 
+    if (i % 10 == 0)
       footprint->addPoints(x, y, th, m, 0, i == 0);
-    
+
     // Update cost
     cont_footprint += applyFootprint(x, y, th, alt_map, collision);
-    
+
     if (!collision )
       applyFootprint(x, y, th, alt_map, collision, true); // Search for positive collisions too
   }
-  
+
   double ret = cont_footprint * m_w_safe + m_w_dist * sqrt(pow(x - operator_command.linear.x * m_T, 2.0) + y*y);  // m_w_safe =1 (Different weights. Respectively: Distance to commanded velocity, safety, collision penalty
   //m_T =3 , lookhead time , x e y son los valores de q_near que son evaluados en esta funcion para evaluar trayectoria
   if (collision) {
@@ -339,28 +339,28 @@ double CommandEvaluator::evaluateTrajectory(const geometry_msgs::Twist& v_ini, c
     m.color.g = 0.0;
     return -1.0;
   }
-  
+
   last_state.resize(3);
   last_state[0] = x;
   last_state[1] = y;
   last_state[2] = th;
-    
+
   return ret;
 }
 
-double CommandEvaluator::evaluateTrajectoryMinVelocity(const geometry_msgs::Twist& v_ini, geometry_msgs::Twist& v_command, const geometry_msgs::Twist& operator_command, 
+double CommandEvaluator::evaluateTrajectoryMinVelocity(const geometry_msgs::Twist& v_ini, geometry_msgs::Twist& v_command, const geometry_msgs::Twist& operator_command,
                                                        const nav_msgs::OccupancyGrid& alt_map, visualization_msgs::Marker& m, double x, double y, double th)
 {
   double dt = m_delta_T;
 //   int steps = m_T / m_delta_T;
   int steps = std::abs(m_T / m_delta_T);  //valor absoluto para evaluar tambien delta negativo
- 
+
   double lv = v_ini.linear.x;
   double av = v_ini.angular.z;
   setParams(alt_map);
 
   int cont_footprint = 0;
-  
+
   // Initialize the footprint if needed:
   initializeFootprint(alt_map);
 
@@ -370,7 +370,7 @@ double CommandEvaluator::evaluateTrajectoryMinVelocity(const geometry_msgs::Twis
   for(int i = 0; i <= steps && !collision; i++)
   {
     computeNewVelocity(lv, av, dt, v_command);
-    
+
     // Integrate the model
     double lin_dist = lv * dt;
     acc_dist += lin_dist;
@@ -386,21 +386,21 @@ double CommandEvaluator::evaluateTrajectoryMinVelocity(const geometry_msgs::Twis
       y = y + lin_dist*sin(th);
       th = th + (av * dt); //actualizo th despues
     }
-    
+
     // Represent downsampled
-    if (i % 5 == 0) 
+    if (i % 5 == 0)
       footprint->addPoints(x, y, th, m, 0, i == 0);
-    
+
     // Actualize the cost
     cont_footprint += applyFootprint(x, y, th, alt_map, collision);
     if (!collision)
       applyFootprint(x, y, th, alt_map, collision, true); // Search for positive collisions too
   }
-  
+
   double ret = cont_footprint * m_w_safe + m_w_dist * sqrt(pow(x - operator_command.linear.x * m_T, 2.0) + y*y);
   if (collision) {
     double v_x = acc_dist / (t - 2.0 * m_T);
-    
+
     if (fabs(v_x) < m_model.v_min) { // Check the minimum velocity
       m.color.r = 1.0;
       m.color.g = 0.0;
@@ -411,17 +411,17 @@ double CommandEvaluator::evaluateTrajectoryMinVelocity(const geometry_msgs::Twis
       v_command.linear.x = v_x;
     }
   }
-  
+
   last_state.resize(3);
   last_state[0] = x;
   last_state[1] = y;
   last_state[2] = th;
-    
+
   return ret;
 }
 
-double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command, 
-                                                   const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map, 
+double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command,
+                                                   const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map,
                                                    visualization_msgs::Marker& m, double x, double y, double th)
 {
   double dt = m_delta_T;
@@ -429,21 +429,21 @@ double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v
 
   double lv = v_command.linear.x; //de momento uso esto, ya que la v_ini que se tomaba no tenia mucha logica en el calculo de computeNewVelocity
   double av = v_command.angular.z;
-  
+
   setParams(alt_map);
 
   int cont_footprint = 0;
-  
+
   // Initialize the footprint if needed:
   initializeFootprint(alt_map);
 
   bool collision = false;
   for(int i = 0; i <= steps && !collision; i++)
   {
-    
+
     // Integrate the model
     double lin_dist = lv * dt;
-    
+
     if (dt > 0){
       th = th + (av * dt);
       x = x + lin_dist*cos(th); // Euler 1
@@ -454,55 +454,55 @@ double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v
       y = y + lin_dist*sin(th);
       th = th + (av * dt); //actualizo th despues
     }
-    
+
     // Represent downsampled
-    if (i % 5 == 0) 
+    if (i % 5 == 0)
       footprint->addPoints(x, y, th, m, 0, i == 0);
-    
+
     // Actualize the cost
     cont_footprint += applyFootprintRelaxed(x, y, th, alt_map, collision);
-    
+
     if (!collision )
       applyFootprint(x, y, th, alt_map, collision, true); // Search for positive collisions too
   }
-  
+
   double ret = cont_footprint * m_w_safe + m_w_dist * sqrt(pow(x - operator_command.linear.x * m_T, 2.0) + y*y);
   if (collision) {
     m.color.r = 1.0;
     m.color.g = 0.0;
     return -1.0;
   }
-  
+
   last_state.resize(3);
   last_state[0] = x;
   last_state[1] = y;
   last_state[2] = th;
-    
+
   return ret;
 }
 
-double CommandEvaluator::evaluateTrajectoryTransition(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command, 
-                                                   const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map, 
+double CommandEvaluator::evaluateTrajectoryTransition(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command,
+                                                   const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map,
                                                    visualization_msgs::Marker& m, double x, double y, double th)
 {
   double dt = m_delta_T;
   int steps = std::abs(m_T / m_delta_T); //m_T =3 y m_delta_T= 0.2 => step =15
 
-  double lv = v_command.linear.x; 
+  double lv = v_command.linear.x;
   double av = v_command.angular.z;
-  
+
   setParams(alt_map);
 
   double cont_footprint = 0;
   double cont_footprint_constant =0;
   double ret = 0;
-  
+
   // Initialize the footprint if needed:
   initializeFootprint(alt_map);
 
   bool collision = false;
   bool collision_wheels =false;
-  for(int i = 0; i <= steps && !collision; i++){ //Here is the beginin of the model integration 
+  for(int i = 0; i <= steps && !collision; i++){ //Here is the beginin of the model integration
     double lin_dist = lv * dt;
 
     if (dt > 0){
@@ -516,20 +516,20 @@ double CommandEvaluator::evaluateTrajectoryTransition(const geometry_msgs::Twist
       th = th + (av * dt); //th is update after
     }
     // Represent downsampled
-    if (i % 5 == 0) 
+    if (i % 5 == 0)
       footprint->addPoints(x, y, th, m, 0, i == 0);
-    
+
     // Actualize the cost
     ROS_ERROR("Realizado el STEP %i de evaluateTrajectoryTransition para diferentes posiciones", i+1);
     cont_footprint += applyFootprintTransition(x, y, th, alt_map, collision, collision_wheels);
-    cont_footprint_constant += 0.2; 
+    cont_footprint_constant += 0.2;
 
   }
 
   if (collision) {
     m.color.r = 1.0;
     m.color.g = 0.0;
-    return 100000000;
+    return -1;
   }
 
   ret = cont_footprint + cont_footprint_constant ;
@@ -538,86 +538,86 @@ double CommandEvaluator::evaluateTrajectoryTransition(const geometry_msgs::Twist
   last_state[0] = x;
   last_state[1] = y;
   last_state[2] = th;
-    
+
   return ret;
 }
 
 
-int CommandEvaluator::applyFootprint(double x, double y, double th, 
-                                     const nav_msgs::OccupancyGrid &alt_map, 
+int CommandEvaluator::applyFootprint(double x, double y, double th,
+                                     const nav_msgs::OccupancyGrid &alt_map,
                                      bool &collision, bool apply_collision)
 {
   int ret_val = 0;
-  
+
   FootprintType fp;
   if (!apply_collision)
     fp = footprint->getFootprint(x, y, th);
   else
     fp = footprint->getFootprintCollision(x, y, th);
-  
+
   collision = false;
-  
+
   int index;
   for (unsigned int i = 0; i < fp.size() && !collision; i++) {
-    
+
     index = point2index(fp[i].x, fp[i].y);
     // ROS_INFO("Point2index(%f,%f) = %d,%d. Value = %d", fp.at(i).x, fp.at(i).y,index/alt_map.info.width, index%alt_map.info.width, alt_map.data[index]);
-    
+
     if (index < 0) {
       continue;
     }
-    if (alt_map.data[index] == positive_obs || (alt_map.data[index] == negative_obs && !apply_collision)) 
+    if (alt_map.data[index] == positive_obs || (alt_map.data[index] == negative_obs && !apply_collision))
       collision = true; // Collision detected! (if applying the collision map, only consider positive obstacles)
-    
-    ret_val += abs(alt_map.data[index]); 
+
+    ret_val += abs(alt_map.data[index]);
     // ROS_ERROR("EL VALOR DE ret_val EN applyFootprint (abs(alt_map.data[index])) ES: %i",ret_val);
-    
+
   }
-  
+
   return ret_val;
 }
 
-int CommandEvaluator::applyFootprintRelaxed(double x, double y, double th, 
-                                     const nav_msgs::OccupancyGrid &alt_map, 
+int CommandEvaluator::applyFootprintRelaxed(double x, double y, double th,
+                                     const nav_msgs::OccupancyGrid &alt_map,
                                      bool &collision)
 {
   int ret_val = 0;
-  
+
   FootprintType fp = footprint->getFootprint(x, y, th);
   FootprintType orig = footprint->getFootprint(0, 0 , 0);
 
   collision = false;
-  
+
   int index;
-  
+
   bool right_wheel = false;
   bool left_wheel = false;
   int size = fp.size();
   int cont_left = (size) / 2;
   int cont_right = (size) / 2;
 
-  
+
   for (unsigned int i = 0; i < size && !collision; i++) {
-    
+
     index = point2index(fp[i].x, fp[i].y);
 //     ROS_INFO("Point2index(%f,%f) = %d,%d. Value = %d", fp.at(i).x, fp.at(i).y,index/alt_map.info.width, index%alt_map.info.width, alt_map.data[index]);
-    
+
     if (index < 0) {
       continue;
     }
     if (alt_map.data[index] == positive_obs ) {
       collision = true;
       ret_val = -1;
-    } 
+    }
     else if (alt_map.data[index] == negative_obs || alt_map.data[index] == positive_obs) {
       if (orig[i].y > 0.0) {
         left_wheel = true;
         cont_left--;
 
         if (min_wheel_left + 0.01 > min_wheel_right || consider_two_wheels) {  //min_wheel_left = min_wheel_right = 0.2
-          ret_val += abs(alt_map.data[index]); 
+          ret_val += abs(alt_map.data[index]);
         }
-      } 
+      }
       else {
         right_wheel = true;
         cont_right--;
@@ -626,7 +626,7 @@ int CommandEvaluator::applyFootprintRelaxed(double x, double y, double th,
           ret_val += abs(alt_map.data[index]);
         }
       }
-    } 
+    }
   }
 
   collision |= ( (double)cont_left / (double)size * 2.0 ) < min_wheel_left;
@@ -638,131 +638,119 @@ int CommandEvaluator::applyFootprintRelaxed(double x, double y, double th,
   return ret_val;
 }
 
-double CommandEvaluator::applyFootprintTransition(double x, double y, double th, 
-                                              const nav_msgs::OccupancyGrid &alt_map, 
+double CommandEvaluator::applyFootprintTransition(double x, double y, double th,
+                                              const nav_msgs::OccupancyGrid &alt_map,
                                               bool &collision, bool &collision_wheels)
 {
-  
+
   int ret_val = 0;
-  
+
   FootprintType fp = footprint->getFootprint(x, y, th);
   FootprintType orig = footprint->getFootprint(0, 0 , 0);
   collision = false;
   collision_wheels = false;
-  
+
   int index;
-  
+
   bool right_wheel = false;
   bool left_wheel = false;
   int size = fp.size();
-  int cont_left = (size) / 2;
-  int cont_right = (size) / 2;
   double porctj_left_1 = 0, porctj_left_2 = 0, porctj_left_3 = 0, porctj_right_1 = 0, porctj_right_2 = 0, porctj_right_3 = 0,cont_porctj_left = 0, cont_porctj_right = 0;
   double cont_Coll_pix_left_1 = 0, cont_Coll_pix_left_2 = 0 ,cont_Coll_pix_left_3 = 0, cont_Coll_pix_right_1 = 0, cont_Coll_pix_right_2 = 0, cont_Coll_pix_right_3 = 0;
-  double cont_Tot_pix_left_1 = 0, cont_Tot_pix_left_2 = 0 ,cont_Tot_pix_left_3 = 0, cont_Tot_pix_right_1 = 0, cont_Tot_pix_right_2 = 0, cont_Tot_pix_right_3 = 0;  
-  
+  double cont_Tot_pix_left_1 = 0, cont_Tot_pix_left_2 = 0 ,cont_Tot_pix_left_3 = 0, cont_Tot_pix_right_1 = 0, cont_Tot_pix_right_2 = 0, cont_Tot_pix_right_3 = 0;
+
+  double wheel_length = footprint->m_length / 3.0;
+  double wl_2 = wheel_length * 0.5;
 
   for (unsigned int i = 0; i < size && !collision; i++) {
     index = point2index(fp[i].x, fp[i].y);
 
+    ret_val += abs(alt_map.data[index]);
+
     if (orig[i].y > 0.0) {
-      if (orig[i].x > 0.13){
+      if (orig[i].x > wl_2){
         cont_Tot_pix_left_1 ++;
       }
-      else if (orig[i].x < 0.13 && orig[i].x > -0.13){
+      else if (orig[i].x < wl_2 && orig[i].x > -wl_2){
         cont_Tot_pix_left_2  ++;
       }
-      else if (orig[i].x < -0.13){
+      else if (orig[i].x < -wl_2){
         cont_Tot_pix_left_3  ++;
       }
     }
     else {
-      if (orig[i].x > 0.13){
+      if (orig[i].x > wl_2){
         cont_Tot_pix_right_1 ++;
       }
-      else if (orig[i].x < 0.13 && orig[i].x > -0.13){
+      else if (orig[i].x < wl_2 && orig[i].x > -wl_2){
         cont_Tot_pix_right_2 ++;
       }
-      else if (orig[i].x < -0.13){
+      else if (orig[i].x < -wl_2){
        cont_Tot_pix_right_3 ++;
       }
     }
-    
+
     if (index < 0) {
       continue;
     }
     if (alt_map.data[index] == positive_obs ) {
       collision = true;
       ret_val = -1;
-    } 
-    else if (alt_map.data[index] == negative_obs){     // || alt_map.data[index] == positive_obs) {
+    }
+    else if (alt_map.data[index] == negative_obs)
+    {
       if (orig[i].y > 0.0) {
         left_wheel = true;
-        cont_left--;
-        
-        if (orig[i].x > 0.13){
+        if (orig[i].x > wl_2){
           cont_Coll_pix_left_1 ++;
         }
-        else if (orig[i].x < 0.13 && orig[i].x > -0.13){
+        else if (orig[i].x < wl_2 && orig[i].x > -wl_2){
           cont_Coll_pix_left_2 ++;
         }
-        else if (orig[i].x < -0.13){
+        else if (orig[i].x < -wl_2){
           cont_Coll_pix_left_3 ++;
         }
-        // if (min_wheel_left + 0.01 > min_wheel_right || consider_two_wheels) {  //min_wheel_left = min_wheel_right = 0.2
-        //   ret_val += abs(alt_map.data[index]); 
-        // }
-      } 
+      }
       else {
         right_wheel = true;
-        cont_right--;
-        if (orig[i].x > 0.13){
+        if (orig[i].x > wl_2){
           cont_Coll_pix_right_1 ++;
         }
-        else if (orig[i].x < 0.13 && orig[i].x > -0.13){
+        else if (orig[i].x < wl_2 && orig[i].x > -wl_2){
           cont_Coll_pix_right_2 ++;
         }
-        else if (orig[i].x < -0.13){
+        else if (orig[i].x < -wl_2){
           cont_Coll_pix_right_3 ++;
         }
-
-        // if (min_wheel_right + 0.01 > min_wheel_left || consider_two_wheels) {
-        //   ret_val += abs(alt_map.data[index]);
-        // }
       }
-    } 
+    }
   }
 
+  //  DEBUG
   //  ROS_ERROR("Numero de pixeles en colision rueda izquierda delantera %f de un TOTAL %f", cont_Coll_pix_left_1, cont_Tot_pix_left_1);
   //  ROS_ERROR("Numero de pixeles en colision rueda izquierda media %f de un TOTAL %f", cont_Coll_pix_left_2, cont_Tot_pix_left_2);
-  //  ROS_ERROR("Numero de pixeles en colision rueda izquierda trasera %f de un TOTAL %f", cont_Coll_pix_left_3, cont_Tot_pix_left_3);   
+  //  ROS_ERROR("Numero de pixeles en colision rueda izquierda trasera %f de un TOTAL %f", cont_Coll_pix_left_3, cont_Tot_pix_left_3);
   //  ROS_ERROR("Numero de pixeles en colision rueda derecha delantera %f de un TOTAL %f", cont_Coll_pix_right_1, cont_Tot_pix_right_1);
   //  ROS_ERROR("Numero de pixeles en colision rueda derecha media %f de un TOTAL %f", cont_Coll_pix_right_2,cont_Tot_pix_right_2);
   //  ROS_ERROR("Numero de pixeles en colision rueda derecha trasera %f de un TOTAL %f", cont_Coll_pix_right_3, cont_Tot_pix_right_3);
 
   if ((cont_Coll_pix_left_1 / cont_Tot_pix_left_1)> 0.6){
-    // ROS_INFO("El valor de cont_Coll_pix_left_1 / cont_Tot_pix_left_1  es %f", cont_Coll_pix_left_1 / cont_Tot_pix_left_1);
-    porctj_left_1 = 1;  
+    porctj_left_1 = 1;
   }
   if ((cont_Coll_pix_left_2 / cont_Tot_pix_left_2)> 0.6){
-    porctj_left_2 = 1; 
-    // ROS_INFO("El valor de cont_Coll_pix_left_2 / cont_Tot_pix_left_2  es %f", cont_Coll_pix_left_2 / cont_Tot_pix_left_2);
+    porctj_left_2 = 1;
   }
   if ((cont_Coll_pix_left_3 / cont_Tot_pix_left_3)> 0.6){
-    porctj_left_3 = 1; 
-    // ROS_INFO("El valor de cont_Coll_pix_left_3 / cont_Tot_pix_left_3  es %f", cont_Coll_pix_left_3 / cont_Tot_pix_left_3);
+    porctj_left_3 = 1;
   }
   if ((cont_Coll_pix_right_1 / cont_Tot_pix_right_1)> 0.6){
     porctj_right_1 = 1;
-    // ROS_INFO("El valor de cont_Coll_pix_right_1 / cont_Tot_pix_right_1  es %f", cont_Coll_pix_right_1 / cont_Tot_pix_right_1);
   }
   if ((cont_Coll_pix_right_2 / cont_Tot_pix_right_2)> 0.6){
     porctj_right_2 = 1;
-    // ROS_INFO("El valor de cont_Coll_pix_right_2 / cont_Tot_pix_right_2  es %f", cont_Coll_pix_right_2 / cont_Tot_pix_right_2);
   }
   if ((cont_Coll_pix_right_3 / cont_Tot_pix_right_3)> 0.6){
     porctj_right_3 = 1;
-    // ROS_INFO("El valor de cont_Coll_pix_right_3 / cont_Tot_pix_right_3  es %f", cont_Coll_pix_right_3 / cont_Tot_pix_right_3);
   }
 
   cont_porctj_left = porctj_left_1 + porctj_left_2 + porctj_left_3;
@@ -772,16 +760,10 @@ double CommandEvaluator::applyFootprintTransition(double x, double y, double th,
     collision_wheels = true;
     collision = true;
 
-    return 100000000;
+    return -1;
   }
 
-  // ROS_INFO("Los porcentajes de ruedas son izq_1 = %f, izq_2 = %f, izq_3 = %f, der_1 = %f, der_2= %f, der_3 = %f",porctj_left_1, porctj_left_2,porctj_left_3,porctj_right_1,porctj_right_2,porctj_right_3 );
-  cost_wheels = (cont_porctj_left + cont_porctj_right);
-  // ROS_INFO("El Costo_Ruedas es: %f (%f porciento en el gutter, de las cuales %f son IZQ y %f son DER).El estado de colision es: %d y colision_wheel:%d",cost_wheels,100*cost_wheels/6,cont_porctj_left,cont_porctj_right, collision,collision_wheels);
-  // ROS_INFO("La POSICION con la que se realiza el APPLYFOOTPRINTTRANSITION es X = %f, Y = %f , th = %f", x,y,th);
-  return cost_wheels;
-
-
+  return ret_val;
 }
 
 void CommandEvaluator::initializeFootprint(const nav_msgs::OccupancyGrid& alt_map)
@@ -793,13 +775,13 @@ void CommandEvaluator::initializeFootprint(const nav_msgs::OccupancyGrid& alt_ma
       footprint = new SiarFootprint(alt_map.info.resolution);
     else
       footprint = new SiarFootprint(alt_map.info.resolution, footprint_params->m_length, footprint_params->m_width, footprint_params->m_wheel_width, true);
-      
+
 //     m_divRes = 1.0 / alt_map.info.resolution;
-   
+
     ROS_INFO("Alt map: height = %d \t width = %d", alt_map.info.height, alt_map.info.width);
 //     origin_x = alt_map.info.height * alt_map.info.resolution /2.0;
 //     origin_y = alt_map.info.width * alt_map.info.resolution /2.0;
-    
+
 //     origin_x *= -1;
 //     origin_y *= -1;
 //     origin_x = alt_map.info.origin.position.x;
@@ -810,7 +792,7 @@ void CommandEvaluator::initializeFootprint(const nav_msgs::OccupancyGrid& alt_ma
 }
 
 
-  
+
 }
 
 

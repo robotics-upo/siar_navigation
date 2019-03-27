@@ -20,12 +20,12 @@ public:
   //! @brief Integrates the model and returns the cost associated with 
   //! @return Negative --> collision. Positive --> Arc's longitude
   double integrate(NodeState &st, geometry_msgs::Twist &cmd, double T, bool relaxed = false);
-  double integrateTransition(NodeState &st, geometry_msgs::Twist &cmd, double T, bool relaxed = false);
+  double integrateTransition(NodeState &st, geometry_msgs::Twist &cmd, double T);
   
   //! @brief Integrates the model and returns the cost associated with 
   //! @return Negative --> collision. Positive --> Arc's longitude
   double integrate(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T, bool relaxed);
-  double integrateTransition(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T, bool relaxed);
+  double integrateTransition(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T);
   
   virtual geometry_msgs::Twist generateRandomCommand();
   
@@ -142,12 +142,12 @@ double SiarModel::integrate(visualization_msgs::Marker& m, NodeState& st, geomet
   return ret_val;
 }
 
-double SiarModel::integrateTransition(NodeState& st, geometry_msgs::Twist& cmd, double T, bool relaxed)
+double SiarModel::integrateTransition(NodeState& st, geometry_msgs::Twist& cmd, double T)
 {
-  return integrate(m, st, cmd, T, relaxed);
+  return integrateTransition(m, st, cmd, T);
 }
 
-double SiarModel::integrateTransition(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T, bool relaxed)
+double SiarModel::integrateTransition(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T)
 {
   geometry_msgs::Twist v_ini;
   v_ini.linear.x = m_ce.getCharacteristics().v_max;

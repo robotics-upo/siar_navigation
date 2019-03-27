@@ -316,8 +316,12 @@ RRTNode* tbiRRT::getNearestNode1(NodeState q_rand) {
     geometry_msgs::Twist command = m.generateRandomCommand();
     //     std::cout << "El comando es " << command <<std::endl;
       ROS_INFO("En arbol 1 el q_near es X = %f, Y = %f , th = %f", q_near->st.state[0],q_near->st.state[1],q_near->st.state[2]); 
-      double cost = m.integrate(st, command, delta_t, relaxation_mode >= 1); // If relaxation_mode >= 1 --> allow two wheels
+      double cost = m.integrateTransition(st, command, delta_t); // If relaxation_mode >= 1 --> allow two wheels
+
       ROS_INFO("En arbol 1 el st, posible new nodo es X = %f, Y = %f , th = %f", st.state[0],st.state[1],st.state[2]);  
+
+
+
       ret_transition1 = transitionTest1 (q_near->st, st, q_rand);
       if (!ret_transition1) {
         // 	std::cout << "Colision " <<std::endl;

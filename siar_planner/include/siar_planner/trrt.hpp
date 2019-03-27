@@ -248,11 +248,14 @@ void tRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_m
     geometry_msgs::Twist command = m.generateRandomCommand(); //generate a random command of velocity
     ROS_ERROR("Evaluando Iteracion: %i / %i para diferentes velocidades", i+1 , K);
     // ROS_INFO("El NODO st utilizado en funcion INTEGRATE es X = %f, Y = %f , th = %f", st.state[0],st.state[1],st.state[2]);
-    cost_wheels_Qnew = m.integrateTransition(st, command, delta_t, relaxation_mode >= 1); // If relaxation_mode >= 1 --> allow two wheels
-    //ROS_INFO("El COSTO DEL NODO es: %f",cost_wheels_Qnew);
+    cost_wheels_Qnew = m.integrateTransition(st, command, delta_t); 
+    if (cost_wheels_Qnew < 0.0)
+      continue;
+
     ROS_INFO("El NODO q_new proveniente de INTEGRATE que va a entrar a TRANSITIONTEST es X = %f, Y = %f , th = %f", st.state[0],st.state[1],st.state[2]);
     ret_transition = transitionTest (st_near, st, st_rand);  //Get the value of Q_new from st of integrate function if there is not collision
     ROS_INFO("TransitionTest retorna un %d",ret_transition);
+
     if (ret_transition){
       is_new_node = true;
       new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
