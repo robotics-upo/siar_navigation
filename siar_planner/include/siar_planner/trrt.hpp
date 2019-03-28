@@ -56,7 +56,7 @@ protected:
   
   double K_normal = 1000000; //(cost_initial - cost_goal)/2
   double Temp = 1*exp (-6); //* exp(-3);
-  int alfa = 2, nFail = 0, nFailmax = 4;
+  int alfa = 2, nFail = 0, nFailmax = 2;
   double cost_Qnear, cost_Qnew, cost_wheels_Qnew;
     
   // Sets to test
@@ -171,8 +171,8 @@ double tRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
   while (relax < n_rounds && !got_to_goal){ //n_round=6
     int cont = 0; 
     while (cont < n_iter && !got_to_goal) { // n_iter = 200 Max. number of nodes to expand for each round
-      ROS_ERROR("Iniciando   la     busqueda    de     nodos     en iteracion de RELAX: %i /%i, e iteracion de CONT: %i /%i", relax+1,n_rounds, cont+1,n_iter);
-      ROS_INFO("El tamano de la lista con nodos es: %ld",nodes.size());
+      // ROS_ERROR("Iniciando   la     busqueda    de     nodos     en iteracion de RELAX: %i /%i, e iteracion de CONT: %i /%i", relax+1,n_rounds, cont+1,n_iter);
+      // ROS_INFO("El tamano de la lista con nodos es: %ld",nodes.size());
       // for (auto n: nodes){ 
       //   ROS_INFO("El valor del NODO en la lista es es X = %f, Y = %f , th = %f",n->st.state[0],n->st.state[1],n->st.state[2]);  
       // }
@@ -183,9 +183,9 @@ double tRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
       else{
       	q_rand = goal_node.st; 
       }     
-      ROS_INFO("El nodo q_rand elegido en GETRANDOMSTATE es X = %f, Y = %f , th = %f", q_rand.state[0],q_rand.state[1],q_rand.state[2]);  
+      // ROS_INFO("El nodo q_rand elegido en GETRANDOMSTATE es X = %f, Y = %f , th = %f", q_rand.state[0],q_rand.state[1],q_rand.state[2]);  
       RRTNode *q_near = getNearestNode(q_rand);  
-      ROS_INFO("El nodo q_near elegido en getNearestNode es X = %f, Y = %f , th = %f", q_near->st.state[0],q_near->st.state[1],q_near->st.state[2]); 
+      // ROS_INFO("El nodo q_near elegido en getNearestNode es X = %f, Y = %f , th = %f", q_near->st.state[0],q_near->st.state[1],q_near->st.state[2]); 
       expandNode(q_rand, q_near, relax);
       cont++;
     }
@@ -246,15 +246,15 @@ void tRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_m
     NodeState st_near = q_near->st; // is necesary to keep one value of Qnear to apply the transition
 
     geometry_msgs::Twist command = m.generateRandomCommand(); //generate a random command of velocity
-    ROS_ERROR("Evaluando Iteracion: %i / %i para diferentes velocidades", i+1 , K);
+    // ROS_ERROR("Evaluando Iteracion: %i / %i para diferentes velocidades", i+1 , K);
     // ROS_INFO("El NODO st utilizado en funcion INTEGRATE es X = %f, Y = %f , th = %f", st.state[0],st.state[1],st.state[2]);
     cost_wheels_Qnew = m.integrateTransition(st, command, delta_t); 
     if (cost_wheels_Qnew < 0.0)
       continue;
 
-    ROS_INFO("El NODO q_new proveniente de INTEGRATE que va a entrar a TRANSITIONTEST es X = %f, Y = %f , th = %f", st.state[0],st.state[1],st.state[2]);
+    // ROS_INFO("El NODO q_new proveniente de INTEGRATE que va a entrar a TRANSITIONTEST es X = %f, Y = %f , th = %f", st.state[0],st.state[1],st.state[2]);
     ret_transition = transitionTest (st_near, st, st_rand);  //Get the value of Q_new from st of integrate function if there is not collision
-    ROS_INFO("TransitionTest retorna un %d",ret_transition);
+    // ROS_INFO("TransitionTest retorna un %d",ret_transition);
 
     if (ret_transition){
       is_new_node = true;
@@ -264,7 +264,7 @@ void tRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_m
         q_new.st = st; 
         q_new.command_lin = command.linear.x;
         q_new.command_ang = command.angular.z;
-        ROS_INFO("EL NODO q_new ha sido ACEPTADO para agregarce a la lista, los valore sson X=%f, Y=%f, th=%f",q_new.st.state[0],q_new.st.state[1],q_new.st.state[2] );
+        // ROS_INFO("EL NODO q_new ha sido ACEPTADO para agregarce a la lista, los valore sson X=%f, Y=%f, th=%f",q_new.st.state[0],q_new.st.state[1],q_new.st.state[2] );
         dist = new_dist;       
       }
     } 
@@ -294,12 +294,12 @@ bool tRRT::transitionTest (NodeState q_near, NodeState q_new, NodeState q_rand){
   
   std::uniform_real_distribution<> dis_2(0,1);
   double random_prob = dis_2(gen);
-  double cost_max = 1000;
+  double cost_max = 10000000000;
   calculateCost(q_near, q_new, q_rand, cost_Qnear, cost_Qnew);
   // ROS_INFO("El NODO q_new dentro de TRANSITIONTEST despues de CALCULATECOST es X = %f, Y = %f , th = %f", q_new.state[0],q_new.state[1],q_new.state[2]);
   double dist_Qnear_Qnew = sqrt(pow(q_near.state[0] - q_new.state[0],2) + pow(q_near.state[1] - q_new.state[1],2));;
   double slope_cost = (cost_Qnew - cost_Qnear)/dist_Qnear_Qnew;
-   ROS_INFO ("The value distance_Qnear_Qnew es: %f", dist_Qnear_Qnew);
+  //  ROS_INFO ("The value distance_Qnear_Qnew es: %f", dist_Qnear_Qnew);
 
   if (slope_cost > 0){
     transition_probability = exp (-(slope_cost)/(K_normal * Temp)); 
@@ -310,18 +310,18 @@ bool tRRT::transitionTest (NodeState q_near, NodeState q_new, NodeState q_rand){
 
   
   if (cost_Qnew > cost_max){
-     ROS_ERROR("Can't be apply the transitionTest --> The cost_Qnew of new_node exceeds the maximum cost");
+    //  ROS_ERROR("Can't be apply the transitionTest --> The cost_Qnew of new_node exceeds the maximum cost");
     return 0;
   } 
   if(cost_Qnew < cost_Qnear ){ 
-     ROS_ERROR("cost_Qnew < cost_Qnear, por lo tanto transition probability = 1, se acepta inmediatamente la configuracion");   
+    //  ROS_ERROR("cost_Qnew < cost_Qnear, por lo tanto transition probability = 1, se acepta inmediatamente la configuracion");   
     return 1;
   }
   if (random_prob < transition_probability){
     Temp = Temp/ alfa;
     nFail = 0;
-     ROS_INFO(" random_prob es MENOR que transition_probability. El valor de nFail es: %i",nFail);
-     ROS_INFO ("El valor de slope_cost es %f, de Temperature es: %f. El random_prob es: %f y la probabilidad de transicion: %f",slope_cost,Temp, random_prob,transition_probability);
+    //  ROS_INFO(" random_prob es MENOR que transition_probability. El valor de nFail es: %i",nFail);
+    //  ROS_INFO ("El valor de slope_cost es %f, de Temperature es: %f. El random_prob es: %f y la probabilidad de transicion: %f",slope_cost,Temp, random_prob,transition_probability);
     return 1;
   }
   else{
@@ -333,8 +333,8 @@ bool tRRT::transitionTest (NodeState q_near, NodeState q_new, NodeState q_rand){
     {
       nFail = nFail+1 ; 
     }
-     ROS_INFO(" random_prob es MAYOR que transition_probability. El valor de nFail es: %i",nFail);
-     ROS_INFO ("El valor de slope_cost es %f, de Temperature es: %f. El random_prob es: %f y la probabilidad de transicion: %f",slope_cost,Temp, random_prob,transition_probability);
+    //  ROS_INFO(" random_prob es MAYOR que transition_probability. El valor de nFail es: %i",nFail);
+    //  ROS_INFO ("El valor de slope_cost es %f, de Temperature es: %f. El random_prob es: %f y la probabilidad de transicion: %f",slope_cost,Temp, random_prob,transition_probability);
     return 0;
   }
 }
@@ -350,9 +350,9 @@ void tRRT::calculateCost(NodeState q_near, NodeState q_new, NodeState q_rand,dou
   
   cost_Qnear = cost_dis_Qnear*1.5 + cost_wheels_Qnear;
   cost_Qnew = cost_dist_Qnew*1.5  + cost_wheels_Qnew;
-  ROS_INFO("El NODO q_new en CALCULATECOST es X = %f, Y = %f , th = %f", q_new.state[0],q_new.state[1],q_new.state[2]);
-  ROS_INFO("El NODO q_near en CALCULATECOST es X = %f, Y = %f , th = %f", q_near.state[0],q_near.state[1],q_near.state[2]);
-  ROS_INFO("El NODO q_rand en CALCULATECOST es X = %f, Y = %f , th = %f", q_rand.state[0],q_rand.state[1],q_rand.state[2]);
+  // ROS_INFO("El NODO q_new en CALCULATECOST es X = %f, Y = %f , th = %f", q_new.state[0],q_new.state[1],q_new.state[2]);
+  // ROS_INFO("El NODO q_near en CALCULATECOST es X = %f, Y = %f , th = %f", q_near.state[0],q_near.state[1],q_near.state[2]);
+  // ROS_INFO("El NODO q_rand en CALCULATECOST es X = %f, Y = %f , th = %f", q_rand.state[0],q_rand.state[1],q_rand.state[2]);
   // ROS_INFO("El costo Qnear es: %f (dis= %f, wheels=%f) y Qnew es: %f (dis= %f, wheels=%f)",cost_Qnear,cost_dis_Qnear,cost_wheels_Qnear, cost_Qnew,cost_dist_Qnew,cost_wheels_Qnew);
 }
 

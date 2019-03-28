@@ -520,7 +520,7 @@ double CommandEvaluator::evaluateTrajectoryTransition(const geometry_msgs::Twist
       footprint->addPoints(x, y, th, m, 0, i == 0);
 
     // Actualize the cost
-    ROS_ERROR("Realizado el STEP %i de evaluateTrajectoryTransition para diferentes posiciones", i+1);
+    // ROS_ERROR("Realizado el STEP %i de evaluateTrajectoryTransition para diferentes posiciones", i+1);
     cont_footprint += applyFootprintTransition(x, y, th, alt_map, collision, collision_wheels);
     cont_footprint_constant += 0.2;
 

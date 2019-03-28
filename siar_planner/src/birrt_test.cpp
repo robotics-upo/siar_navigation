@@ -20,8 +20,7 @@ int main(int argc, char** argv){
   std::ofstream ofs;
   std::string output_file;
   
-  RRT a(nh, pnh);
-//   biRRT a(nh, pnh);
+  biRRT a(nh, pnh);
   
   ROS_INFO("Waiting for map initialization");
   while (!a.getModel().isInit() && ros::ok()){ 

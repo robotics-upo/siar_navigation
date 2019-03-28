@@ -7,6 +7,7 @@
 #include "siar_planner/SiarModel.hpp"
 
 #include "visualization_msgs/Marker.h"
+#include "visualization_msgs/MarkerArray.h"
 
 #include <functions/functions.h>
 #include <math.h>
@@ -26,7 +27,7 @@ public:
   SiarModel &getModel() {return m;}
   
 //   visualization_msgs::Marker getPathMarker(const std::list< RRTNode >& path);
-  visualization_msgs::Marker getPathMarker(const std::list< RRTNode >& path);
+  visualization_msgs::MarkerArray getPathMarker(const std::list< RRTNode >& path);
   
   visualization_msgs::Marker getGraphMarker();
   
@@ -689,58 +690,32 @@ std::list<RRTNode> biRRT::getPath(){
 //   return ret;
 // }
 
-visualization_msgs::Marker biRRT::getPathMarker(const std::list< RRTNode >& path)
+visualization_msgs::MarkerArray biRRT::getPathMarker(const std::list< RRTNode >& path) 
 {
-  visualization_msgs::Marker m;
-  m.header.frame_id = this->m.getFrameID();
-  m.header.stamp = ros::Time::now();
-  m.ns = "path";
-  m.action = visualization_msgs::Marker::ADD;
-  m.pose.orientation.w = 1.0;
-  m.id = 0;
-  m.points.clear();
-  m.type = visualization_msgs::Marker::POINTS;
-//   m.type = visualization_msgs::Marker::LINE_LIST;
-  // LINE_LIST markers use x scale only (for line width)
-  m.scale.x = 0.05;
-  // Points are green
-  visualization_msgs::Marker::_color_type color;
-  color.r = 0;
-  color.b = 0;
-  color.g = 1.0;
-  color.a = 1.0;
-//   double color_step = 1.0/(double)nodes.size();
-  geometry_msgs::Point p1;
-  //geometry_msgs::Point p2;
-  //for (unsigned int i = 0; i < nodes.size();i++) {
-//   for (auto n : path){  
-  for (auto it = path.begin(); it != path.end(); it++){
-//     auto new_color = color;
-//     new_color.r -= color_step;
-//     new_color.b += color_step;
-    
-    p1.x = it->st.state[0];
-    p1.y = it->st.state[1];
-    
-    m.points.push_back(p1); //es correcto aqui?
-    m.colors.push_back(color);
-    
-//      for (auto child : n->children) {
-//        m.points.push_back(p1);
-//        m.colors.push_back(color);
-// //        
-//        p2.x = child->st.state[0];
-//        p2.y = child->st.state[1];
-// //        
-//        m.points.push_back(p2);
-//        m.colors.push_back(new_color);
-//      }
-   
-//     color = new_color;
-    
+  visualization_msgs::MarkerArray ret;
+  visualization_msgs::Marker m_aux;
+
+  int cont = 0;
+  NodeState pt;
+  for (auto it = path.begin(); it != path.end(); it++, cont++) {
+    if (cont > 0) { //cuando no lo es??
+      pt = (--it)->st;
+      it++;
+      geometry_msgs::Twist command;
+      command.linear.x = it->command_lin;
+      command.angular.z = it->command_ang;
+
+    if (cont % 5 == 0)  
+
+      m_aux= m.getMarker(pt,cont);
+      m_aux.color.b=1.0;
+      m_aux.color.a=1.0;
+      m_aux.color.g=0.2;
+      m_aux.color.r=0.2;
+      ret.markers.push_back(m_aux);
+    }
   }
-  
-  return m;
+  return ret;
 }
 
 visualization_msgs::Marker biRRT::getGraphMarker()
