@@ -652,6 +652,7 @@ double CommandEvaluator::applyFootprintTransition(double x, double y, double th,
 
   int index;
 
+
   bool right_wheel = false;
   bool left_wheel = false;
   int size = fp.size();
