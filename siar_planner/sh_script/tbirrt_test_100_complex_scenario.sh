@@ -8,7 +8,7 @@ for i in {1..100..1}
 do
 roslaunch siar_planner tbirrt_test_in_complex_scenario.launch &
 echo "Concluded test $i"
-sleep 6
+sleep 10
 done
 
 echo "Finished 100 birtt tests"

@@ -4,7 +4,7 @@
 <!--         <param name="/use_sim_time" value="true" /> -->
   <arg name="debug" default="false"/>
 
-  <arg name="config" default="rrt_params_23.yaml"/>
+  <arg name="config" default="rrt_params_complex_scenario.yaml"/>
   <arg name="map" default="test_map_fork_4.yaml"/>
   <arg name="problem" default="problem_complex_scenario.yaml"/>
   <arg name="velocity_file" default=""/>  <!--sin velocidaes, tomare random commands -->
