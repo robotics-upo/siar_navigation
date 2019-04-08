@@ -23,6 +23,7 @@ public:
   
   double resolve(NodeState start, NodeState goal, std::list<RRTNode>& path); 
   double resolve_expand1(NodeState start, NodeState goal, std::list<RRTNode>& path);
+  double retCostTotal();
   
   SiarModel &getModel() {return m;}
   
@@ -73,6 +74,7 @@ protected:
   double wheel_decrease, last_wheel;
   double max_x, max_y, max_yaw, min_x, min_y, min_yaw; //de que tipo serian?
   double x_g, y_g, x_0, y_0;
+  double cost_total = 0;
   
   
   SiarModel m;
@@ -288,7 +290,7 @@ double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
       //if didnt get a solution, do relaxation
       m.decreaseWheels(wheel_decrease, last_wheel);
       relax++;
-      ROS_ERROR("biRRT::resolve -->  could not find a path -->  trying relaxation");    
+      ROS_ERROR("biRRT::resolve -->  could not find a path -->  starting new iteration");    
     }
   }
   std::cout << "Numero de nodos totales: " << tree1.size()+tree2.size() <<std::endl;
@@ -488,6 +490,7 @@ void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_
 	  q_near->command_lin = command.linear.x; //este dato se almacena en el hijo
 	  q_near->command_ang = command.angular.z;
 	  dist = new_dist;
+    cost_total += cost;
 	}
       }
     }  
@@ -769,6 +772,11 @@ visualization_msgs::Marker biRRT::getGraphMarker()
   }
   
   return m;
+}
+
+double biRRT::retCostTotal(){
+ 
+  return cost_total;
 }
 
 #endif

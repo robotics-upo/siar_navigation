@@ -29,13 +29,13 @@ public:
   visualization_msgs::Marker getGraphMarker();
   
   double getDeltaT() const {return delta_t;}
-  
+  std::list<RRTNode *> nodes;
+  double retCostTotal();
+
 protected:
   tRRT();
   void addNode(NodeState st, double comm_x = 0.0, double comm_ang = 0.0, RRTNode *parent = NULL); //darle uso a esta funcion
   void clear();
-
-  std::list<RRTNode *> nodes;
   
   void isGoal(NodeState st);
   bool got_to_goal = false;
@@ -68,7 +68,7 @@ protected:
   double delta_t, cellsize_m, cellsize_rad;
   double wheel_decrease, last_wheel;
   double max_x, max_y, max_yaw, min_x, min_y, min_yaw; //de que tipo serian?
-  
+  double cost_total = 0;
   
   SiarModel m;
   double goal_gap_m, goal_gap_rad;
@@ -157,7 +157,7 @@ double tRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
   nodes.clear(); 
 
   if (!m.isInit()) {
-    ROS_ERROR("RRT::resolve --> The model has not been initialized --> could not calculate a path");
+    ROS_ERROR("tRRT::resolve --> The model has not been initialized --> could not calculate a path");
     return -1.0;
   }
 
@@ -198,7 +198,7 @@ double tRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
     else{   //if didnt get a solution, do relaxation
       m.decreaseWheels(wheel_decrease, last_wheel);
       relax++;
-      ROS_ERROR("RRT::resolve -->  could not find a path -->  trying relaxation");    
+      ROS_ERROR("tRRT::resolve -->  could not find a path -->  starting new iteration");    
     }
   }
   std::cout << "Numero de nodos en grafo: " << nodes.size() <<std::endl;
@@ -265,7 +265,7 @@ void tRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_m
         q_new.command_lin = command.linear.x;
         q_new.command_ang = command.angular.z;
         // ROS_INFO("EL NODO q_new ha sido ACEPTADO para agregarce a la lista, los valore sson X=%f, Y=%f, th=%f",q_new.st.state[0],q_new.st.state[1],q_new.st.state[2] );
-        dist = new_dist;       
+        dist = new_dist;      
       }
     } 
   }
@@ -307,12 +307,13 @@ bool tRRT::transitionTest (NodeState q_near, NodeState q_new, NodeState q_rand){
   else {
     transition_probability = 1;
   }
-
-  
   if (cost_Qnew > cost_max){
     //  ROS_ERROR("Can't be apply the transitionTest --> The cost_Qnew of new_node exceeds the maximum cost");
     return 0;
-  } 
+  }
+
+  cost_total += cost_Qnew; 
+
   if(cost_Qnew < cost_Qnear ){ 
     //  ROS_ERROR("cost_Qnew < cost_Qnear, por lo tanto transition probability = 1, se acepta inmediatamente la configuracion");   
     return 1;
@@ -443,5 +444,11 @@ visualization_msgs::Marker tRRT::getGraphMarker()
   }
   return m;
 }
+
+double tRRT::retCostTotal(){
+ 
+  return cost_total;
+}
+
 
 #endif

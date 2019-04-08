@@ -5,7 +5,7 @@
   <arg name="debug" default="false"/>
 
   <arg name="config" default="rrt_params_complex_scenario.yaml"/>
-  <arg name="map" default="test_map_fork_4.yaml"/>
+  <arg name="map" default="test_map_complex_scenario.yaml"/>
   <arg name="problem" default="problem_complex_scenario.yaml"/>
   <arg name="velocity_file" default=""/>  <!--sin velocidaes, tomare random commands -->
   <!--<arg name="output_file" default="$(find siar_planner)/output_files/rrt_params_1.txt"/>-->

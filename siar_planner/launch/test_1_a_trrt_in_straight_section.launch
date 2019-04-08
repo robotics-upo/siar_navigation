@@ -4,7 +4,7 @@
 <!--         <param name="/use_sim_time" value="true" /> -->
   <arg name="debug" default="false"/>
   <arg name="config" default="parameters_test_1.yaml"/>
-  <arg name="map" default="test_map_fork.yaml"/>
+  <arg name="map" default="test_map_fork_scenario.yaml"/>
   <arg name="problem" default="problem_test_1_a.yaml"/>
   <arg name="velocity_file" default=""/>  <!--sin velocidaes, tomare random commands -->
   <!--<arg name="output_file" default="$(find siar_planner)/output_files/rrt_params_1.txt"/>-->
@@ -20,5 +20,6 @@
     <param name="output_file" type="string" value="$(find siar_planner)/output_files/test_1_a_trrt_results_in_straight_section_1.txt" />
   </node>
 
-  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find siar_planner)/test/test.rviz"/>
+  <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find siar_planner)/test/test.rviz"/> -->
+  <node pkg="rviz" type="rviz" name="rviz"/>
 </launch>
