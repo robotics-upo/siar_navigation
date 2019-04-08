@@ -1,5 +1,5 @@
-#ifndef _RRT_HPP_
-#define _RRT_HPP_
+#ifndef _tRRT_HPP_
+#define _tRRT_HPP_
 
 
 #include "siar_planner/NodeState.hpp"

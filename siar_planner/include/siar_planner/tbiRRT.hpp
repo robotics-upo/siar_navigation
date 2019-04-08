@@ -1,5 +1,5 @@
-#ifndef _biRRT_HPP_
-#define _biRRT_HPP_
+#ifndef _tbiRRT_HPP_
+#define _tbiRRT_HPP_
 
 #include "siar_planner/NodeState.hpp"
 #include "siar_planner/RRTNode.h"

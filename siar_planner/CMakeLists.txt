@@ -70,6 +70,7 @@ add_executable(rrt_test src/rrt_test.cpp)
 add_executable(birrt_test src/birrt_test.cpp)
 add_executable(trrt_test src/trrt_test.cpp)
 add_executable(tbirrt_test src/tbirrt_test.cpp)
+add_executable(rrt_siar_planner_node src/rrt_siar_planner_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -85,7 +86,7 @@ add_dependencies(rrt_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_
 add_dependencies(birrt_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(trrt_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(tbirrt_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
+add_dependencies(rrt_siar_planner_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(test_planner
@@ -104,5 +105,8 @@ target_link_libraries(trrt_test
   ${catkin_LIBRARIES}
 )
 target_link_libraries(tbirrt_test
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(rrt_siar_planner_node
   ${catkin_LIBRARIES}
 )
