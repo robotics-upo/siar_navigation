@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /Marker1
+        - /Marker3
       Splitter Ratio: 0.5
     Tree Height: 775
   - Class: rviz/Selection
@@ -28,6 +29,8 @@ Panels:
     Name: Time
     SyncMode: 0
     SyncSource: ""
+Toolbars:
+  toolButtonStyle: 2
 Visualization Manager:
   Class: ""
   Displays:
@@ -88,7 +91,7 @@ Visualization Manager:
       Marker Topic: /path_marker
       Name: MarkerArray
       Namespaces:
-        {}
+        footprint: true
       Queue Size: 100
       Value: true
   Enabled: true
