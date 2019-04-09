@@ -265,7 +265,8 @@ void tRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_m
         q_new.command_lin = command.linear.x;
         q_new.command_ang = command.angular.z;
         // ROS_INFO("EL NODO q_new ha sido ACEPTADO para agregarce a la lista, los valore sson X=%f, Y=%f, th=%f",q_new.st.state[0],q_new.st.state[1],q_new.st.state[2] );
-        dist = new_dist;      
+        dist = new_dist;
+        cost_total += cost_wheels_Qnew;       
       }
     } 
   }
@@ -311,9 +312,6 @@ bool tRRT::transitionTest (NodeState q_near, NodeState q_new, NodeState q_rand){
     //  ROS_ERROR("Can't be apply the transitionTest --> The cost_Qnew of new_node exceeds the maximum cost");
     return 0;
   }
-
-  cost_total += cost_Qnew; 
-
   if(cost_Qnew < cost_Qnear ){ 
     //  ROS_ERROR("cost_Qnew < cost_Qnear, por lo tanto transition probability = 1, se acepta inmediatamente la configuracion");   
     return 1;

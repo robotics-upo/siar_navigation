@@ -344,7 +344,7 @@ RRTNode* tbiRRT::getNearestNode1(NodeState q_rand) {
           q_new.command_lin = command.linear.x;
           q_new.command_ang = command.angular.z;
           dist = new_dist;
-          
+          cost_total_1 += cost_wheels_Qnew1; 
         }
       }
       // ROS_INFO("En arbol 1 el st, new nodo es X = %f, Y = %f , th = %f", q_new.st.state[0],q_new.st.state[1],q_new.st.state[2]);  
@@ -475,8 +475,6 @@ bool tbiRRT::transitionTest1 (NodeState q_near, NodeState q_new, NodeState q_ran
     return 0;
   }
 
-  cost_total_1 += cost_Qnew; 
-
   if(cost_Qnew < cost_Qnear ){ 
     // ROS_ERROR("cost_Qnew < cost_Qnear, por lo tanto transition probability = 1, se acepta inmediatamente la configuracion");   
     return 1;
@@ -520,9 +518,6 @@ bool tbiRRT::transitionTest2 (NodeState q_near, NodeState q_new, NodeState q_ran
     // ROS_ERROR("Can't be apply the transitionTest --> The cost_Qnew of new_node exceeds the maximum cost");
     return 0;
   }
-
-  cost_total_2 += cost_Qnew; 
-
   if(cost_Qnew < cost_Qnear ){ 
     // ROS_ERROR("cost_Qnew < cost_Qnear, por lo tanto transition probability = 1, se acepta inmediatamente la configuracion");   
     return 1;

@@ -665,6 +665,8 @@ double CommandEvaluator::applyFootprintTransition(double x, double y, double th,
 
   for (unsigned int i = 0; i < size && !collision; i++) {
     index = point2index(fp[i].x, fp[i].y);
+    if (index < 0)
+      continue;
 
     ret_val += abs(alt_map.data[index]);
 
@@ -691,9 +693,6 @@ double CommandEvaluator::applyFootprintTransition(double x, double y, double th,
       }
     }
 
-    if (index < 0) {
-      continue;
-    }
     if (alt_map.data[index] == positive_obs ) {
       collision = true;
       ret_val = -1;
