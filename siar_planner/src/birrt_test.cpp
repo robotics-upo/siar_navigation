@@ -104,12 +104,10 @@ int main(int argc, char** argv){
 //   } 
   if (ofs.is_open()) {
     std::cout << "Guardado en archivo de salida: " << output_file << std::endl;
-    ofs << (t1 - t).toSec() << ","  
-//     << a.tree1.size() << ","
-//     << a.tree2.size() << ","
-//     << a.tree1.size() + a.tree2.size() << ","
-    << path.size() << std::endl;
-//     std::cout << "escribe texto" << std::endl;
+    ofs << (t1 - t).toSec() << "," << path.size() 
+    << "," << a.tree1.size() << "," << a.tree2.size() << "," << a.tree1.size() + a.tree2.size() 
+    << "," << a.retCostTotal() <<std::endl;
+
   } 
   else {
     std::cout << "No se puede abrir el archivo de salida" << std::endl;

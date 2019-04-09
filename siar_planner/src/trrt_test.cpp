@@ -83,7 +83,9 @@ int main(int argc, char** argv){
 
   if (ofs.is_open()) {
     std::cout << "Guardado en archivo de salida: " << output_file << std::endl;
-    ofs << (t1 - t).toSec() << ","  << path.size() << std::endl;
+    ofs << (t1 - t).toSec() << ","   << path.size() 
+    << "," << a.nodes.size() << ","
+    << a.retCostTotal() <<std::endl;
   } 
   else {
     std::cout << "No se puede abrir el archivo de salida" << std::endl;

@@ -4,9 +4,9 @@
 echo "Starting 100 birtt tests"
 
 
-for i in {1..100..1}
+for i in {1..10..1}
 do
-roslaunch siar_planner tbirrt_test_in_complex_scenario.launch &
+roslaunch siar_planner test_4_a_tbirrt_in_complex_scenario_turn_L.launch &
 echo "Concluded test $i"
 sleep 10
 done

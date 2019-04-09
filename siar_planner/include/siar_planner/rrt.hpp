@@ -24,11 +24,15 @@ public:
   double resolve(NodeState start, NodeState goal, std::list<RRTNode>& path);      
   
   SiarModel &getModel() {return m;}
+
+  std::list<RRTNode *> nodes;
   
 //   visualization_msgs::Marker getPathMarker(const std::list< RRTNode >& path);
   visualization_msgs::MarkerArray getPathMarker(const std::list< RRTNode >& path);
   
   visualization_msgs::Marker getGraphMarker();
+
+   double retCostTotal();
   
   double getDeltaT() const {return delta_t;}
   
@@ -38,8 +42,6 @@ protected:
   //int addNode(NodeState st, double comm_x = 0.0, double comm_ang = 0.0);
   void addNode(NodeState st, double comm_x = 0.0, double comm_ang = 0.0, RRTNode *parent = NULL); //darle uso a esta funcion
   void clear();
-  
-  std::list<RRTNode *> nodes;
   
   void isGoal(NodeState st);
   bool got_to_goal = false;
@@ -64,6 +66,7 @@ protected:
   double delta_t, cellsize_m, cellsize_rad;
   double wheel_decrease, last_wheel;
   double max_x, max_y, max_yaw, min_x, min_y, min_yaw; //de que tipo serian?
+  double cost_total = 0;
   
   
   SiarModel m;
@@ -220,7 +223,7 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
       //if didnt get a solution, do relaxation
       m.decreaseWheels(wheel_decrease, last_wheel);
       relax++;
-      ROS_ERROR("RRT::resolve -->  could not find a path -->  trying relaxation");    
+      ROS_ERROR("RRT::resolve -->  could not find a path -->  starting new iteration");    
     }
   }
   std::cout << "Numero de nodos en grafo: " << nodes.size() <<std::endl;
@@ -294,6 +297,7 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
 	q_new.command_lin = command.linear.x;
 	q_new.command_ang = command.angular.z;
 	dist = new_dist;
+  cost_total += cost;
       }
     }    
   }
@@ -440,5 +444,12 @@ visualization_msgs::Marker RRT::getGraphMarker()
   
   return m;
 }
+
+double RRT::retCostTotal(){
+ 
+  return cost_total;
+}
+
+
 
 #endif

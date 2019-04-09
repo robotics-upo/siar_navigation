@@ -28,6 +28,9 @@ public:
   visualization_msgs::Marker getGraphMarker();
   
   double getDeltaT() const {return delta_t;}
+
+  double  retCostTotal();
+  double cost_total = 0 , cost_total_1 = 0, cost_total_2= 0;
   
   std::list<RRTNode *> tree1;
   std::list<RRTNode *> tree2;
@@ -170,7 +173,7 @@ double tbiRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path
   clear();
   
   if (!m.isInit()) {
-    ROS_ERROR("biRRT::resolve --> The model has not been initialized --> could not calculate a path");
+    ROS_ERROR("tbiRRT::resolve --> The model has not been initialized --> could not calculate a path");
     return -1.0;
   }
 
@@ -239,7 +242,7 @@ double tbiRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path
     else{ 
       m.decreaseWheels(wheel_decrease, last_wheel);
       relax++;
-      ROS_ERROR("biRRT::resolve -->  could not find a path -->  trying relaxation");    
+      ROS_ERROR("tbiRRT::resolve -->  could not find a path -->  starting new iteration");    
     }
   }
   std::cout << "Numero de nodos totales: " << tree1.size()+tree2.size() <<std::endl;
@@ -340,7 +343,8 @@ RRTNode* tbiRRT::getNearestNode1(NodeState q_rand) {
           q_new.st = st; 
           q_new.command_lin = command.linear.x;
           q_new.command_ang = command.angular.z;
-          dist = new_dist; 
+          dist = new_dist;
+          cost_total_1 += cost_wheels_Qnew1; 
         }
       }
       // ROS_INFO("En arbol 1 el st, new nodo es X = %f, Y = %f , th = %f", q_new.st.state[0],q_new.st.state[1],q_new.st.state[2]);  
@@ -410,6 +414,7 @@ void tbiRRT::expandNode2(const NodeState &q_rand, RRTNode *q_near, int relaxatio
           q_near->command_lin = command.linear.x; //este dato se almacena en el hijo
           q_near->command_ang = command.angular.z;
           dist = new_dist;
+          cost_total_2 += cost_wheels_Qnew2; 
         }
       }
       // ROS_INFO("En arbol 2 el st, new nodo es X = %f, Y = %f , th = %f", q_new.st.state[0],q_new.st.state[1],q_new.st.state[2]); 
@@ -464,11 +469,12 @@ bool tbiRRT::transitionTest1 (NodeState q_near, NodeState q_new, NodeState q_ran
   }
   else {
     transition_probability = 1;
-  }  
+  } 
   if (cost_Qnew > cost_max){
     // ROS_ERROR("Can't be apply the transitionTest --> The cost_Qnew of new_node exceeds the maximum cost");
     return 0;
-  } 
+  }
+
   if(cost_Qnew < cost_Qnear ){ 
     // ROS_ERROR("cost_Qnew < cost_Qnear, por lo tanto transition probability = 1, se acepta inmediatamente la configuracion");   
     return 1;
@@ -511,7 +517,7 @@ bool tbiRRT::transitionTest2 (NodeState q_near, NodeState q_new, NodeState q_ran
   if (cost_Qnew > cost_max){
     // ROS_ERROR("Can't be apply the transitionTest --> The cost_Qnew of new_node exceeds the maximum cost");
     return 0;
-  } 
+  }
   if(cost_Qnew < cost_Qnear ){ 
     // ROS_ERROR("cost_Qnew < cost_Qnear, por lo tanto transition probability = 1, se acepta inmediatamente la configuracion");   
     return 1;
@@ -704,5 +710,13 @@ visualization_msgs::Marker tbiRRT::getGraphMarker()
   }
   return m;
 }
+
+double tbiRRT::retCostTotal(){
+  cost_total = cost_total_1 + cost_total_2;
+
+  return cost_total;
+}
+
+
 
 #endif
