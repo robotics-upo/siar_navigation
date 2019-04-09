@@ -48,8 +48,8 @@ protected:
   
   // Choose a Planner
   //RRT planner;
-  //biRRT planner;
-  tRRT planner;
+  biRRT planner;
+  //tRRT planner;
   //tbiRRT planner;
   
   // Status flag
