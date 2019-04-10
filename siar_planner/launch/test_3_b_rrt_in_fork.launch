@@ -12,14 +12,20 @@
   <!--Start the map server for the path planner-->
   <node name="map_server" pkg="map_server" type="map_server" args="$(find siar_planner)/test/$(arg map)" output="screen"/>
   
-  <node name="rrt_test" pkg="siar_planner" type="rrt_test" output="screen" if="$(arg debug)" launch-prefix="xterm -e gdb args">
+  <node name="rrt_test" pkg="siar_planner" type="rrt_test" output="screen" if="$(arg debug)" launch-prefix="xterm -e gdb --args">
     <remap from="/altitude_map" to="/map"/>
     <rosparam file="$(find siar_planner)/test/$(arg config)" command="load"  /> 
     <rosparam file="$(find siar_planner)/test/$(arg problem)" command="load"  /> 
     <param name="velocity_file" value="$(find siar_planner)/test/$(arg velocity_file)" />
     <param name="output_file" type="string" value="$(find siar_planner)/output_files/test_3_b_rrt_results_in_fork_1.txt" />
   </node>
-
+  <node name="rrt_test" pkg="siar_planner" type="rrt_test" output="screen" unless="$(arg debug)">
+    <remap from="/altitude_map" to="/map"/>
+    <rosparam file="$(find siar_planner)/test/$(arg config)" command="load"  /> 
+    <rosparam file="$(find siar_planner)/test/$(arg problem)" command="load"  /> 
+    <param name="velocity_file" value="$(find siar_planner)/test/$(arg velocity_file)" />
+    <param name="output_file" type="string" value="$(find siar_planner)/output_files/test_3_b_rrt_results_in_fork_1.txt" />
+  </node>
   <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find siar_planner)/test/test.rviz"/> -->
   <!-- <node pkg="rviz" type="rviz" name="rviz"/> -->
 </launch>
