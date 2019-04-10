@@ -252,7 +252,7 @@ CommandEvaluator::CommandEvaluator(double w_dist, double w_safe, double T, const
 CommandEvaluator::CommandEvaluator(ros::NodeHandle& pn):m_model(pn),footprint(NULL)
 {
 
-  pn.param("w_dist", m_w_dist, 1.0);
+  pn.param("w_dist", m_w_dist, 0.0);
   pn.param("w_safe", m_w_safe, 1.0);
   pn.param("delta_T", m_delta_T, 0.2);
   pn.param("T", m_T, 3.0);
@@ -522,7 +522,7 @@ double CommandEvaluator::evaluateTrajectoryTransition(const geometry_msgs::Twist
     // Actualize the cost
     // ROS_ERROR("Realizado el STEP %i de evaluateTrajectoryTransition para diferentes posiciones", i+1);
     cont_footprint += applyFootprintTransition(x, y, th, alt_map, collision, collision_wheels);
-    cont_footprint_constant += 0.2;
+    cont_footprint_constant += 0;
 
   }
 

@@ -30,7 +30,8 @@ public:
   
   double getDeltaT() const {return delta_t;}
   std::list<RRTNode *> nodes;
-  double retCostTotal();
+
+  RRTNode goal_node;
 
 protected:
   tRRT();
@@ -39,8 +40,7 @@ protected:
   
   void isGoal(NodeState st);
   bool got_to_goal = false;
-  
-  RRTNode goal_node;
+
   RRTNode start_node;
   
   
@@ -68,7 +68,6 @@ protected:
   double delta_t, cellsize_m, cellsize_rad;
   double wheel_decrease, last_wheel;
   double max_x, max_y, max_yaw, min_x, min_y, min_yaw; //de que tipo serian?
-  double cost_total = 0;
   
   SiarModel m;
   double goal_gap_m, goal_gap_rad;
@@ -266,7 +265,7 @@ void tRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_m
         q_new.command_ang = command.angular.z;
         // ROS_INFO("EL NODO q_new ha sido ACEPTADO para agregarce a la lista, los valore sson X=%f, Y=%f, th=%f",q_new.st.state[0],q_new.st.state[1],q_new.st.state[2] );
         dist = new_dist;
-        cost_total += cost_wheels_Qnew;       
+        q_new.cost = cost_wheels_Qnew; // New field:cost        
       }
     } 
   }
@@ -277,9 +276,11 @@ void tRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_m
       goal_node.parent = q_near; 
       goal_node.command_lin = q_new.command_lin; 
       goal_node.command_ang = q_new.command_ang;
+      goal_node.cost = q_new.cost + q_near->cost; // New field:cost
     }
     else{
       q_new.parent = q_near;
+      q_new.cost += q_near->cost; // Accumulate the parent cost 
       RRTNode *new_node = new RRTNode(q_new); 
       q_near->children.push_back(new_node);
       nodes.push_back(new_node);	
@@ -378,7 +379,7 @@ visualization_msgs::MarkerArray tRRT::getPathMarker(const std::list< RRTNode >& 
 {
   visualization_msgs::MarkerArray ret;
   visualization_msgs::Marker m_aux;
-
+  m_aux.lifetime = ros::Duration(2);
   int cont = 0;
   NodeState pt;
   for (auto it = path.begin(); it != path.end(); it++, cont++) {
@@ -440,12 +441,8 @@ visualization_msgs::Marker tRRT::getGraphMarker()
   
     color = new_color;
   }
+  m.lifetime = ros::Duration(2);
   return m;
-}
-
-double tRRT::retCostTotal(){
- 
-  return cost_total;
 }
 
 

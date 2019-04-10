@@ -7,6 +7,7 @@ struct RRTNode
   NodeState st;
   double command_lin; //parent to child command
   double command_ang;
+  double cost;
   RRTNode *parent;
   std::vector<RRTNode*> children;
   //std::list<RRTNode*> children;

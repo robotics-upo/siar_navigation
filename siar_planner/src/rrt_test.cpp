@@ -39,8 +39,8 @@ int main(int argc, char** argv){
   pnh.param("x_g", x_g, 0.0);
   pnh.param("y_g", y_g, 0.0);
   pnh.param("a_g", a_g, 0.0);
-  
   pnh.param("output_file", output_file, std::string ("~/test.txt"));
+  
 //   pnh.param("output_file", output_file);
   
   ROS_INFO("START: (%f, %f, %f)\t\tGOAL: (%f, %f, %f)", x_0, y_0, a_0, x_g, y_g, a_g);
@@ -104,9 +104,10 @@ int main(int argc, char** argv){
 //   } 
   if (ofs.is_open()) {
     std::cout << "Guardado en archivo de salida: " << output_file << std::endl;
-    ofs << (t1 - t).toSec() << "," << path.size() 
+    ofs << (t1 - t).toSec() << "," << path.size()* a.getDeltaT() << "," << path.size() 
     << "," << a.nodes.size()
-    << "," << a.retCostTotal() <<std::endl;
+    << "," << a.goal_node.cost 
+    <<std::endl;
   } 
   else {
     std::cout << "No se puede abrir el archivo de salida" << std::endl;
@@ -114,7 +115,15 @@ int main(int argc, char** argv){
   ofs.close();
   
   
-  ros::spin();
-  
+  if (pnh.hasParam("wait")) {
+    ros::spin();
+  }
+  else {
+    ros::spinOnce();
+    int sleep_time;
+    pnh.param("sleep_time", sleep_time, 1000000);
+    usleep(sleep_time);
+    ros::spinOnce();   
+  }
   return 0;
 }

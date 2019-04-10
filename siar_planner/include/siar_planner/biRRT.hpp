@@ -23,7 +23,6 @@ public:
   
   double resolve(NodeState start, NodeState goal, std::list<RRTNode>& path); 
   double resolve_expand1(NodeState start, NodeState goal, std::list<RRTNode>& path);
-  double retCostTotal();
   
   SiarModel &getModel() {return m;}
   
@@ -37,23 +36,19 @@ public:
   std::list<RRTNode *> tree1;
   std::list<RRTNode *> tree2;
   
+  RRTNode *q_final_1 = NULL;
+  RRTNode *q_final_2 = NULL;
   
 protected:
   biRRT();
   
   void clear();
-  
-//   std::list<RRTNode *> tree1;
-//   std::list<RRTNode *> tree2;
-  
+    
   RRTNode* areConnected(NodeState st, bool direct);
   bool got_connected = false;
   
   RRTNode goal_node;
   RRTNode start_node;
-  RRTNode *q_final_1 = NULL;
-  RRTNode *q_final_2 = NULL;
-  
   
   //new functions
   NodeState getRandomState(double max_x, double max_y, double max_yaw, double min_x, double min_y, double min_yaw);
@@ -74,8 +69,6 @@ protected:
   double wheel_decrease, last_wheel;
   double max_x, max_y, max_yaw, min_x, min_y, min_yaw; //de que tipo serian?
   double x_g, y_g, x_0, y_0;
-  double cost_total = 0;
-  
   
   SiarModel m;
   double goal_gap_m, goal_gap_rad;
@@ -147,28 +140,6 @@ biRRT::biRRT(ros::NodeHandle &nh, ros::NodeHandle &pnh):m(nh, pnh), gen(rd()), d
   if (!pnh.getParam("max_yaw", max_yaw)) {
     max_yaw = 1;
   }
-  
-//   pnh.param("x0", x_0, 0.0);
-//   pnh.param("y0", y_0, 0.0); 
-//   pnh.param("x_g", x_g, 0.0);
-//   pnh.param("y_g", y_g, 0.0);
-//   if (x_0 > x_g) {
-//     max_x = 1;
-//     min_x = 0;
-//   }
-//   else {
-//     max_x = 1;
-//     min_x = 0;
-//   }
-//   if (y_0 > y_g) {
-//     max_y = 1;
-//     min_y = 0;
-//   }
-//   else {
-//     max_y = 1;
-//     min_y = 0;
-//   }
-  
   if (!pnh.getParam("samp_goal_rate", samp_goal_rate)) {
     samp_goal_rate = 10;
   }
@@ -401,7 +372,7 @@ RRTNode* biRRT::getNearestNode(NodeState q_rand, bool primary_tree) {
     for (auto n: tree1){ 
       new_dist = sqrt(pow(q_rand.state[0] - n->st.state[0],2) + pow(q_rand.state[1] - n->st.state[1],2)); 
       if (new_dist < dist) {
-	q_near = n; 
+        q_near = n; 
         dist = new_dist;
       }
     } 
@@ -410,7 +381,7 @@ RRTNode* biRRT::getNearestNode(NodeState q_rand, bool primary_tree) {
     for (auto n: tree2){ 
       new_dist = sqrt(pow(q_rand.state[0] - n->st.state[0],2) + pow(q_rand.state[1] - n->st.state[1],2)); 
       if (new_dist < dist) {
-	q_near = n; 
+	      q_near = n; 
         dist = new_dist;
       }
     } 
@@ -422,7 +393,7 @@ RRTNode* biRRT::getNearestNode1(NodeState q_rand) {
   RRTNode *q_near = NULL; 
   double dist = std::numeric_limits<double>::infinity(); 
   double new_dist;
-//   TODO hacer una busqueda más eficiente  
+  //   TODO hacer una busqueda más eficiente  
   for (auto n: tree1){ 
     new_dist = sqrt(pow(q_rand.state[0] - n->st.state[0],2) + pow(q_rand.state[1] - n->st.state[1],2)); 
     if (new_dist < dist) {
@@ -453,147 +424,81 @@ void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_
   for (int i = 0; i < K; i++) {
     NodeState st = q_near->st;
     geometry_msgs::Twist command = m.generateRandomCommand();
-//     std::cout << "El comando es " << command <<std::endl;
+    //     std::cout << "El comando es " << command <<std::endl;
     double cost;
     if (direct){
       cost = m.integrate(st, command, delta_t, relaxation_mode >= 1); // If relaxation_mode >= 1 --> allow two wheels
       
       if (cost < 0.0) {
-// 	std::cout << "Colision " <<std::endl;
+        // 	std::cout << "Colision " <<std::endl;
       }
       else{
-// 	std::cout << "Se encuentra nodo sin colision " <<std::endl;
-	// get node with minimum distance
-	is_new_node = true;
-	new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
-	if (new_dist<dist) {
-	  q_new.st = st; 
-	  q_new.command_lin = command.linear.x;
-	  q_new.command_ang = command.angular.z;
-	  dist = new_dist; 
-	}
+        // std::cout << "Se encuentra nodo sin colision " <<std::endl;
+        // get node with minimum distance
+        is_new_node = true;
+        new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
+        if (new_dist<dist) {
+          q_new.st = st; 
+          q_new.command_lin = command.linear.x;
+          q_new.command_ang = command.angular.z;
+          dist = new_dist; 
+          q_new.cost = cost;
+        }
       }
     }
-    
     else{
       cost = m.integrate(st, command, -(delta_t), relaxation_mode >= 1); // si direct es false, entonces le paso delta_t <0 a la integracion
       if (cost < 0.0) {
-// 	std::cout << "Colision " <<std::endl;
+        // 	std::cout << "Colision " <<std::endl;
       }
       else{
-// 	std::cout << "Se encuentra nodo sin colision " <<std::endl;
-	// get node with minimum distance
-	is_new_node = true;
-	new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
-	if (new_dist<dist) {
-	  q_new.st = st; 
-	  q_near->command_lin = command.linear.x; //este dato se almacena en el hijo
-	  q_near->command_ang = command.angular.z;
-	  dist = new_dist;
-    cost_total += cost;
-	}
+        // 	std::cout << "Se encuentra nodo sin colision " <<std::endl;
+        // get node with minimum distance
+        is_new_node = true;
+        new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
+        if (new_dist<dist) {
+          q_new.st = st; 
+          q_near->command_lin = command.linear.x; //este dato se almacena en el hijo
+          q_near->command_ang = command.angular.z;
+          dist = new_dist;
+          q_new.cost = cost;
+        }
       }
     }  
   }
   //check if there is a new node and add it to the graph (unless its the goal)
   if (is_new_node){
-    RRTNode *q_closest = areConnected(q_new.st, direct); //este q_closest solo lo uso si got_connected=true; si es direct, q_closest sera un hijo, si no, sera un padre
-    
+    RRTNode *q_closest = areConnected(q_new.st, direct); 
     if(direct){
       q_new.parent = q_near;
-      RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
+      q_new.cost += q_near->cost; // Accumulate the parent cost 
+      RRTNode *new_node = new RRTNode(q_new); 
       q_near->children.push_back(new_node);
       tree1.push_back(new_node);
       if(got_connected){
-	q_final_1 = new_node;
-	q_final_2 = q_closest;
+        q_final_1 = new_node;
+        q_final_2 = q_closest;
+        q_final_1->cost = q_new.cost + q_near->cost;
+        q_final_2->cost = q_closest->cost;
       }
     }     
     else{
-// 	std::cout << "hay un nodo indirecto " <<std::endl;
-      q_near->command_lin = q_new.command_lin; //esto debe recibirlo el nodo final del desplazamiento normal, que en este caso es q_near
+      q_near->command_lin = q_new.command_lin;
       q_near->command_ang = q_new.command_ang;
       q_new.command_lin = 0;
       q_new.command_ang = 0;
-      
       q_new.parent = q_near;
-      RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
+      q_new.cost += q_near->cost; // Accumulate the parent cost 
+      RRTNode *new_node = new RRTNode(q_new); 
       q_near->children.push_back(new_node);
       tree2.push_back(new_node);
       if(got_connected){
-	q_final_2 = new_node;
-	q_final_1 = q_closest;
+        q_final_2 = new_node;
+        q_final_1 = q_closest;
+        q_final_2->cost = q_new.cost + q_near->cost;
+        q_final_1->cost = q_closest->cost;
       }      
     }
-      
-//     //esto tambien depende, si es direct o no
-//     if(got_connected){
-//       std::cout << "Llego a la conexion " <<std::endl;
-//       if(direct){
-// 	std::cout << "Llego hasta aqui 1 " << q_closest->st.state[0] <<std::endl;
-// // 	q_final_1->st = q_closest->st;
-// 	RRTNode prueba = *q_closest;
-// 	std::cout << "Llego hasta aqui 1" <<std::endl;
-// // 	*q_final_1 = *q_closest;
-// 	q_final_1 = &prueba;
-// // 	q_final_1 = new RRTNode(q_closest);
-// // 	q_final_1->st = q_new.st;
-// 	std::cout << "Llego hasta aqui 1" <<std::endl;
-// 	q_near->children.push_back(q_final_1); //considero q_closest casi igual a q_new
-// 	q_final_1->parent = q_near; 
-// 	q_final_1->command_lin = q_new.command_lin; 
-// 	q_final_1->command_ang = q_new.command_ang; //no hay que añadirlo al tree pork es igual a q_closest que si esta añadido
-// 	q_final_2 = q_closest;
-// 	std::cout << "Llego al final" <<std::endl;
-//       }
-//       else{
-// 	std::cout << "Llego hasta aqui 2 " << q_closest->st.state[0] << std::endl;
-// // 	q_final_2->st = q_closest->st;
-// 	RRTNode prueba = *q_closest;
-// 	std::cout << "Llego hasta aqui 2" <<std::endl;
-// 	q_final_2 = &prueba;
-// // 	*q_final_2 = *q_closest;
-// // 	q_final_2->st = q_new.st;
-// 	std::cout << "Llego hasta aqui 2" <<std::endl;
-// 	q_near->children.push_back(q_final_2); //considero q_closest casi igual a q_new
-// 	q_final_2->parent = q_near; 
-// 	q_near->command_lin = q_new.command_lin; 
-// 	q_near->command_ang = q_new.command_ang;
-// 	q_final_1 = q_closest;
-// 	std::cout << "Llego al final" <<std::endl;
-// 	
-// // 	q_closest->children.push_back(q_near); //considero q_closest casi igual a q_new
-// // 	q_near->parent = q_closest; 
-// // 	q_near->command_lin = q_new.command_lin; 
-// // 	q_near->command_ang = q_new.command_ang;
-//       }      
-//     }
-//     else{
-//       if(direct){
-// 	q_new.parent = q_near;
-// 	RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
-// 	q_near->children.push_back(new_node);
-// 	tree1.push_back(new_node);
-//       }
-//       else{
-// // 	std::cout << "hay un nodo indirecto " <<std::endl;
-// // 	q_near->parent = &q_new;
-// 	q_near->command_lin = q_new.command_lin; //esto debe recibirlo el nodo final del desplazamiento normal, que en este caso es q_near
-// 	q_near->command_ang = q_new.command_ang;
-// 	q_new.command_lin = 0;
-// 	q_new.command_ang = 0;
-// 	
-// 	q_new.parent = q_near;
-// 	RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
-// 	q_near->children.push_back(new_node);
-// 	tree2.push_back(new_node);
-// 	
-// // 	RRTNode *new_node = new RRTNode(q_new); 
-// // 	new_node->children.push_back(q_near);
-// // 	q_near->parent = new_node;  //es este el que hay k pasar??
-// // 	tree2.push_back(new_node);
-//       }
-//     }
   }
 }
 
@@ -602,19 +507,19 @@ RRTNode* biRRT::areConnected(NodeState st, bool direct) {
   RRTNode *q_closest = NULL;  
   double new_dist;
   if(direct){
-    for (auto n: tree2){ //si hago integracion positiva obtengo nodo de tree1, debo compraralo con tree2
+    for (auto n: tree2){ 
       new_dist = sqrt(pow(st.state[0] - n->st.state[0],2) + pow(st.state[1] - n->st.state[1],2)); 
       if (new_dist < dist) {
-	q_closest = n; 
+	      q_closest = n; 
         dist = new_dist;
       }
     }  
   }
   else{
-    for (auto n: tree1){ //si hago integracion positiva obtengo nodo de tree1, debo compraralo con tree2
+    for (auto n: tree1){ 
       new_dist = sqrt(pow(st.state[0] - n->st.state[0],2) + pow(st.state[1] - n->st.state[1],2)); 
       if (new_dist < dist) {
-	q_closest = n; 
+      	q_closest = n; 
         dist = new_dist;
       }
     }
@@ -698,6 +603,8 @@ visualization_msgs::MarkerArray biRRT::getPathMarker(const std::list< RRTNode >&
   visualization_msgs::MarkerArray ret;
   visualization_msgs::Marker m_aux;
 
+  m_aux.lifetime = ros::Duration(2);
+
   int cont = 0;
   NodeState pt;
   for (auto it = path.begin(); it != path.end(); it++, cont++) {
@@ -715,7 +622,11 @@ visualization_msgs::MarkerArray biRRT::getPathMarker(const std::list< RRTNode >&
       m_aux.color.a=1.0;
       m_aux.color.g=0.2;
       m_aux.color.r=0.2;
+
+      
+
       ret.markers.push_back(m_aux);
+
     }
   }
   return ret;
@@ -770,13 +681,9 @@ visualization_msgs::Marker biRRT::getGraphMarker()
     m.points.push_back(p1); 
     m.colors.push_back(color);   
   }
-  
+  m.lifetime = ros::Duration(2);
   return m;
 }
 
-double biRRT::retCostTotal(){
- 
-  return cost_total;
-}
 
 #endif
