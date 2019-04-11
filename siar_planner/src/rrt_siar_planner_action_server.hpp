@@ -47,8 +47,8 @@ protected:
   ros::Time start_time, end_time;
   
   // Choose a Planner
-  //RRT planner;
-  biRRT planner;
+  RRT planner;
+  //biRRT planner;
   //tRRT planner;
   //tbiRRT planner;
   
