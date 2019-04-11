@@ -13,28 +13,35 @@ from threading import Thread, Lock
 
 class PathTracker:    
   def path_callback(self, new_path):
+      
       self.mutex.acquire()
       self.path = Path()
-      self.path.poses
-      self.path.header = new_path.header
-      self.path.header.frame_id = global_frame_id
+      self.path.header.stamp = new_path.header.stamp
+      self.path.header.seq = new_path.header.seq
+      self.path.header.frame_id = self.global_frame_id
       
-      self.path_len = len(self.path.poses)
-      print ("New path received. Length: {0}". format(self.path_len))
-            
-      # TODO: Transform the path to the base frame
-      if (path.header.frame_id != self.global_frame_id)
-        for i in range(len( new_path.poses ))
-            try
+      self.path_len = len(new_path.poses)
+      
+      print "New path received. Frame id: {0}. Global frame id: {1}".format( new_path.header.frame_id, self.global_frame_id)
+      
+      for i in range(len( new_path.poses )):
+	if new_path.header.frame_id != self.global_frame_id:
+            try:
+	        print "Waypoint {0}".format(i)
                 new_pose = self.listener.transformPose(global_frame_id, new_path.poses[i])
                 self.path.poses.append(new_pose)
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+	        print "SiarPathTracker error: could not get transform"
                 continue
+	else:
+	  self.path.poses.append(new_path.poses[i]);
+	      
+      print "New path received. Length: {0}. New path length: {1}". format(len(new_path.poses), len(self.path.poses))
       self.active_path = True
       self.curr_wp = 0
       self.mutex.release()
       
-  def __init__():
+  def __init__(self):
     # Default parameters
     self.base_frame_id = rospy.get_param('~base_frame_id', default="/base_link")
     self.global_frame_id = rospy.get_param('~global_frame_id', default="/world")
@@ -51,16 +58,16 @@ class PathTracker:
     self.cmd_vel_pub = rospy.Publisher('cmd_vel',Twist, queue_size=2)
     self.listener = tf.TransformListener()
     
-  def loop_function:
+  def loop_function(self):
     rate = rospy.Rate(10.0)
     while not rospy.is_shutdown():
         cmd = Twist()
         cmd.linear.x = 0
         cmd.angular.z = 0
-        if (self.active_path):
+        if self.active_path and len(self.path.poses) > 0:
             self.mutex.acquire()
             try:
-                (trans,rot) = listener.lookupTransform(self.global_frame_id, self.base_frame_id, rospy.Time(0))
+                (trans,rot) = self.listener.lookupTransform(self.global_frame_id, self.base_frame_id, rospy.Time(0))
                 # Search for the closest node
                 min_dist = 1e100
                 new_min = False
@@ -73,13 +80,14 @@ class PathTracker:
                         new_min = True
                         min_dist = d
                     else:
-                        if new_min = False:
+                        if new_min == False:
                             self.curr_wp = i - 1
                             break # If the distance increases, we found the current waypoint
                         
                 #Get the new target taking into account the lookahead
-                target_node = min(self.curr_wp + self.lookahead, len(self.path.poses))
-                p = self.path.target_node.poses[target_node]
+                target_node = min(self.curr_wp + self.lookahead, len(self.path.poses) - 1)
+                print "Target node {0}, length:{1}".format(target_node, len(self.path.poses))
+                p = self.path.poses[target_node]
                 dist[0] = trans[0] - p.pose.position.x
                 dist[1] = trans[1] - p.pose.position.y
                 d = dist[0]**2 + dist[1]**2
@@ -97,10 +105,16 @@ class PathTracker:
     
 if __name__ == '__main__':
   rospy.init_node("siar_path_tracker")
-  PathTracker tracker()
+  tracker = PathTracker()
+  print "Tracker created"
   
-  # Spin until ctrl + c  
+  #Generate the path follower thread
   t = Thread(target=tracker.loop_function)
   t.daemon = True
-  t.start()  
+  t.start()
+  
+  # Spin until ctrl + c  
+  
   rospy.spin()
+    
+  
