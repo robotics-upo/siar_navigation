@@ -1,7 +1,6 @@
 #ifndef SIAR_PLANNER_ACTION_SERVER_HPP__
 #define SIAR_PLANNER_ACTION_SERVER_HPP__
 
-#include "siar_planner/PassForkAction.h"
 #include <ros/ros.h>
 
 #include "siar_planner/rrt.hpp"
@@ -10,55 +9,57 @@
 #include "siar_planner/tbiRRT.hpp"
 
 #include <std_msgs/Bool.h>
-#include <actionlib/server/simple_action_server.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <visualization_msgs/Marker.h>
 #include "visualization_msgs/MarkerArray.h"
 #include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Path.h>
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
 
 //! @class This class takes as inputs a desired 2D pose (with yaw) or a desired direction in the fork and tries to get a path
-//! TODO: output a sequence of cmd_vel!! 
 
-class SiarPlannerActionServer 
+template <typename T> class SiarPlannerActionServer 
 {
 public:
   
-  SiarPlannerActionServer(ros::NodeHandle &nh, ros::NodeHandle &pnh);
-  
-  //! @brief Start new action
-  void passFork(const siar_planner::PassForkGoal::ConstPtr& goal);
-  
-  bool getCurrentVel(geometry_msgs::Twist &curr_cmd);
-  
-  double getDeltaT() const {return planner.getDeltaT();}
+  SiarPlannerActionServer(ros::NodeHandle& nh, ros::NodeHandle& pnh):reverse(false)
+{
+  // Publishers
+  path_marker_pub = nh.advertise<visualization_msgs::MarkerArray>("path_marker", 2, true);
+  graph_pub = nh.advertise<visualization_msgs::Marker>("graph_marker", 2, true);
+  path_pub = nh.advertise<nav_msgs::Path>("planned_path", 2, true);
+
+  // Subscribers
+  reverse_sub = nh.subscribe("/reverse", 1, &SiarPlannerActionServer::reverseCB, this);
+  goal_sub = nh.subscribe("/move_base_simple/goal", 1, &SiarPlannerActionServer::goalCB, this);
+
+  planner = new T(nh,pnh);
+  pnh.param("base_frame_id", base_frame_id, std::string("base_link"));
+}
+
+  double getDeltaT() const {return planner->getDeltaT();}
   
 protected:
   ros::NodeHandle nh_;
-  typedef actionlib::SimpleActionServer<siar_planner::PassForkAction> PFActionServer;
-  PFActionServer PFActionServer_;
   ros::Subscriber reverse_sub, goal_sub; // Also the commands can be sent as a regular topic (without action server)
-  ros::Publisher path_pub; 
-  ros::Publisher graph_pub;
+  ros::Publisher path_marker_pub, graph_pub, path_pub;
+  tf::TransformListener tfl;
+
+  std::string base_frame_id; // Frame of the robot (usually /base_link)
   
   // Path related info
   std::list<RRTNode> curr_path;
-  ros::Time start_time, end_time;
   
   // Choose a Planner
-  RRT planner;
-  //biRRT planner;
-  //tRRT planner;
-  //tbiRRT planner;
+  T *planner;
   
   // Status flag
   bool reverse;
   
-  void goalCB();
-  
-  void goalCB(const geometry_msgs::PoseStamped::ConstPtr &msg);
-  
+  void goalCB(const geometry_msgs::PoseStamped_< std::allocator< void > >::ConstPtr& msg ) {
+    calculatePath(*msg);
+  }
   
   // ROS Communication stuff -----------------------------
   //! @brief To cancel an ongoing action
@@ -68,115 +69,63 @@ protected:
     reverse = (msg->data != 0);
   }
   
-  //! @brief Calculates path and gets the 
-  void calculatePath(const geometry_msgs::PoseStamped &pose);
+  //! @brief Calculates path and gets the solution
+  void calculatePath(const geometry_msgs::PoseStamped &pose) {
+    NodeState start, goal;
+    ros::Time t0, t1;
+    t0 = ros::Time::now();
+    start.state.push_back(0);start.state.push_back(0);start.state.push_back(0);
+    
+    // TODO: transform the pose (now it assumes it is indicated in base_link)
+    auto tf_pose = pose;
+    try {
+      
+      if (pose.header.frame_id != base_frame_id) {
+        tfl.transformPose(base_frame_id, pose, tf_pose);
+      }
+    } catch (std::exception &e) {
+      ROS_ERROR("siar_planner_as::calculatePath --> could not transform the pose");
+    }
+    
+    goal.state.push_back(tf_pose.pose.position.x);
+    goal.state.push_back(tf_pose.pose.position.y);
+    
+    // Conversion from quaternion message to yaw
+    double roll, pitch, yaw;
+    tf::Quaternion q(tf_pose.pose.orientation.x, tf_pose.pose.orientation.y, tf_pose.pose.orientation.z, tf_pose.pose.orientation.w);
+    tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
+    goal.state.push_back(yaw);
+    
+    
+    //double cost = a_star.getPath(start, goal, curr_path);
+    double cost = planner->resolve(start, goal, curr_path);
+    
+    t1 = ros::Time::now();
+    ROS_INFO("Path calculated. Cost = %f.\t Expended time: %f", cost, (t1 - t0).toSec());
+    
+    visualization_msgs::MarkerArray m = planner->getPathMarker(curr_path);
+    path_marker_pub.publish(m);
+    graph_pub.publish(planner->getGraphMarker());
+
+    nav_msgs::Path path;
+    path.header.frame_id = base_frame_id;
+    path.header.stamp = ros::Time::now();
+
+    auto time_ = ros::Time::now();
+    for (auto x:curr_path) {
+      geometry_msgs::PoseStamped p;
+      p.header.stamp = time_;
+      // time_ = time_ + ros::Duration(planner->getDeltaT);
+      p.pose.position.x = x.st.state[0];
+      p.pose.position.y = x.st.state[1];
+      tf::Quaternion q;
+      q.setRPY(0,0, x.st.state[2]);
+      tf::quaternionTFToMsg(q, p.pose.orientation);
+      path.poses.push_back(p);
+    }
+
+    path_pub.publish(path); 
+  }
 };
-
-SiarPlannerActionServer::SiarPlannerActionServer(ros::NodeHandle& nh, ros::NodeHandle& pnh):PFActionServer_(nh_, "pass_fork", false), 
-planner(nh, pnh),reverse(false)
-{
-  //register the goal and feeback callbacks
-  PFActionServer_.registerGoalCallback(boost::bind(&SiarPlannerActionServer::goalCB, this));
-//   PFActionServer_.registerPreemptCallback(boost::bind(&SiarPlannerActionServer::preemptCB, this, _1));
-  
-  // Publishers
-  path_pub = nh.advertise<visualization_msgs::MarkerArray>("path_marker", 2, true);
-  graph_pub = nh.advertise<visualization_msgs::Marker>("graph_marker", 2, true);
-
-  // Subscribers
-  reverse_sub = nh.subscribe("/reverse", 1, &SiarPlannerActionServer::reverseCB, this);
-  goal_sub = nh.subscribe("/move_base_simple/goal", 1, &SiarPlannerActionServer::goalCB, this);
-  // Start server
-  PFActionServer_.start();
-}
-
-void SiarPlannerActionServer::passFork(const siar_planner::PassForkGoal_< std::allocator< void > >::ConstPtr& goal_msg)
-{
-  // TODO: How to infere the goal from the map?
-  ros::Rate r(0.1);
-  
-  if (goal_msg->direction == 0) {
-    // Straight --> just go forward a certain distance? 
-    geometry_msgs::PoseStamped pose;
-    pose.header.frame_id = planner.getModel().getFrameID();
-  }
-}
-
-void SiarPlannerActionServer::calculatePath(const geometry_msgs::PoseStamped &pose) {
-  NodeState start, goal;
-  ros::Time t0, t1;
-  t0 = ros::Time::now();
-  start.state.push_back(0);start.state.push_back(0);start.state.push_back(0);
-  
-  // TODO: transform the pose (now it assumes it is indicated in base_link
-  
-  goal.state.push_back(pose.pose.position.x);
-  goal.state.push_back(pose.pose.position.y);
-  
-  // Conversion from quaternion message to yaw (TODO: Is there a better way to do this?)
-  double roll, pitch, yaw;
-  tf::Quaternion q(pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w);
-  tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
-  goal.state.push_back(yaw);
-  
-  //double cost = a_star.getPath(start, goal, curr_path);
-  double cost = planner.resolve(start, goal, curr_path);
-  
-  t1 = ros::Time::now();
-  ROS_INFO("Path calculated. Cost = %f.\t Expended time: %f", cost, (t1 - t0).toSec());
-  
-  //visualization_msgs::Marker m = a_star.getPathMarker(curr_path);
-  visualization_msgs::MarkerArray m = planner.getPathMarker(curr_path);
-  path_pub.publish(m);
-  graph_pub.publish(planner.getGraphMarker());
-  
-  start_time = ros::Time::now();
-  end_time = start_time + ros::Duration(planner.getDeltaT() * curr_path.size());
-}
-
-void SiarPlannerActionServer::goalCB(const geometry_msgs::PoseStamped_< std::allocator< void > >::ConstPtr& msg ) {
-  calculatePath(*msg);
-}
-
-void SiarPlannerActionServer::goalCB()
-{
-  auto msg = PFActionServer_.acceptNewGoal();
-  ROS_INFO("Accepted new direction: %u", msg->direction);
-  // TODO: Infere the new goal position from the direction to be traversed the gutter
-//   calculatePath(*msg);
-}
-
-bool SiarPlannerActionServer::getCurrentVel(geometry_msgs::Twist& curr_cmd)
-{
-  ros::Time t = ros::Time::now();
-  
-  curr_cmd.linear.y = curr_cmd.linear.z = curr_cmd.angular.x = curr_cmd.angular.y = 0.0;
-  curr_cmd.linear.x = curr_cmd.angular.z = 0.0;
-  
-  if (t < start_time || t > end_time) {
-    return false;
-  }
-  
-  double mission_t = (t - start_time).toSec();
-  
-  int n = floor(mission_t / planner.getDeltaT() );
-  
-  ROS_INFO("getCurrentVel. T - Start_time= %f\t n = %d", (t - start_time).toSec(), n);
-  
-  int cont = 0;
-  auto it = curr_path.begin();
-  for (; cont < n; cont++, it++) {
-  }
-  
-  
-  
-  curr_cmd.linear.x = it->command_lin;
-  curr_cmd.angular.z = it->command_ang;
-  
-  
-  return true;
-}
-
-
 
 #endif

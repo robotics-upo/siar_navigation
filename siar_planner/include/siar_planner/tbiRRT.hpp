@@ -28,12 +28,11 @@ public:
   visualization_msgs::Marker getGraphMarker();
   
   double getDeltaT() const {return delta_t;}
-
-  double  retCostTotal();
-  double cost_total = 0 , cost_total_1 = 0, cost_total_2= 0;
   
   std::list<RRTNode *> tree1;
   std::list<RRTNode *> tree2;
+  RRTNode *q_final_1 = NULL;
+  RRTNode *q_final_2 = NULL;
   
 protected:
   tbiRRT();
@@ -45,9 +44,7 @@ protected:
   
   RRTNode goal_node;
   RRTNode start_node;
-  RRTNode *q_final_1 = NULL;
-  RRTNode *q_final_2 = NULL;
-  
+   
   //new functions
   NodeState getRandomState(double max_x, double max_y, double max_yaw, double min_x, double min_y, double min_yaw);
   RRTNode *getNearestNode(NodeState q_rand, bool primary_tree);
@@ -344,7 +341,7 @@ RRTNode* tbiRRT::getNearestNode1(NodeState q_rand) {
           q_new.command_lin = command.linear.x;
           q_new.command_ang = command.angular.z;
           dist = new_dist;
-          cost_total_1 += cost_wheels_Qnew1; 
+          q_new.cost = cost_wheels_Qnew1; // New field:cost
         }
       }
       // ROS_INFO("En arbol 1 el st, new nodo es X = %f, Y = %f , th = %f", q_new.st.state[0],q_new.st.state[1],q_new.st.state[2]);  
@@ -355,12 +352,15 @@ RRTNode* tbiRRT::getNearestNode1(NodeState q_rand) {
     
     if(direct){
       q_new.parent = q_near;
+      q_new.cost += q_near->cost;
       RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
       q_near->children.push_back(new_node);
       tree1.push_back(new_node);
       if(got_connected){
 	      q_final_1 = new_node;
 	      q_final_2 = q_closest;
+        q_final_1->cost = q_new.cost + q_near->cost;
+        q_final_2->cost = q_closest->cost;
       }
     }     
     else{
@@ -369,14 +369,16 @@ RRTNode* tbiRRT::getNearestNode1(NodeState q_rand) {
       q_near->command_ang = q_new.command_ang;
       q_new.command_lin = 0;
       q_new.command_ang = 0;
-      
       q_new.parent = q_near;
+      q_new.cost += q_near->cost; // Accumulate the parent cost 
       RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
       q_near->children.push_back(new_node);
       tree2.push_back(new_node);
       if(got_connected){
 	      q_final_2 = new_node;
 	      q_final_1 = q_closest;
+        q_final_1->cost = q_new.cost + q_near->cost;
+        q_final_2->cost = q_closest->cost;
       }      
     }
   }
@@ -414,39 +416,42 @@ void tbiRRT::expandNode2(const NodeState &q_rand, RRTNode *q_near, int relaxatio
           q_near->command_lin = command.linear.x; //este dato se almacena en el hijo
           q_near->command_ang = command.angular.z;
           dist = new_dist;
-          cost_total_2 += cost_wheels_Qnew2; 
+          q_new.cost = cost_wheels_Qnew2; // New field:cost
         }
       }
       // ROS_INFO("En arbol 2 el st, new nodo es X = %f, Y = %f , th = %f", q_new.st.state[0],q_new.st.state[1],q_new.st.state[2]); 
   }
-  //check if there is a new node and add it to the graph (unless its the goal)
   if (is_new_node){
-    RRTNode *q_closest = areConnected(q_new.st, direct); //este q_closest solo lo uso si got_connected=true; si es direct, q_closest sera un hijo, si no, sera un padre
+    RRTNode *q_closest = areConnected(q_new.st, direct); 
     
     if(direct){
       q_new.parent = q_near;
-      RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
+      q_new.cost += q_near->cost;
+      RRTNode *new_node = new RRTNode(q_new); 
       q_near->children.push_back(new_node);
       tree1.push_back(new_node);
       if(got_connected){
 	      q_final_1 = new_node;
 	      q_final_2 = q_closest;
+        q_final_1->cost = q_new.cost + q_near->cost;
+        q_final_2->cost = q_closest->cost;
       }
     }     
     else{
-      // 	std::cout << "hay un nodo indirecto " <<std::endl;
-      q_near->command_lin = q_new.command_lin; //esto debe recibirlo el nodo final del desplazamiento normal, que en este caso es q_near
+      q_near->command_lin = q_new.command_lin; 
       q_near->command_ang = q_new.command_ang;
       q_new.command_lin = 0;
       q_new.command_ang = 0;
-      
       q_new.parent = q_near;
-      RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
+      q_new.cost += q_near->cost;
+      RRTNode *new_node = new RRTNode(q_new); 
       q_near->children.push_back(new_node);
       tree2.push_back(new_node);
       if(got_connected){
 	      q_final_2 = new_node;
 	      q_final_1 = q_closest;
+        q_final_2->cost = q_new.cost + q_near->cost;
+        q_final_1->cost = q_closest->cost;
       }      
     }
   }
@@ -539,18 +544,6 @@ bool tbiRRT::transitionTest2 (NodeState q_near, NodeState q_new, NodeState q_ran
     return 0;
   }
 }
-
-
-// void tbiRRT::calculateCost(NodeState q_near, NodeState q_new, NodeState q_rand,double &cost_Qnear,double &cost_Qnew){
-//   //First calculate the Cost of Qnear
-//   double cost_dis_Qnear = sqrt(pow(q_rand.state[0] - q_near.state[0],2) + pow(q_rand.state[1] - q_near.state[1],2));
-//   double cost_wheels_Qnear = m.costWheelsQnear(q_near.state[0],q_near.state[1],q_near.state[2]);
-
-//   //Second calculate the Cost of Qnew
-//   double cost_dist_Qnew = sqrt(pow(q_rand.state[0] - q_new.state[0],2) + pow(q_rand.state[1] - q_new.state[1],2));
-//   cost_Qnear = cost_dis_Qnear*1.5 + cost_wheels_Qnear;
-//   cost_Qnew = cost_dist_Qnew*1.5  + cost_wheels_Qnew;
-// }
 
 double tbiRRT::calculateCostNear1(NodeState q_near, NodeState q_new, NodeState q_rand){
 
@@ -649,6 +642,7 @@ visualization_msgs::MarkerArray tbiRRT::getPathMarker(const std::list< RRTNode >
 {
   visualization_msgs::MarkerArray ret;
   visualization_msgs::Marker m_aux;
+  m_aux.lifetime = ros::Duration(2);
 
   int cont = 0;
   NodeState pt;
@@ -708,15 +702,10 @@ visualization_msgs::Marker tbiRRT::getGraphMarker()
     m.points.push_back(p1); 
     m.colors.push_back(color);   
   }
+
+  m.lifetime = ros::Duration(2);
   return m;
 }
-
-double tbiRRT::retCostTotal(){
-  cost_total = cost_total_1 + cost_total_2;
-
-  return cost_total;
-}
-
 
 
 #endif

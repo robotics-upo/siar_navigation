@@ -31,10 +31,10 @@ public:
   visualization_msgs::MarkerArray getPathMarker(const std::list< RRTNode >& path);
   
   visualization_msgs::Marker getGraphMarker();
-
-   double retCostTotal();
   
   double getDeltaT() const {return delta_t;}
+
+  RRTNode goal_node;
   
 protected:
   RRT();
@@ -46,7 +46,7 @@ protected:
   void isGoal(NodeState st);
   bool got_to_goal = false;
   
-  RRTNode goal_node;
+  
   RRTNode start_node;
   
   
@@ -66,8 +66,6 @@ protected:
   double delta_t, cellsize_m, cellsize_rad;
   double wheel_decrease, last_wheel;
   double max_x, max_y, max_yaw, min_x, min_y, min_yaw; //de que tipo serian?
-  double cost_total = 0;
-  
   
   SiarModel m;
   double goal_gap_m, goal_gap_rad;
@@ -198,10 +196,10 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
       NodeState q_rand;
       //if (!(samp_cont%samp_goal_rate == 0)){
       if (!(cont%samp_goal_rate == 0)){
-	q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
+	      q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
       }
       else{
-	q_rand = goal_node.st; 
+	      q_rand = goal_node.st; 
       }     
       RRTNode *q_near = getNearestNode(q_rand);  
       expandNode(q_rand, q_near, relax);
@@ -229,17 +227,6 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
   std::cout << "Numero de nodos en grafo: " << nodes.size() <<std::endl;
   return ret_val; 
 }
-
-
-// inline
-// void RRT::addNode(NodeState st, double comm_x, double comm_ang, RRTNode *parent){ //si no le doy alguno de los elementos??
-//   RRTNode node;
-//   node.st = st;
-//   node.command_lin = comm_x;
-//   node.command_ang = comm_ang;
-//   node.parent = parent;
-//   nodes.push_back(new RRTnode);
-// }
 
 NodeState RRT::getRandomState(double max_x, double min_x, double max_y, double min_y, double max_yaw, double min_yaw) {
   NodeState randomState;
@@ -293,11 +280,11 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
       is_new_node = true;
       new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
       if (new_dist<dist) {
-	q_new.st = st; 
-	q_new.command_lin = command.linear.x;
-	q_new.command_ang = command.angular.z;
-	dist = new_dist;
-  cost_total += cost;
+      q_new.st = st; 
+      q_new.command_lin = command.linear.x;
+      q_new.command_ang = command.angular.z;
+      dist = new_dist;
+      q_new.cost = cost; // New field:cost
       }
     }    
   }
@@ -311,14 +298,15 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
       goal_node.parent = q_near; 
       goal_node.command_lin = q_new.command_lin; 
       goal_node.command_ang = q_new.command_ang;
+      goal_node.cost = q_new.cost + q_near->cost; // New field:cost
       //got_to_goal = true; //?? no se ha usado esto para entrar en el if??
       //nodes.push_back(goal_node);
     }
     else{
       q_new.parent = q_near;
+      q_new.cost += q_near-> cost; // Accumulate the parent cost 
       RRTNode *new_node = new RRTNode(q_new); 
       q_near->children.push_back(new_node);
-      /*q_new.parent = q_near;*/ //aqui esta mal
       nodes.push_back(new_node);	
     }
   }
@@ -386,6 +374,7 @@ visualization_msgs::MarkerArray RRT::getPathMarker(const std::list< RRTNode >& p
       m_aux.color.a=1.0;
       m_aux.color.g=0.2;
       m_aux.color.r=0.2;
+      m_aux.lifetime = ros::Duration(2);
       ret.markers.push_back(m_aux);
     }
   }
@@ -397,7 +386,7 @@ visualization_msgs::Marker RRT::getGraphMarker()
   visualization_msgs::Marker m;
   m.header.frame_id = this->m.getFrameID();
   m.header.stamp = ros::Time::now();
-  m.ns = "rrt";
+  // m.ns = "rrt";
   m.action = visualization_msgs::Marker::ADD;
   m.pose.orientation.w = 1.0;
   m.id = 0;
@@ -441,15 +430,10 @@ visualization_msgs::Marker RRT::getGraphMarker()
     color = new_color;
     
   }
+  m.lifetime = ros::Duration(2);
   
   return m;
 }
-
-double RRT::retCostTotal(){
- 
-  return cost_total;
-}
-
 
 
 #endif
