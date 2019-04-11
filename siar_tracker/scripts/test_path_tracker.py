@@ -10,6 +10,9 @@ from geometry_msgs.msg import Twist, PoseStamped
 import numpy as np
 
 if __name__ == '__main__':
+  if (len(sys.argv)) < 2:
+      print "Usage: {0} <path_filename>".format(sys.argv[0])
+      sys.exit(1)
   rospy.init_node("test_siar_path_tracker")
   frame_id = rospy.get_param('~frame_id', default="/base_link")    
   path_pub = rospy.Publisher('path',Path, queue_size=10, latch = True)
@@ -21,19 +24,21 @@ if __name__ == '__main__':
   path.header.stamp = rospy.Time.now()
   path.header.seq = 0
   
-  curr_wp = PoseStamped()
-  curr_wp.header = path.header
-  curr_wp.pose.orientation.x = 0
-  curr_wp.pose.orientation.y = 0
-  curr_wp.pose.orientation.z = 0
-  curr_wp.pose.orientation.w = 1
-  curr_wp.pose.position.z = 0
   
-  for row in vec:
+  
+  for i in range(len(vec)):
+      row = vec[i]
       if len(row) >= 2:
-          curr_wp.pose.position.x = row[0]
-          curr_wp.pose.position.y = row[1]
-          path.poses.append(curr_wp)
+            curr_wp = PoseStamped()
+            curr_wp.header = path.header
+            curr_wp.pose.orientation.x = 0
+            curr_wp.pose.orientation.y = 0
+            curr_wp.pose.orientation.z = 0
+            curr_wp.pose.orientation.w = 1
+            curr_wp.pose.position.z = 0
+            curr_wp.pose.position.x = row[0]
+            curr_wp.pose.position.y = row[1]
+            path.poses.append(curr_wp)
   print "Path length: {0}".format(len(path.poses))
   path_pub.publish(path)
   
