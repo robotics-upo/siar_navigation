@@ -10,7 +10,7 @@
   <!--<arg name="output_file" default="$(find siar_planner)/output_files/rrt_params_1.txt"/>-->
    
   <!--Start the map server for the path planner-->
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find siar_planner)/test/$(arg map)" output="screen"/>
+  <!-- <node name="map_server" pkg="map_server" type="map_server" args="$(find siar_planner)/test/$(arg map)" output="screen"/> -->
   
   <node name="trrt_test" pkg="siar_planner" type="trrt_test" output="screen" if="$(arg debug)" launch-prefix="xterm -e gdb --args">
     <remap from="/altitude_map" to="/map"/>

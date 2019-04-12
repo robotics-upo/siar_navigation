@@ -7,6 +7,7 @@
 #include <string.h>
 // #include <iomanip>
 #include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/Marker.h>
 
 using functions::RealVector;
 
@@ -50,11 +51,12 @@ int main(int argc, char** argv){
   goal.state = v;
   
   std::list<RRTNode> path; 
+  visualization_msgs::MarkerArray m;
   
   ros::Publisher vis_pub = nh.advertise<visualization_msgs::Marker>("init_marker", 2, true);
   ros::Publisher goal_pub = nh.advertise<visualization_msgs::Marker>("goal_marker", 2, true);
   ros::Publisher graph_pub = nh.advertise<visualization_msgs::Marker>("graph_marker", 2, true);
-  ros::Publisher path_pub = nh.advertise<visualization_msgs::MarkerArray>("path_marker", 100, true);
+  ros::Publisher path_pub = nh.advertise<visualization_msgs::MarkerArray>("path_marker", 4, true);
   
 
   ROS_INFO("Publishing visualization markers (init and goal)");
@@ -69,7 +71,7 @@ int main(int argc, char** argv){
 
   if (cost > 0.0){ 
     ROS_INFO("Path calculated. Expended time: %f. Cost: %f", (t1 - t).toSec(), cost);
-    visualization_msgs::MarkerArray m = a.getPathMarker(path);
+    m = a.getPathMarker(path);
     ROS_INFO("El tamano de m es: %ld y el de path: %ld",m.markers.size(), path.size());
     path_pub.publish(m);
   } 
@@ -85,7 +87,7 @@ int main(int argc, char** argv){
     std::cout << "Guardado en archivo de salida: " << output_file << std::endl;
     ofs << (t1 - t).toSec() << "," << path.size()* a.getDeltaT() << "," << path.size()
     <<  "," << a.tree1.size() <<  "," << a.tree2.size() << "," << a.tree1.size() + a.tree2.size() 
-    << "," << a.q_final_1->cost + a.q_final_2->cost 
+    << "," << a.retCostPath(path) 
     << std::endl;
   } 
   else {
@@ -100,7 +102,10 @@ int main(int argc, char** argv){
     int sleep_time;
     pnh.param("sleep_time", sleep_time, 1000000);
     usleep(sleep_time);
+    // m.markers.clear();  
+    // path_pub.publish(m);
     ros::spinOnce();   
   }
+  
   return 0;
 }

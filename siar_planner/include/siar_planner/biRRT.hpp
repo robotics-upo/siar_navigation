@@ -23,6 +23,7 @@ public:
   
   double resolve(NodeState start, NodeState goal, std::list<RRTNode>& path); 
   double resolve_expand1(NodeState start, NodeState goal, std::list<RRTNode>& path);
+  double retCostPath(const std::list< RRTNode >& path);  
   
   SiarModel &getModel() {return m;}
   
@@ -419,7 +420,6 @@ void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_
   double new_dist;
   bool is_new_node = false;
   
-  //from q_near apply random conmands   
   
   for (int i = 0; i < K; i++) {
     NodeState st = q_near->st;
@@ -428,7 +428,7 @@ void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_
     double cost;
     if (direct){
       cost = m.integrate(st, command, delta_t, relaxation_mode >= 1); // If relaxation_mode >= 1 --> allow two wheels
-      
+      // ROS_INFO("EL costo en birrt_arbol_11 es: %f",cost);
       if (cost < 0.0) {
         // 	std::cout << "Colision " <<std::endl;
       }
@@ -448,6 +448,7 @@ void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_
     }
     else{
       cost = m.integrate(st, command, -(delta_t), relaxation_mode >= 1); // si direct es false, entonces le paso delta_t <0 a la integracion
+      // ROS_INFO("EL costo en birrt_arbol_2222 es: %f",cost);
       if (cost < 0.0) {
         // 	std::cout << "Colision " <<std::endl;
       }
@@ -555,56 +556,16 @@ std::list<RRTNode> biRRT::getPath(){
   return path;
 }
 
-// void biRRT::expandNearestNodes(){
-//   double dist = std::numeric_limits<double>::infinity();
-//   RRTNode *q_closest1 = NULL;  
-//   RRTNode *q_closest2 = NULL;
-//   double new_dist;
-//   for (auto n1: tree1){ 
-//     for (auto n2: tree2){
-//       new_dist = sqrt(pow(n1->st.state[0] - n2->st.state[0],2) + pow(n1->st.state[1] - n2->st.state[1],2)); 
-//       if (new_dist < dist){
-// 	q_closest1 = n1; 
-// 	q_closest2 = n2; 
-//         dist = new_dist;
-//       }
-//     }
-//   }
-//   //aqui llamo a expandNode
-//   expandNode(q_closest2->st, q_closest1, relax, true); //expansion de tree1
-//   expandNode(q_closest1->st, q_closest2, relax, false); //expansion de tree2
-//     
-// }
-
-// visualization_msgs::Marker biRRT::getPathMarker(const std::list< RRTNode >& path) 
-// {
-//   visualization_msgs::Marker ret;
-//   
-//   int cont = 0;
-//   NodeState st;
-//   for (auto it = path.begin(); it != path.end(); it++, cont++) {
-//     if (cont > 0) { //cuando no lo es??
-//       st = (--it)->st;
-//       it++;
-//     
-//       geometry_msgs::Twist command;
-//       command.linear.x = it->command_lin;
-//       command.angular.z = it->command_ang;
-//     
-//       m.integrate(ret, st, command, 1.0, true);
-//     }
-//   }
-//   
-//   return ret;
-// }
-
 visualization_msgs::MarkerArray biRRT::getPathMarker(const std::list< RRTNode >& path) 
 {
   visualization_msgs::MarkerArray ret;
   visualization_msgs::Marker m_aux;
 
-  m_aux.lifetime = ros::Duration(2);
-
+  m_aux.header.frame_id = this->m.getFrameID();
+  m_aux.header.stamp = ros::Time::now();
+  m_aux.action = visualization_msgs::Marker::DELETEALL;
+  m_aux.points.clear();
+  m_aux.type = visualization_msgs::Marker::POINTS;
   int cont = 0;
   NodeState pt;
   for (auto it = path.begin(); it != path.end(); it++, cont++) {
@@ -615,20 +576,19 @@ visualization_msgs::MarkerArray biRRT::getPathMarker(const std::list< RRTNode >&
       command.linear.x = it->command_lin;
       command.angular.z = it->command_ang;
 
-    if (cont % 5 == 0)  
+      if (cont % 5 == 0){  
 
-      m_aux= m.getMarker(pt,cont);
-      m_aux.color.b=1.0;
-      m_aux.color.a=1.0;
-      m_aux.color.g=0.2;
-      m_aux.color.r=0.2;
-
-      
-
-      ret.markers.push_back(m_aux);
-
+        m_aux= m.getMarker(pt,cont);
+        m_aux.color.b=1.0;
+        m_aux.color.a=1.0;
+        m_aux.color.g=0.2;
+        m_aux.color.r=0.2;
+        m_aux.lifetime = ros::Duration(2);
+        ret.markers.push_back(m_aux);
+      }
     }
   }
+  
   return ret;
 }
 
@@ -637,47 +597,33 @@ visualization_msgs::Marker biRRT::getGraphMarker()
   visualization_msgs::Marker m;
   m.header.frame_id = this->m.getFrameID();
   m.header.stamp = ros::Time::now();
-  m.ns = "rrt";
+  m.ns = "birrt";
   m.action = visualization_msgs::Marker::ADD;
   m.pose.orientation.w = 1.0;
   m.id = 0;
   m.points.clear();
   m.type = visualization_msgs::Marker::POINTS;
-//   m.type = visualization_msgs::Marker::LINE_LIST;
-  // LINE_LIST markers use x scale only (for line width)
   m.scale.x = 0.05;
   // Points are green
   visualization_msgs::Marker::_color_type color;
   color.g = 0;
   color.a = 1.0;
-//   double color_step = 1.0/(double)nodes.size();
   geometry_msgs::Point p1;
-//   geometry_msgs::Point p2;
-  //for (unsigned int i = 0; i < nodes.size();i++) {
+
   for (auto n : tree1){  
     color.r = 0;
     color.b = 1.0;
-//     auto new_color = color;
-//     new_color.r -= color_step;
-//     new_color.b += color_step;
-    
     p1.x = n->st.state[0];
     p1.y = n->st.state[1];
     
     m.points.push_back(p1); 
     m.colors.push_back(color);
   }
-  
   for (auto n : tree2){  
     color.r = 1.0;
     color.b = 0;
-//     auto new_color = color;
-//     new_color.r -= color_step;
-//     new_color.b += color_step;
-    
     p1.x = n->st.state[0];
     p1.y = n->st.state[1];
-    
     m.points.push_back(p1); 
     m.colors.push_back(color);   
   }
@@ -685,5 +631,18 @@ visualization_msgs::Marker biRRT::getGraphMarker()
   return m;
 }
 
+
+double biRRT::retCostPath(const std::list< RRTNode >& path){
+  double ret;
+  int cont = 0;
+
+  for (auto it = path.begin(); it != path.end(); it++, cont++) {
+    if (cont > 0) {
+      double cost_node = fabs(it->cost);
+      ret += cost_node;
+    }
+  }
+  return ret;
+}
 
 #endif

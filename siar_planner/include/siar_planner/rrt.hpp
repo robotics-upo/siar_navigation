@@ -22,7 +22,8 @@ public:
   ~RRT();
   
   double resolve(NodeState start, NodeState goal, std::list<RRTNode>& path);      
-  
+  double retCostPath(const std::list< RRTNode >& path);
+
   SiarModel &getModel() {return m;}
 
   std::list<RRTNode *> nodes;
@@ -46,9 +47,7 @@ protected:
   void isGoal(NodeState st);
   bool got_to_goal = false;
   
-  
   RRTNode start_node;
-  
   
   //new functions
   NodeState getRandomState(double max_x, double max_y, double max_yaw, double min_x, double min_y, double min_yaw);
@@ -267,7 +266,8 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
     geometry_msgs::Twist command = m.generateRandomCommand();
 //     std::cout << "El comando es " << command <<std::endl;
     double cost = m.integrate(st, command, delta_t, relaxation_mode >= 1); // If relaxation_mode >= 1 --> allow two wheels
-    
+    // ROS_INFO("EL costo en rrt es: %f",cost);
+
     if (cost < 0.0) {
 //       std::cout << "Colision " <<std::endl;
       // Collision
@@ -299,8 +299,6 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
       goal_node.command_lin = q_new.command_lin; 
       goal_node.command_ang = q_new.command_ang;
       goal_node.cost = q_new.cost + q_near->cost; // New field:cost
-      //got_to_goal = true; //?? no se ha usado esto para entrar en el if??
-      //nodes.push_back(goal_node);
     }
     else{
       q_new.parent = q_near;
@@ -311,6 +309,7 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
     }
   }
 }
+
 
 void RRT::isGoal(NodeState st) {
   got_to_goal = (fabs(st.state[0] - goal_node.st.state[0]) < goal_gap_m) && (fabs(st.state[1]-goal_node.st.state[1]) < goal_gap_m) &&
@@ -330,27 +329,6 @@ std::list<RRTNode> RRT::getPath(){
   return path;
 }
 
-// visualization_msgs::Marker RRT::getPathMarker(const std::list< RRTNode >& path) 
-// {
-//   visualization_msgs::Marker ret;
-//   
-//   int cont = 0;
-//   NodeState st;
-//   for (auto it = path.begin(); it != path.end(); it++, cont++) {
-//     if (cont > 0) { //cuando no lo es??
-//       st = (--it)->st;
-//       it++;
-//     
-//       geometry_msgs::Twist command;
-//       command.linear.x = it->command_lin;
-//       command.angular.z = it->command_ang;
-//     
-//       m.integrate(ret, st, command, 1.0, true);
-//     }
-//   }
-//   
-//   return ret;
-// }
 
 visualization_msgs::MarkerArray RRT::getPathMarker(const std::list< RRTNode >& path) 
 {
@@ -360,42 +338,38 @@ visualization_msgs::MarkerArray RRT::getPathMarker(const std::list< RRTNode >& p
   int cont = 0;
   NodeState pt;
   for (auto it = path.begin(); it != path.end(); it++, cont++) {
-    if (cont > 0) { //cuando no lo es??
+    if (cont > 0) { 
       pt = (--it)->st;
       it++;
       geometry_msgs::Twist command;
       command.linear.x = it->command_lin;
       command.angular.z = it->command_ang;
-
-    if (cont % 5 == 0)  
-
-      m_aux= m.getMarker(pt,cont);
-      m_aux.color.b=1.0;
-      m_aux.color.a=1.0;
-      m_aux.color.g=0.2;
-      m_aux.color.r=0.2;
-      m_aux.lifetime = ros::Duration(2);
-      ret.markers.push_back(m_aux);
+      //  m_aux.action = visualization_msgs::Marker::DELETEALL;
+      if (cont % 5 == 0) { 
+        m_aux= m.getMarker(pt,cont);
+        m_aux.color.b=1.0;
+        m_aux.color.a=1.0;
+        m_aux.color.g=0.2;
+        m_aux.color.r=0.2;
+        m_aux.lifetime = ros::Duration(2);
+        ret.markers.push_back(m_aux);
+      }
     }
   }
   return ret;
 }
+
 
 visualization_msgs::Marker RRT::getGraphMarker()
 {
   visualization_msgs::Marker m;
   m.header.frame_id = this->m.getFrameID();
   m.header.stamp = ros::Time::now();
-  // m.ns = "rrt";
-  m.action = visualization_msgs::Marker::ADD;
   m.pose.orientation.w = 1.0;
   m.id = 0;
   m.points.clear();
   m.type = visualization_msgs::Marker::POINTS;
-//   m.type = visualization_msgs::Marker::LINE_LIST;
-  // LINE_LIST markers use x scale only (for line width)
   m.scale.x = 0.05;
-  // Points are green
   visualization_msgs::Marker::_color_type color;
   color.r = 1.0;
   color.b = 0;
@@ -404,36 +378,32 @@ visualization_msgs::Marker RRT::getGraphMarker()
   double color_step = 1.0/(double)nodes.size();
   geometry_msgs::Point p1;
   geometry_msgs::Point p2;
-  //for (unsigned int i = 0; i < nodes.size();i++) {
   for (auto n : nodes){  
     auto new_color = color;
     new_color.r -= color_step;
     new_color.b += color_step;
-    
     p1.x = n->st.state[0];
     p1.y = n->st.state[1];
-    
     m.points.push_back(p1); //es correcto aqui?
     m.colors.push_back(color);
-    
-//      for (auto child : n->children) {
-//        m.points.push_back(p1);
-//        m.colors.push_back(color);
-// //        
-//        p2.x = child->st.state[0];
-//        p2.y = child->st.state[1];
-// //        
-//        m.points.push_back(p2);
-//        m.colors.push_back(new_color);
-//      }
-   
     color = new_color;
-    
   }
   m.lifetime = ros::Duration(2);
   
   return m;
 }
 
+double RRT::retCostPath(const std::list< RRTNode >& path){
+  double ret = 0;
+  int cont = 0;
+
+  for (auto it = path.begin(); it != path.end(); it++, cont++) {
+    if (cont > 0) {
+      double cost_node = fabs(it->cost);
+      ret += cost_node;
+    }
+  }
+  return ret;
+}
 
 #endif

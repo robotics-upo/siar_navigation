@@ -84,8 +84,8 @@ int main(int argc, char** argv){
   if (ofs.is_open()) {
     std::cout << "Guardado en archivo de salida: " << output_file << std::endl;
     ofs << (t1 - t).toSec() << ","  << path.size()*a.getDeltaT() << "," << path.size() 
-    << "," << a.nodes.size() << ","
-    << a.goal_node.cost 
+    << "," << a.nodes.size() 
+    << "," << a.retCostPath(path) 
     <<std::endl;
   } 
   else {
@@ -102,5 +102,6 @@ int main(int argc, char** argv){
     usleep(sleep_time);
     ros::spinOnce();   
   }
+  
   return 0;
 }

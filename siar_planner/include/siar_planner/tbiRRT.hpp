@@ -21,6 +21,7 @@ public:
   
   double resolve(NodeState start, NodeState goal, std::list<RRTNode>& path); 
   double resolve_expand1(NodeState start, NodeState goal, std::list<RRTNode>& path);
+  double retCostPath(const std::list< RRTNode >& path);  
   
   SiarModel &getModel() {return m;}
   
@@ -638,12 +639,16 @@ std::list<RRTNode> tbiRRT::getPath(){
 }
 
 
-visualization_msgs::MarkerArray tbiRRT::getPathMarker(const std::list< RRTNode >& path)
+visualization_msgs::MarkerArray tbiRRT::getPathMarker(const std::list< RRTNode >& path) 
 {
   visualization_msgs::MarkerArray ret;
   visualization_msgs::Marker m_aux;
-  m_aux.lifetime = ros::Duration(2);
 
+  m_aux.header.frame_id = this->m.getFrameID();
+  m_aux.header.stamp = ros::Time::now();
+  m_aux.action = visualization_msgs::Marker::DELETEALL;
+  m_aux.points.clear();
+  m_aux.type = visualization_msgs::Marker::POINTS;
   int cont = 0;
   NodeState pt;
   for (auto it = path.begin(); it != path.end(); it++, cont++) {
@@ -654,25 +659,30 @@ visualization_msgs::MarkerArray tbiRRT::getPathMarker(const std::list< RRTNode >
       command.linear.x = it->command_lin;
       command.angular.z = it->command_ang;
 
-    if (cont % 5 == 0)  
+      if (cont % 5 == 0){  
 
-      m_aux= m.getMarker(pt,cont);
-      m_aux.color.b=1.0;
-      m_aux.color.a=1.0;
-      m_aux.color.g=0.2;
-      m_aux.color.r=0.2;
-      ret.markers.push_back(m_aux);
+        m_aux= m.getMarker(pt,cont);
+        m_aux.color.b=1.0;
+        m_aux.color.a=1.0;
+        m_aux.color.g=0.2;
+        m_aux.color.r=0.2;
+        m_aux.lifetime = ros::Duration(2);
+        ret.markers.push_back(m_aux);
+      }
     }
   }
+  
   return ret;
 }
+
+
 
 visualization_msgs::Marker tbiRRT::getGraphMarker()
 {
   visualization_msgs::Marker m;
   m.header.frame_id = this->m.getFrameID();
   m.header.stamp = ros::Time::now();
-  m.ns = "rrt";
+  m.ns = "tbirrt";
   m.action = visualization_msgs::Marker::ADD;
   m.pose.orientation.w = 1.0;
   m.id = 0;
@@ -683,7 +693,6 @@ visualization_msgs::Marker tbiRRT::getGraphMarker()
   visualization_msgs::Marker::_color_type color;
   color.g = 0;
   color.a = 1.0;
-
   geometry_msgs::Point p1;
 
   for (auto n : tree1){  
@@ -691,6 +700,7 @@ visualization_msgs::Marker tbiRRT::getGraphMarker()
     color.b = 1.0;
     p1.x = n->st.state[0];
     p1.y = n->st.state[1];
+    
     m.points.push_back(p1); 
     m.colors.push_back(color);
   }
@@ -702,10 +712,22 @@ visualization_msgs::Marker tbiRRT::getGraphMarker()
     m.points.push_back(p1); 
     m.colors.push_back(color);   
   }
-
   m.lifetime = ros::Duration(2);
   return m;
 }
 
+
+double tbiRRT::retCostPath(const std::list< RRTNode >& path){
+  double ret;
+  int cont = 0;
+
+  for (auto it = path.begin(); it != path.end(); it++, cont++) {
+    if (cont > 0) {
+      double cost_node = fabs(it->cost);
+      ret += cost_node;
+    }
+  }
+  return ret;
+}
 
 #endif

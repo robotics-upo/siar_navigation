@@ -92,21 +92,12 @@ int main(int argc, char** argv){
   graph_pub.publish(a.getGraphMarker());
   
   ofs.open(output_file.c_str(), std::ofstream::app);
-//   std::cout << "Guardado en archivo de salida: " << output_file << std::endl;
-//   if (ofs.is_open()) {
-//     std::cout << "Guardado en archivo de salida: " << output_file << std::endl;
-//     ofs << "Tiempo de ejecucion: " << (t1 - t).toSec() << std::endl 
-//     << "Nodos en árbol de start: " << a.tree1.size() << std::endl 
-//     << "Nodos en árbol de goal: " << a.tree2.size() << std::endl
-//     << "Nodos totales: " << a.tree1.size() + a.tree2.size() << std::endl
-//     << "Nodos en path: " << path.size() << std::endl << std::endl;
-// //     std::cout << "escribe texto" << std::endl;
-//   } 
+
   if (ofs.is_open()) {
     std::cout << "Guardado en archivo de salida: " << output_file << std::endl;
     ofs << (t1 - t).toSec() << "," << path.size()* a.getDeltaT() << "," << path.size() 
     << "," << a.nodes.size()
-    << "," << a.goal_node.cost 
+    << "," << a.retCostPath(path) 
     <<std::endl;
   } 
   else {
@@ -125,5 +116,6 @@ int main(int argc, char** argv){
     usleep(sleep_time);
     ros::spinOnce();   
   }
+
   return 0;
 }

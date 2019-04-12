@@ -7,6 +7,7 @@
 // #include <iomanip>
 #include <string.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/Marker.h>
 
 using functions::RealVector;
 // using namespace std;
@@ -54,13 +55,13 @@ int main(int argc, char** argv){
   goal.state = v;
 
   std::list<RRTNode> path;
-
+  visualization_msgs::MarkerArray marker;
 
 
   ros::Publisher vis_pub = nh.advertise<visualization_msgs::Marker>("init_marker", 2, true);
   ros::Publisher goal_pub = nh.advertise<visualization_msgs::Marker>("goal_marker", 2, true);
   ros::Publisher graph_pub = nh.advertise<visualization_msgs::Marker>("graph_marker", 2, true);
-  ros::Publisher path_pub = nh.advertise<visualization_msgs::MarkerArray>("path_marker", 2, true);
+  ros::Publisher path_pub = nh.advertise<visualization_msgs::MarkerArray>("path_marker", 4, true);
 
   ROS_INFO("Publishing visualization markers (init and goal)");
   vis_pub.publish(a.getModel().getMarker(init));
@@ -76,9 +77,9 @@ int main(int argc, char** argv){
 
     ROS_INFO("Path calculated. Expended time: %f. Cost: %f", (t1 - t).toSec(), cost);
 
-    visualization_msgs::MarkerArray m = a.getPathMarker(path);
+    marker = a.getPathMarker(path);
 
-    path_pub.publish(m);
+    path_pub.publish(marker);
   }
   else{
 
@@ -92,8 +93,7 @@ int main(int argc, char** argv){
   if (ofs.is_open()) {
     std::cout << "Guardado en archivo de salida: " << output_file << std::endl;
     ofs << (t1 - t).toSec() << ","  << path.size()* a.getDeltaT() << "," << path.size()
-    << "," << a.tree1.size() << "," << a.tree2.size() << "," << a.tree1.size() + a.tree2.size()
-    << "," << a.q_final_1->cost + a.q_final_2->cost
+    << "," << a.tree1.size() << "," << a.tree2.size() << "," << a.tree1.size() + a.tree2.size() << "," << a.retCostPath(path) 
     <<std::endl;
 
   }
@@ -110,7 +110,10 @@ int main(int argc, char** argv){
     int sleep_time;
     pnh.param("sleep_time", sleep_time, 1000000);
     usleep(sleep_time);
+    // marker.markers.clear();  
+    // path_pub.publish(marker);
     ros::spinOnce();   
   }
+
   return 0;
 }
