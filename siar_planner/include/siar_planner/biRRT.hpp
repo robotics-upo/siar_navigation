@@ -479,8 +479,8 @@ void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_
       if(got_connected){
         q_final_1 = new_node;
         q_final_2 = q_closest;
-        q_final_1->cost = q_new.cost + q_near->cost;
-        q_final_2->cost = q_closest->cost;
+        // q_final_1->cost = q_new.cost + q_near->cost;   // To add the costs of each node respect to father node
+        // q_final_2->cost = q_closest->cost;
       }
     }     
     else{
@@ -496,8 +496,8 @@ void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_
       if(got_connected){
         q_final_2 = new_node;
         q_final_1 = q_closest;
-        q_final_2->cost = q_new.cost + q_near->cost;
-        q_final_1->cost = q_closest->cost;
+        // q_final_2->cost = q_new.cost + q_near->cost;   // To add the costs of each node respect to father node
+        // q_final_1->cost = q_closest->cost;
       }      
     }
   }

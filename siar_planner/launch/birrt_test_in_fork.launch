@@ -2,7 +2,6 @@
 <launch>
 <!--         <master auto="true"/> -->
 <!--         <param name="/use_sim_time" value="true" /> -->
-  <arg name="debug" default="false"/>
 
   <arg name="config" default="rrt_params_23.yaml"/>
   <arg name="map" default="test_map_fork.yaml"/>
@@ -14,7 +13,7 @@
   <!--Start the map server for the path planner-->
   <node name="map_server" pkg="map_server" type="map_server" args="$(find siar_planner)/test/$(arg map)" output="screen"/>
   
-  <node name="birrt_test" pkg="siar_planner" type="birrt_test" output="screen" unless="$(arg debug)">
+  <node name="birrt_test" pkg="siar_planner" type="birrt_test" output="screen" launch-prefix="valgrind" >
     <remap from="/altitude_map" to="/map"/>
     <rosparam file="$(find siar_planner)/test/$(arg config)" command="load"  /> 
     <rosparam file="$(find siar_planner)/test/$(arg problem)" command="load"  /> 

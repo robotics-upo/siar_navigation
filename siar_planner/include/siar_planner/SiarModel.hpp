@@ -100,7 +100,6 @@ protected:
 
 SiarModel::SiarModel(ros::NodeHandle &nh, ros::NodeHandle& pn):m_ce(pn), map_init(false), gen(rd()), dis(-m_ce.getCharacteristics().theta_dot_max, m_ce.getCharacteristics().theta_dot_max)
 {
-  
   map_sub = nh.subscribe("/altitude_map", 2, &SiarModel::occupancyGridCallback, this);
 }
 
