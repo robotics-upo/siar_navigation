@@ -266,7 +266,7 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
     geometry_msgs::Twist command = m.generateRandomCommand();
 //     std::cout << "El comando es " << command <<std::endl;
     double cost = m.integrate(st, command, delta_t, relaxation_mode >= 1); // If relaxation_mode >= 1 --> allow two wheels
-    // ROS_INFO("EL costo en rrt es: %f",cost);
+    ROS_INFO("EL costo en rrt es: %f",cost);
 
     if (cost < 0.0) {
 //       std::cout << "Colision " <<std::endl;
