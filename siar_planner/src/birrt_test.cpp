@@ -92,8 +92,10 @@ int main(int argc, char** argv){
 
   if (ofs.is_open()) {
     std::cout << "Guardado en archivo de salida: " << output_file << std::endl;
+
     ofs << (t1 - t).toSec() << ","  << path.size()* a.getDeltaT() << "," << path.size()
-    << "," << a.tree1.size() << "," << a.tree2.size() << "," << a.tree1.size() + a.tree2.size() << "," << a.retCostPath(path) 
+    << "," << a.tree1.size() + a.tree2.size() 
+    << "," << a.retCostPath(path) 
     <<std::endl;
 
   }

@@ -293,7 +293,7 @@ RRTNode* tbiRRT::getNearestNode1(NodeState q_rand) {
     if (new_dist < dist) {
       q_near = n; 
       dist = new_dist;
-      tree_num = true;  // Why this constant??
+      tree_num = true;  
     }
   } 
   for (auto n: tree2){ 
@@ -349,37 +349,37 @@ RRTNode* tbiRRT::getNearestNode1(NodeState q_rand) {
   }
   //check if there is a new node and add it to the graph (unless its the goal)
   if (is_new_node){
-    RRTNode *q_closest = areConnected(q_new.st, direct); //este q_closest solo lo uso si got_connected=true; si es direct, q_closest sera un hijo, si no, sera un padre
+    RRTNode *q_closest = areConnected(q_new.st, direct); 
     
     if(direct){
       q_new.parent = q_near;
       q_new.cost += q_near->cost;
-      RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
+      RRTNode *new_node = new RRTNode(q_new); 
       q_near->children.push_back(new_node);
       tree1.push_back(new_node);
       if(got_connected){
 	      q_final_1 = new_node;
 	      q_final_2 = q_closest;
-        q_final_1->cost = q_new.cost + q_near->cost;
-        q_final_2->cost = q_closest->cost;
+        // q_final_1->cost = q_new.cost + q_near->cost;   // To add the costs of each node respect to father node
+        // q_final_2->cost = q_closest->cost;
       }
     }     
     else{
       // 	std::cout << "hay un nodo indirecto " <<std::endl;
-      q_near->command_lin = q_new.command_lin; //esto debe recibirlo el nodo final del desplazamiento normal, que en este caso es q_near
+      q_near->command_lin = q_new.command_lin; 
       q_near->command_ang = q_new.command_ang;
       q_new.command_lin = 0;
       q_new.command_ang = 0;
       q_new.parent = q_near;
       q_new.cost += q_near->cost; // Accumulate the parent cost 
-      RRTNode *new_node = new RRTNode(q_new); //para pasar puntero?? no se puede pasar el puntero como argumento??
+      RRTNode *new_node = new RRTNode(q_new); 
       q_near->children.push_back(new_node);
       tree2.push_back(new_node);
       if(got_connected){
 	      q_final_2 = new_node;
 	      q_final_1 = q_closest;
-        q_final_1->cost = q_new.cost + q_near->cost;
-        q_final_2->cost = q_closest->cost;
+        // q_final_1->cost = q_new.cost + q_near->cost;   // To add the costs of each node respect to father node
+        // q_final_2->cost = q_closest->cost;
       }      
     }
   }
@@ -434,8 +434,8 @@ void tbiRRT::expandNode2(const NodeState &q_rand, RRTNode *q_near, int relaxatio
       if(got_connected){
 	      q_final_1 = new_node;
 	      q_final_2 = q_closest;
-        q_final_1->cost = q_new.cost + q_near->cost;
-        q_final_2->cost = q_closest->cost;
+        // q_final_1->cost = q_new.cost + q_near->cost;   // To add the costs of each node respect to father node
+        // q_final_2->cost = q_closest->cost;
       }
     }     
     else{
@@ -451,8 +451,8 @@ void tbiRRT::expandNode2(const NodeState &q_rand, RRTNode *q_near, int relaxatio
       if(got_connected){
 	      q_final_2 = new_node;
 	      q_final_1 = q_closest;
-        q_final_2->cost = q_new.cost + q_near->cost;
-        q_final_1->cost = q_closest->cost;
+        // q_final_2->cost = q_new.cost + q_near->cost;   // To add the costs of each node respect to father node
+        // q_final_1->cost = q_closest->cost;
       }      
     }
   }

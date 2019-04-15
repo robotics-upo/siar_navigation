@@ -222,55 +222,55 @@ sleep 2
 # done
 
 echo "Starting test_4_a_birrt"
-for i in {1..100..1}
+for i in {1..10..1}
 do
 roslaunch siar_planner test_4_a_birrt_in_complex_scenario_turn_L.launch 
 echo "Concluded test_4_a_birrt, loop $i"
 sleep $SLEEP_TIME_2
 done
 
-echo "Starting test_4_a_trrt"
-for i in {1..100..1}
-do
-roslaunch siar_planner test_4_a_trrt_in_complex_scenario_turn_L.launch 
-echo "Concluded test_4_a_trrt, loop $i"
-sleep $SLEEP_TIME_2
-done
+#echo "Starting test_4_a_trrt"
+#for i in {1..100..1}
+#do
+#roslaunch siar_planner test_4_a_trrt_in_complex_scenario_turn_L.launch 
+#echo "Concluded test_4_a_trrt, loop $i"
+#sleep $SLEEP_TIME_2
+#done
 
 echo "Starting test_4_a_tbirrt"
-for i in {1..100..1}
+for i in {1..10..1}
 do
 roslaunch siar_planner test_4_a_tbirrt_in_complex_scenario_turn_L.launch 
 echo "Concluded test_4_a_tbirrt, loop $i"
 sleep $SLEEP_TIME_2
 done
 
-echo "Starting test_4_b_rrt"
-for i in {1..100..1}
-do
-roslaunch siar_planner test_4_b_rrt_in_complex_scenario_turn_L.launch 
-echo "Concluded test_4_b_rrt, loop $i"
-sleep $SLEEP_TIME_2
-done
+#echo "Starting test_4_b_rrt"
+#for i in {1..100..1}
+#do
+#roslaunch siar_planner test_4_b_rrt_in_complex_scenario_turn_L.launch 
+#echo "Concluded test_4_b_rrt, loop $i"
+#sleep $SLEEP_TIME_2
+#done
 
 echo "Starting test_4_b_birrt"
-for i in {1..100..1}
+for i in {1..10..1}
 do
 roslaunch siar_planner test_4_b_birrt_in_complex_scenario_turn_L.launch 
 echo "Concluded test_4_b_birrt, loop $i"
 sleep $SLEEP_TIME_2
 done
 
-echo "Starting test_4_b_trrt"
-for i in {1..100..1}
-do
-roslaunch siar_planner test_4_b_trrt_in_complex_scenario_turn_L.launch 
-echo "Concluded test_4_b_trrt, loop $i"
-sleep $SLEEP_TIME_2
-done
+#echo "Starting test_4_b_trrt"
+#for i in {1..100..1}
+#do
+#roslaunch siar_planner test_4_b_trrt_in_complex_scenario_turn_L.launch 
+#echo "Concluded test_4_b_trrt, loop $i"
+#sleep $SLEEP_TIME_2
+#done
 
 echo "Starting test_4_b_tbirrt"
-for i in {1..100..1}
+for i in {1..10..1}
 do
 roslaunch siar_planner test_4_b_tbirrt_in_complex_scenario_turn_L.launch 
 echo "Concluded test_4_b_tbirrt, loop $i"
@@ -282,64 +282,64 @@ done
 
 
 
-echo "Starting test_5_a_rrt"
-for i in {1..100..1}
-do
-roslaunch siar_planner test_5_a_rrt_in_complex_scenario_turn_U.launch 
-echo "Concluded test_5_a_rrt, loop $i"
-sleep $SLEEP_TIME_2
-done
+#echo "Starting test_5_a_rrt"
+#for i in {1..100..1}
+#do
+#roslaunch siar_planner test_5_a_rrt_in_complex_scenario_turn_U.launch 
+#echo "Concluded test_5_a_rrt, loop $i"
+#sleep $SLEEP_TIME_2
+#done
 
 echo "Starting test_5_a_birrt"
-for i in {1..100..1}
+for i in {1..10..1}
 do
 roslaunch siar_planner test_5_a_birrt_in_complex_scenario_turn_U.launch 
 echo "Concluded test_5_a_birrt, loop $i"
 sleep $SLEEP_TIME_2
 done
 
-echo "Starting test_5_a_trrt"
-for i in {1..100..1}
-do
-roslaunch siar_planner test_5_a_trrt_in_complex_scenario_turn_U.launch 
-echo "Concluded test_5_a_trrt, loop $i"
-sleep $SLEEP_TIME_2
-done
+#echo "Starting test_5_a_trrt"
+#for i in {1..100..1}
+#do
+#roslaunch siar_planner test_5_a_trrt_in_complex_scenario_turn_U.launch 
+#echo "Concluded test_5_a_trrt, loop $i"
+#sleep $SLEEP_TIME_2
+#done
 
 echo "Starting test_5_a_tbirrt"
-for i in {1..100..1}
+for i in {1..10..1}
 do
 roslaunch siar_planner test_5_a_tbirrt_in_complex_scenario_turn_U.launch 
 echo "Concluded test_5_a_tbirrt, loop $i"
 sleep $SLEEP_TIME_2
 done
 
-echo "Starting test_5_b_rrt"
-for i in {1..100..1}
-do
-roslaunch siar_planner test_5_b_rrt_in_complex_scenario_turn_U.launch 
-echo "Concluded test_5_b_rrt, loop $i"
-sleep $SLEEP_TIME_2
-done
+#echo "Starting test_5_b_rrt"
+#for i in {1..100..1}
+#do
+#roslaunch siar_planner test_5_b_rrt_in_complex_scenario_turn_U.launch 
+#echo "Concluded test_5_b_rrt, loop $i"
+#sleep $SLEEP_TIME_2
+#done
 
 echo "Starting test_5_b_birrt"
-for i in {1..100..1}
+for i in {1..10..1}
 do
 roslaunch siar_planner test_5_b_birrt_in_complex_scenario_turn_U.launch 
 echo "Concluded test_5_b_birrt, loop $i"
 sleep $SLEEP_TIME_2
 done
 
-echo "Starting test_5_b_trrt"
-for i in {1..100..1}
-do
-roslaunch siar_planner test_5_b_trrt_in_complex_scenario_turn_U.launch 
-echo "Concluded test_5_b_trrt, loop $i"
-sleep $SLEEP_TIME_2
-done
+#echo "Starting test_5_b_trrt"
+#for i in {1..100..1}
+#do
+#roslaunch siar_planner test_5_b_trrt_in_complex_scenario_turn_U.launch 
+#echo "Concluded test_5_b_trrt, loop $i"
+#sleep $SLEEP_TIME_2
+#done
 
 echo "Starting test_5_b_tbirrt"
-for i in {1..100..1}
+for i in {1..10..1}
 do
 roslaunch siar_planner test_5_b_tbirrt_in_complex_scenario_turn_U.launch 
 echo "Concluded test_5_b_tbirrt, loop $i"
@@ -352,67 +352,67 @@ done
 
 
 
-echo "Starting test_6_a_rrt"
-for i in {1..100..1}
-do
-roslaunch siar_planner test_6_a_rrt_in_complex_scenario_turn_fork.launch 
-echo "Concluded test_6_a_rrt, loop $i"
-sleep $SLEEP_TIME_2
-done
+#echo "Starting test_6_a_rrt"
+#for i in {1..100..1}
+#do
+#roslaunch siar_planner test_6_a_rrt_in_complex_scenario_turn_fork.launch 
+#echo "Concluded test_6_a_rrt, loop $i"
+#sleep $SLEEP_TIME_2
+#done
 
 echo "Starting test_6_a_birrt"
-for i in {1..100..1}
+for i in {1..10..1}
 do
 roslaunch siar_planner test_6_a_birrt_in_complex_scenario_turn_fork.launch 
 echo "Concluded test_6_a_birrt, loop $i"
 sleep $SLEEP_TIME_2
 done
 
-echo "Starting test_6_a_rrt"
-for i in {1..100..1}
-do
-roslaunch siar_planner test_6_a_trrt_in_complex_scenario_turn_fork.launch 
-echo "Concluded test_6_a_rrt, loop $i"
-sleep $SLEEP_TIME_2
-done
+#echo "Starting test_6_a_rrt"
+#for i in {1..100..1}
+#do
+#roslaunch siar_planner test_6_a_trrt_in_complex_scenario_turn_fork.launch 
+#echo "Concluded test_6_a_rrt, loop $i"
+#sleep $SLEEP_TIME_2
+#done
 
-echo "Starting test_6_a_birrt"
-for i in {1..100..1}
+echo "Starting test_6_a_tbirrt"
+for i in {1..10..1}
 do
 roslaunch siar_planner test_6_a_tbirrt_in_complex_scenario_turn_fork.launch 
-echo "Concluded test_6_a_birrt, loop $i"
+echo "Concluded test_6_a_tbirrt, loop $i"
 sleep $SLEEP_TIME_2
 done
 
-echo "Starting test_6_b_rrt"
-for i in {1..100..1}
-do
-roslaunch siar_planner test_6_b_rrt_in_complex_scenario_turn_fork.launch 
-echo "Concluded test_6_b_rrt, loop $i"
-sleep $SLEEP_TIME_2
-done
+#echo "Starting test_6_b_rrt"
+#for i in {1..100..1}
+#do
+#roslaunch siar_planner test_6_b_rrt_in_complex_scenario_turn_fork.launch 
+#echo "Concluded test_6_b_rrt, loop $i"
+#sleep $SLEEP_TIME_2
+#done
 
 echo "Starting test_6_b_birrt"
-for i in {1..100..1}
+for i in {1..10..1}
 do
 roslaunch siar_planner test_6_b_birrt_in_complex_scenario_turn_fork.launch 
 echo "Concluded test_6_b_birrt, loop $i"
 sleep $SLEEP_TIME_2
 done
 
-echo "Starting test_6_b_rrt"
-for i in {1..100..1}
-do
-roslaunch siar_planner test_6_b_trrt_in_complex_scenario_turn_fork.launch 
-echo "Concluded test_6_b_rrt, loop $i"
-sleep $SLEEP_TIME_2
-done
+#echo "Starting test_6_b_trrt"
+#for i in {1..100..1}
+#do
+#roslaunch siar_planner test_6_b_trrt_in_complex_scenario_turn_fork.launch 
+#echo "Concluded test_6_b_trrt, loop $i"
+#sleep $SLEEP_TIME_2
+#done
 
-echo "Starting test_6_b_birrt"
-for i in {1..100..1}
+echo "Starting test_6_b_tbirrt"
+for i in {1..10..1}
 do
 roslaunch siar_planner test_6_b_tbirrt_in_complex_scenario_turn_fork.launch 
-echo "Concluded test_6_b_birrt, loop $i"
+echo "Concluded test_6_b_tbirrt, loop $i"
 sleep $SLEEP_TIME_2
 done
 

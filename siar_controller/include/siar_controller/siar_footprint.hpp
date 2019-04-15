@@ -63,6 +63,7 @@ SiarFootprint::SiarFootprint(ros::NodeHandle& pn)
   if (!pn.getParam("width", m_width)) {
     m_width = 0.56;
   }
+  m_x_elec = 1e-4;
   pn.param("wheel_width", m_wheel_width, 0.075);
   if (!pn.getParam("simple_footprint", m_simplified))
     m_simplified = true;
