@@ -15,15 +15,19 @@ int main(int argc, char** argv) {
   pnh.param("planner_type", planner_type, std::string("rrt"));
 
   if (planner_type == "rrt") {
+    ROS_INFO("STARTING RRT planner");
     SiarPlannerActionServer<RRT> spas(nh, pnh);
     ros::spin();
   } else if (planner_type == "birrt") {
+    ROS_INFO("STARTING BIRRT planner");
     SiarPlannerActionServer<biRRT> spas(nh, pnh);
     ros::spin();
   } else if (planner_type == "trrt") {
+    ROS_INFO("STARTING TRRT planner");
     SiarPlannerActionServer<tRRT> spas(nh, pnh);
     ros::spin();
   } else if (planner_type == "tbirrt") {
+    ROS_INFO("STARTING TBIRRT planner");
     SiarPlannerActionServer<tbiRRT> spas(nh, pnh);
     ros::spin();
   }
