@@ -23,7 +23,7 @@ template <typename T> class SiarPlannerActionServer
 {
 public:
   
-  SiarPlannerActionServer(ros::NodeHandle& nh, ros::NodeHandle& pnh):reverse(false)
+  SiarPlannerActionServer(ros::NodeHandle& nh, ros::NodeHandle& pnh):seq(0),reverse(false)
 {
   // Publishers
   path_marker_pub = nh.advertise<visualization_msgs::MarkerArray>("path_marker", 2, true);
@@ -47,6 +47,7 @@ protected:
   tf::TransformListener tfl;
 
   std::string base_frame_id; // Frame of the robot (usually /base_link)
+  int seq;
   
   // Path related info
   std::list<RRTNode> curr_path;
@@ -77,14 +78,20 @@ protected:
     start.state.push_back(0);start.state.push_back(0);start.state.push_back(0);
     
     // TODO: transform the pose (now it assumes it is indicated in base_link)
-    auto tf_pose = pose;
+    geometry_msgs::PoseStamped tf_pose = pose;
+    geometry_msgs::PoseStamped pose_cpy = pose;
     try {
-      
+      // tfl.waitForTransform(base_frame_id, pose.header.frame_id, ros::Time(0));
+      pose_cpy.header.stamp = ros::Time(0);
+
+
+
       if (pose.header.frame_id != base_frame_id) {
-        tfl.transformPose(base_frame_id, pose, tf_pose);
+        tfl.transformPose(base_frame_id, pose_cpy, tf_pose);
       }
     } catch (std::exception &e) {
-      ROS_ERROR("siar_planner_as::calculatePath --> could not transform the pose");
+      ROS_ERROR("siar_planner_as::calculatePath --> could not transform the pose. Base frame = %s. Pose frame = %s", base_frame_id.c_str(), pose.header.frame_id.c_str());
+      return;
     }
     
     goal.state.push_back(tf_pose.pose.position.x);
@@ -97,7 +104,6 @@ protected:
     goal.state.push_back(yaw);
     
     
-    //double cost = a_star.getPath(start, goal, curr_path);
     double cost = planner->resolve(start, goal, curr_path);
     
     t1 = ros::Time::now();
@@ -115,6 +121,8 @@ protected:
     for (auto x:curr_path) {
       geometry_msgs::PoseStamped p;
       p.header.stamp = time_;
+      p.header.frame_id = base_frame_id;
+      p.header.seq = seq++;
       // time_ = time_ + ros::Duration(planner->getDeltaT);
       p.pose.position.x = x.st.state[0];
       p.pose.position.y = x.st.state[1];
