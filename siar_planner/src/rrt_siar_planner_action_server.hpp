@@ -36,6 +36,7 @@ public:
 
   planner = new T(nh,pnh);
   pnh.param("base_frame_id", base_frame_id, std::string("base_link"));
+  pnh.param("global_frame_id", base_frame_id, std::string("world"));
 }
 
   double getDeltaT() const {return planner->getDeltaT();}
@@ -46,7 +47,7 @@ protected:
   ros::Publisher path_marker_pub, graph_pub, path_pub;
   tf::TransformListener tfl;
 
-  std::string base_frame_id; // Frame of the robot (usually /base_link)
+  std::string base_frame_id, global_frame_id; // Frame of the robot (usually /base_link)
   
   // Path related info
   std::list<RRTNode> curr_path;
@@ -103,8 +104,31 @@ protected:
     t1 = ros::Time::now();
     ROS_INFO("Path calculated. Cost = %f.\t Expended time: %f", cost, (t1 - t0).toSec());
     
-    visualization_msgs::MarkerArray m = planner->getPathMarker(curr_path);
-    path_marker_pub.publish(m);
+    visualization_msgs::MarkerArray m_a = planner->getPathMarker(curr_path);
+
+    // Transform the path to a global frame
+    tf::StampedTransform t;
+    t.setIdentity();
+    try { 
+      if (m_a.markers.size() > 0 && m_a.markers.at(0).header.frame_id != global_frame_id) {
+        tfl.lookupTransform(global_frame_id, m_a.markers[0].header.frame_id, ros::Time(0), t);
+      }
+      auto ang = t.getRotation().getAngle();
+      auto axis = t.getRotation().getAxis();
+      for (auto m:m_a.markers) {
+        m.header.frame_id = global_frame_id;
+        for (auto p_:m.points) {
+          tf::Point p;
+          tf::pointMsgToTF(p_, p);
+          p.rotate(axis, ang);
+          p = p + t.getOrigin();
+          tf::pointTFToMsg(p, p_);
+        }
+      }
+    } catch (std::exception &e) {
+      ROS_ERROR("siar_planner_as::calculatePath --> could not transform the pose");
+    }
+    path_marker_pub.publish(m_a);
     graph_pub.publish(planner->getGraphMarker());
 
     nav_msgs::Path path;

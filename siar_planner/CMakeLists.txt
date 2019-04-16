@@ -7,7 +7,9 @@ set(CMAKE_BUILD_TYPE Release)
 # SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -pg" )  # Uncomment for profiling 
 
 ## Add support for C++11, supported in ROS Kinetic and newer
- add_definitions(-std=c++11)
+ add_definitions(-std=c++11 ) # pg for profiling
+ set (CMAKE_CXX_FLAGS -pg)
+ set (CMAKE_EXE_LINKER_FLAGS -pg)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)

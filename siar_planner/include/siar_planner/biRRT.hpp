@@ -77,6 +77,7 @@ protected:
   int samp_cont, samp_goal_rate; //contadores de sampleo
   bool tree_num;
   
+  double getClosestNode(RRTNode *&n1, RRTNode *&n2);
   
   // Random numbers
   std::random_device rd;
@@ -211,40 +212,25 @@ double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
     while (cont < n_iter && !got_connected) { // n_iter Max. number of nodes to expand for each round
       NodeState q_rand;
       if (!(cont%samp_goal_rate == 0)){
-	q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
-	RRTNode *q_near = getNearestNode(q_rand, true);  
+	      q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
+	      RRTNode *q_near = getNearestNode(q_rand, true);  
         expandNode(q_rand, q_near, relax, true);
-	if(!got_connected){
-	  q_near = getNearestNode(q_rand, false);
-	  expandNode(q_rand, q_near, relax, false);
-	}
-// 	q_near = getNearestNode(q_rand, false);
-// 	expandNode(q_rand, q_near, relax, false);
+	      if(!got_connected){
+	        q_near = getNearestNode(q_rand, false);
+	        expandNode(q_rand, q_near, relax, false);
+	      }
       }
       else{
-// 	expandNearestNodes();
-	double dist = std::numeric_limits<double>::infinity();
-	RRTNode *q_closest1 = NULL;  
-	RRTNode *q_closest2 = NULL;
-	double new_dist;
-	for (auto n1: tree1){ 
-	  for (auto n2: tree2){
-	    new_dist = sqrt(pow(n1->st.state[0] - n2->st.state[0],2) + pow(n1->st.state[1] - n2->st.state[1],2)); 
-	    if (new_dist < dist){
-	      q_closest1 = n1; 
-	      q_closest2 = n2; 
-	      dist = new_dist;
-	    }
-	  }
-	}
-	//aqui llamo a expandNode
-	expandNode(q_closest2->st, q_closest1, relax, true); //expansion de q_closest1 que pertenece a tree1 hacia tree2
-// 	expandNode(q_closest1->st, q_closest2, relax, false);
-	if(!got_connected){
-	  expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1
-// 	  expandNode(q_closest2->st, q_closest1, relax, true);
-	}
-// 	expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1	
+      	double dist = std::numeric_limits<double>::infinity();
+	      RRTNode *q_closest1 = NULL;  
+	      RRTNode *q_closest2 = NULL;
+        getClosestNode(q_closest1, q_closest2);
+	      
+	      //aqui llamo a expandNode
+	      expandNode(q_closest2->st, q_closest1, relax, true); //expansion de q_closest1 que pertenece a tree1 hacia tree2
+	      if(!got_connected){
+	        expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1
+	      }
       }     
       cont++;
     }
@@ -309,28 +295,28 @@ double biRRT::resolve_expand1(NodeState start, NodeState goal, std::list<RRTNode
       }
       else{
 // 	expandNearestNodes();
-	double dist = std::numeric_limits<double>::infinity();
-	RRTNode *q_closest1 = NULL;  
-	RRTNode *q_closest2 = NULL;
-	double new_dist;
-	for (auto n1: tree1){ 
-	  for (auto n2: tree2){
-	    new_dist = sqrt(pow(n1->st.state[0] - n2->st.state[0],2) + pow(n1->st.state[1] - n2->st.state[1],2)); 
-	    if (new_dist < dist){
-	      q_closest1 = n1; 
-	      q_closest2 = n2; 
-	      dist = new_dist;
-	    }
-	  }
-	}
-	//aqui llamo a expandNode
-	expandNode(q_closest2->st, q_closest1, relax, true); //expansion de q_closest1 que pertenece a tree1 hacia tree2
-// 	expandNode(q_closest1->st, q_closest2, relax, false);
-	if(!got_connected){
-	  expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1
-// 	  expandNode(q_closest2->st, q_closest1, relax, true);
-	}
-// 	expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1	
+        double dist = std::numeric_limits<double>::infinity();
+        RRTNode *q_closest1 = NULL;  
+        RRTNode *q_closest2 = NULL;
+        getClosestNode(q_closest1, q_closest2);
+        // for (auto n1: tree1){ 
+        //   for (auto n2: tree2){
+        //     new_dist = sqrt(pow(n1->st.state[0] - n2->st.state[0],2) + pow(n1->st.state[1] - n2->st.state[1],2)); 
+        //     if (new_dist < dist){
+        //       q_closest1 = n1; 
+        //       q_closest2 = n2; 
+        //       dist = new_dist;
+        //     }
+        //   }
+        // }
+        //aqui llamo a expandNode
+        expandNode(q_closest2->st, q_closest1, relax, true); //expansion de q_closest1 que pertenece a tree1 hacia tree2
+      // 	expandNode(q_closest1->st, q_closest2, relax, false);
+        if(!got_connected){
+          expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1
+      // 	  expandNode(q_closest2->st, q_closest1, relax, true);
+        }
+      // 	expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1	
       }     
       cont++;
     }
@@ -340,8 +326,7 @@ double biRRT::resolve_expand1(NodeState start, NodeState goal, std::list<RRTNode
       path = getPath(); 
       ret_val = 1;
       ROS_INFO("Iteration %d. Solution found", relax);
-    }
-    else{ 
+    } else { 
       //if didnt get a solution, do relaxation
       m.decreaseWheels(wheel_decrease, last_wheel);
       relax++;
@@ -423,6 +408,7 @@ void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_
   
   for (int i = 0; i < K; i++) {
     NodeState st = q_near->st;
+    
     geometry_msgs::Twist command = m.generateRandomCommand();
     //     std::cout << "El comando es " << command <<std::endl;
     double cost;
@@ -643,6 +629,22 @@ double biRRT::retCostPath(const std::list< RRTNode >& path){
     }
   }
   return ret;
+}
+
+double biRRT::getClosestNode(RRTNode *&c1, RRTNode *&c2) {
+  double dist = 1e100;
+  double new_dist;
+  for (auto n1: tree1){ 
+    for (auto n2: tree2){
+      new_dist = pow(n1->st.state[0] - n2->st.state[0],2) + pow(n1->st.state[1] - n2->st.state[1],2); 
+      if (new_dist < dist){
+        c1 = n1; 
+        c2 = n2; 
+        dist = new_dist;
+      }
+    }
+  }
+  return sqrt(dist);
 }
 
 #endif
