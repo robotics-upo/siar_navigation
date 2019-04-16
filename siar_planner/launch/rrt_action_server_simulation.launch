@@ -15,7 +15,7 @@
   <node name="siar_tracker" pkg="siar_tracker" type="path_tracker.py" >
     <remap from="/path" to="/planned_path"/>
     <remap from="/cmd_vel" to="/planned_cmd_vel"/>
-    <param name="a" value ="1"/>
+    <param name="a" value ="2"/>
     <param name="lookahead" value ="5"/>
     <param name="max_omega" value="0.1"/>
   </node>
