@@ -3,11 +3,21 @@
   <arg name="config" default="rrt_params_23.yaml"/>
   <arg name="map" default="/test_costmap"/>
   <arg name="velocity_file" default="velocityset"/>
+  <arg name="planner_type" default="tbirrt"/>
         
   <node name="rrt_siar_planner_action_server" pkg="siar_planner" type="rrt_siar_planner_node" output="screen" >
     <remap from="/altitude_map" to="$(arg map)"/>
     <rosparam file="$(find siar_planner)/test/$(arg config)" command="load"  /> 
     <param name="velocity_file" value="$(find siar_planner)/test/$(arg velocity_file)" />
+    <param name="planner_type" value="$(arg planner_type)"/>
   </node>
-  
+
+  <node name="siar_tracker" pkg="siar_tracker" type="path_tracker.py" >
+    <remap from="/path" to="/planned_path"/>
+    <remap from="/cmd_vel" to="/planned_cmd_vel"/>
+    <param name="a" value ="1"/>
+    <param name="lookahead" value ="5"/>
+    <param name="max_omega" value="0.1"/>
+  </node>
+
 </launch>
