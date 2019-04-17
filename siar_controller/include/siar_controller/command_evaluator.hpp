@@ -299,6 +299,8 @@ double CommandEvaluator::evaluateTrajectory(const geometry_msgs::Twist& v_ini, c
   double lv = v_command.linear.x; //de momento uso esto, ya que la v_ini que se tomaba no tenia mucha logica en el calculo de computeNewVelocity
   double av = v_command.angular.z;
 
+  // ROS_INFO ("Evaluating traj. lv = %f, av =%f",lv,av);
+
   int cont_footprint = 0;
 
   // Initialize the footprint if needed:
@@ -309,7 +311,6 @@ double CommandEvaluator::evaluateTrajectory(const geometry_msgs::Twist& v_ini, c
   {
     // Integrate the model
     double lin_dist = lv * dt;
-    //cambio esto valar evaluar dt<0
     if (dt > 0){
       th = th + (av * dt);
       x = x + lin_dist*cos(th); // Euler 1
@@ -425,9 +426,9 @@ double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v
                                                    visualization_msgs::Marker& m, double x, double y, double th)
 {
   double dt = m_delta_T;
-  int steps = std::abs(m_T / m_delta_T);  //valor absoluto para evaluar tambien delta negativo
+  int steps = std::abs(m_T / m_delta_T);  
 
-  double lv = v_command.linear.x; //de momento uso esto, ya que la v_ini que se tomaba no tenia mucha logica en el calculo de computeNewVelocity
+  double lv = v_command.linear.x; 
   double av = v_command.angular.z;
 
   setParams(alt_map);
@@ -438,6 +439,7 @@ double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v
   initializeFootprint(alt_map);
 
   bool collision = false;
+  bool collision_relax = false;
   for(int i = 0; i <= steps && !collision; i++)
   {
 
@@ -452,7 +454,7 @@ double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v
     else{
       x = x + lin_dist*cos(th); // Euler 1
       y = y + lin_dist*sin(th);
-      th = th + (av * dt); //actualizo th despues
+      th = th + (av * dt); 
     }
 
     // Represent downsampled
@@ -460,7 +462,8 @@ double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v
       footprint->addPoints(x, y, th, m, 0, i == 0);
 
     // Actualize the cost
-    cont_footprint += applyFootprintRelaxed(x, y, th, alt_map, collision);
+    cont_footprint += applyFootprintTransition(x, y, th, alt_map, collision,collision_relax);
+    collision = collision | collision_relax;
 
     if (!collision )
       applyFootprint(x, y, th, alt_map, collision, true); // Search for positive collisions too
@@ -494,7 +497,6 @@ double CommandEvaluator::evaluateTrajectoryTransition(const geometry_msgs::Twist
   setParams(alt_map);
 
   double cont_footprint = 0;
-  double cont_footprint_constant =0;
   double ret = 0;
 
   // Initialize the footprint if needed:
@@ -519,11 +521,9 @@ double CommandEvaluator::evaluateTrajectoryTransition(const geometry_msgs::Twist
     if (i % 5 == 0)
       footprint->addPoints(x, y, th, m, 0, i == 0);
 
-    // Actualize the cost
-    // ROS_ERROR("Realizado el STEP %i de evaluateTrajectoryTransition para diferentes posiciones", i+1);
     cont_footprint += applyFootprintTransition(x, y, th, alt_map, collision, collision_wheels);
-    cont_footprint_constant += 0;
-
+    if (!collision )
+      applyFootprint(x, y, th, alt_map, collision, true); // Search for positive collisions too
   }
 
   if (collision) {
@@ -532,7 +532,7 @@ double CommandEvaluator::evaluateTrajectoryTransition(const geometry_msgs::Twist
     return -1;
   }
 
-  ret = cont_footprint + cont_footprint_constant ;
+  ret = cont_footprint;
 
   last_state.resize(3);
   last_state[0] = x;
@@ -570,7 +570,6 @@ int CommandEvaluator::applyFootprint(double x, double y, double th,
       collision = true; // Collision detected! (if applying the collision map, only consider positive obstacles)
 
     ret_val += abs(alt_map.data[index]);
-    // ROS_ERROR("EL VALOR DE ret_val EN applyFootprint (abs(alt_map.data[index])) ES: %i",ret_val);
 
   }
 
@@ -631,16 +630,13 @@ int CommandEvaluator::applyFootprintRelaxed(double x, double y, double th,
 
   collision |= ( (double)cont_left / (double)size * 2.0 ) < min_wheel_left;
   collision |= ( (double)cont_right / (double)size * 2.0 ) < min_wheel_right;
-//   if (collision) {
-//     ROS_INFO("CommandEvaluator::applyFootprintRelaxed --> COLLISION. Cont_left: %d \t Cont_right: %d \t fp size: %d", cont_left, cont_right, (int)fp.size());
-//   }
-  //  ROS_ERROR("EL VALOR DE ret_val EN applyFootprint (abs(alt_map.data[index])) ES: %i",ret_val);
+
   return ret_val;
 }
 
 double CommandEvaluator::applyFootprintTransition(double x, double y, double th,
                                               const nav_msgs::OccupancyGrid &alt_map,
-                                              bool &collision, bool &collision_wheels)
+                                              bool &collision, bool &collision_relaxed)
 {
 
   int ret_val = 0;
@@ -648,13 +644,11 @@ double CommandEvaluator::applyFootprintTransition(double x, double y, double th,
   FootprintType fp = footprint->getFootprint(x, y, th);
   FootprintType orig = footprint->getFootprint(0, 0 , 0);
   collision = false;
-  collision_wheels = false;
+  collision_relaxed = false;
 
   int index;
 
 
-  bool right_wheel = false;
-  bool left_wheel = false;
   int size = fp.size();
   double porctj_left_1 = 0, porctj_left_2 = 0, porctj_left_3 = 0, porctj_right_1 = 0, porctj_right_2 = 0, porctj_right_3 = 0,cont_porctj_left = 0, cont_porctj_right = 0;
   double cont_Coll_pix_left_1 = 0, cont_Coll_pix_left_2 = 0 ,cont_Coll_pix_left_3 = 0, cont_Coll_pix_right_1 = 0, cont_Coll_pix_right_2 = 0, cont_Coll_pix_right_3 = 0;
@@ -673,23 +667,19 @@ double CommandEvaluator::applyFootprintTransition(double x, double y, double th,
     if (orig[i].y > 0.0) {
       if (orig[i].x > wl_2){
         cont_Tot_pix_left_1 ++;
-      }
-      else if (orig[i].x < wl_2 && orig[i].x > -wl_2){
-        cont_Tot_pix_left_2  ++;
-      }
-      else if (orig[i].x < -wl_2){
+      } else if (orig[i].x < -wl_2){
         cont_Tot_pix_left_3  ++;
+      } else {
+        cont_Tot_pix_left_2  ++;
       }
     }
     else {
       if (orig[i].x > wl_2){
         cont_Tot_pix_right_1 ++;
-      }
-      else if (orig[i].x < wl_2 && orig[i].x > -wl_2){
-        cont_Tot_pix_right_2 ++;
-      }
-      else if (orig[i].x < -wl_2){
+      } else if (orig[i].x < -wl_2){
        cont_Tot_pix_right_3 ++;
+      } else {
+        cont_Tot_pix_right_2 ++;
       }
     }
 
@@ -700,40 +690,26 @@ double CommandEvaluator::applyFootprintTransition(double x, double y, double th,
     else if (alt_map.data[index] == negative_obs)
     {
       if (orig[i].y > 0.0) {
-        left_wheel = true;
         if (orig[i].x > wl_2){
           cont_Coll_pix_left_1 ++;
         }
-        else if (orig[i].x < wl_2 && orig[i].x > -wl_2){
-          cont_Coll_pix_left_2 ++;
-        }
         else if (orig[i].x < -wl_2){
           cont_Coll_pix_left_3 ++;
+        } else {
+          cont_Coll_pix_left_2 ++;
         }
       }
       else {
-        right_wheel = true;
         if (orig[i].x > wl_2){
           cont_Coll_pix_right_1 ++;
-        }
-        else if (orig[i].x < wl_2 && orig[i].x > -wl_2){
-          cont_Coll_pix_right_2 ++;
-        }
-        else if (orig[i].x < -wl_2){
+        } else if (orig[i].x < -wl_2) {
           cont_Coll_pix_right_3 ++;
+        } else {
+          cont_Coll_pix_right_2 ++;
         }
       }
     }
   }
-
-  //  DEBUG
-  //  ROS_ERROR("Numero de pixeles en colision rueda izquierda delantera %f de un TOTAL %f", cont_Coll_pix_left_1, cont_Tot_pix_left_1);
-  //  ROS_ERROR("Numero de pixeles en colision rueda izquierda media %f de un TOTAL %f", cont_Coll_pix_left_2, cont_Tot_pix_left_2);
-  //  ROS_ERROR("Numero de pixeles en colision rueda izquierda trasera %f de un TOTAL %f", cont_Coll_pix_left_3, cont_Tot_pix_left_3);
-  //  ROS_ERROR("Numero de pixeles en colision rueda derecha delantera %f de un TOTAL %f", cont_Coll_pix_right_1, cont_Tot_pix_right_1);
-  //  ROS_ERROR("Numero de pixeles en colision rueda derecha media %f de un TOTAL %f", cont_Coll_pix_right_2,cont_Tot_pix_right_2);
-  //  ROS_ERROR("Numero de pixeles en colision rueda derecha trasera %f de un TOTAL %f", cont_Coll_pix_right_3, cont_Tot_pix_right_3);
-
   if ((cont_Coll_pix_left_1 / cont_Tot_pix_left_1)> 0.6){
     porctj_left_1 = 1;
   }
@@ -756,12 +732,21 @@ double CommandEvaluator::applyFootprintTransition(double x, double y, double th,
   cont_porctj_left = porctj_left_1 + porctj_left_2 + porctj_left_3;
   cont_porctj_right = porctj_right_1 + porctj_right_2 + porctj_right_3;
 
+  
+
   if ((cont_porctj_left >2 && cont_porctj_right > 2)||(cont_porctj_left >=3 || cont_porctj_right >= 3)){
-    collision_wheels = true;
+    // ROS_INFO("Cont pcj left 1: %f\t2: %f\t3: %f\tnegative obs:%d", cont_Coll_pix_left_1, cont_Coll_pix_left_2, cont_Coll_pix_left_3, negative_obs);
+    // ROS_INFO("Cont pcj right 1: %f\t2: %f\t3: %f\tnegative obs:%d", cont_Coll_pix_right_1, cont_Coll_pix_right_2, cont_Coll_pix_right_3, negative_obs);
     collision = true;
 
     return -1;
   }
+
+  int cont_left = cont_Coll_pix_left_1 + cont_Coll_pix_left_2 + cont_Coll_pix_left_3;
+  int cont_right = cont_Coll_pix_right_1 + cont_Coll_pix_right_2 + cont_Coll_pix_right_3;
+  size*=2;
+  collision_relaxed = ( 1 - (double)cont_left / (double)size ) < min_wheel_left;
+  collision_relaxed |= ( 1 - (double)cont_right / (double)size ) < min_wheel_right;
 
   return ret_val;
 }
@@ -776,21 +761,9 @@ void CommandEvaluator::initializeFootprint(const nav_msgs::OccupancyGrid& alt_ma
     else
       footprint = new SiarFootprint(alt_map.info.resolution, footprint_params->m_length, footprint_params->m_width, footprint_params->m_wheel_width, true);
 
-//     m_divRes = 1.0 / alt_map.info.resolution;
-
     ROS_INFO("Alt map: height = %d \t width = %d", alt_map.info.height, alt_map.info.width);
-//     origin_x = alt_map.info.height * alt_map.info.resolution /2.0;
-//     origin_y = alt_map.info.width * alt_map.info.resolution /2.0;
-
-//     origin_x *= -1;
-//     origin_y *= -1;
-//     origin_x = alt_map.info.origin.position.x;
-//     origin_y = alt_map.info.origin.position.y;
-//     width = alt_map.info.width;
-//     ROS_INFO("Origin : %f, %f", origin_x, origin_y);
   }
 }
-
 
 
 }
