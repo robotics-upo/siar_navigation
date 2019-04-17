@@ -23,7 +23,12 @@ public:
   
   virtual double resolve(NodeState start, NodeState goal, std::list<RRTNode>& path); 
   
+<<<<<<< HEAD
   virtual visualization_msgs::Marker getGraphMarker();
+=======
+  visualization_msgs::MarkerArray getPathMarker(const std::list< RRTNode >& path, double duration = 10);
+  visualization_msgs::Marker getGraphMarker();
+>>>>>>> 2df3515c94b30e04a02f7a47107cd8e9ee46fc46
   
   double getDeltaT() const {return delta_t;}
   
@@ -37,7 +42,15 @@ public:
   }
   
 protected:
+<<<<<<< HEAD
   virtual void clear();
+=======
+  tbiRRT();
+
+  double getClosestNode(RRTNode *&c1, RRTNode *&c2);
+  
+  void clear();
+>>>>>>> 2df3515c94b30e04a02f7a47107cd8e9ee46fc46
   
   RRTNode* areConnected(NodeState st, bool direct);
   bool got_connected = false;
@@ -145,20 +158,21 @@ double tbiRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path
         }
       }
       else{                                               // is search the nodes from each tree that are more near
-        double dist = std::numeric_limits<double>::infinity();
+        // double dist = std::numeric_limits<double>::infinity();
         RRTNode *q_closest1 = NULL;  
         RRTNode *q_closest2 = NULL;
-        double new_dist;
-        for (auto n1: tree1){ 
-          for (auto n2: tree2){
-            new_dist = sqrt(pow(n1->st.state[0] - n2->st.state[0],2) + pow(n1->st.state[1] - n2->st.state[1],2)); 
-            if (new_dist < dist){
-              q_closest1 = n1; 
-              q_closest2 = n2; 
-              dist = new_dist;
-	          }
-	        }
-	      }
+        // double new_dist;
+        // for (auto n1: tree1){ 
+        //   for (auto n2: tree2){
+        //     new_dist = sqrt(pow(n1->st.state[0] - n2->st.state[0],2) + pow(n1->st.state[1] - n2->st.state[1],2)); 
+        //     if (new_dist < dist){
+        //       q_closest1 = n1; 
+        //       q_closest2 = n2; 
+        //       dist = new_dist;
+	      //     }
+	      //   }
+	      // }
+        getClosestNode(q_closest1, q_closest2);
         //  ROS_INFO("El nodo n_1 es X = %f, Y = %f , th = %f", q_closest1->st.state[0],q_closest1->st.state[1],q_closest1->st.state[2]);  
         //  ROS_INFO("El nodo n_2 es X = %f, Y = %f , th = %f", q_closest2->st.state[0],q_closest2->st.state[1],q_closest2->st.state[2]);  
         //aqui llamo a expandNode
@@ -176,7 +190,7 @@ double tbiRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path
       ROS_INFO("Iteration %d. Solution found", relax);    
     }
     else{ 
-      m.decreaseWheels(wheel_decrease, last_wheel);
+      // m.decreaseWheels(wheel_decrease, last_wheel);
       relax++;
       ROS_ERROR("tbiRRT::resolve -->  could not find a path -->  starting new iteration");    
     }
@@ -565,6 +579,47 @@ std::list<RRTNode> tbiRRT::getPath(){
 }
 
 
+<<<<<<< HEAD
+=======
+visualization_msgs::MarkerArray tbiRRT::getPathMarker(const std::list< RRTNode >& path, double duration) 
+{
+  visualization_msgs::MarkerArray ret;
+  visualization_msgs::Marker m_aux;
+
+  m_aux.header.frame_id = this->m.getFrameID();
+  m_aux.header.stamp = ros::Time::now();
+  m_aux.action = visualization_msgs::Marker::DELETEALL;
+  m_aux.points.clear();
+  m_aux.type = visualization_msgs::Marker::POINTS;
+  int cont = 0;
+  NodeState pt;
+  for (auto it = path.begin(); it != path.end(); it++, cont++) {
+    if (cont > 0) { 
+      pt = (--it)->st;
+      it++;
+      geometry_msgs::Twist command;
+      command.linear.x = it->command_lin;
+      command.angular.z = it->command_ang;
+
+      if (cont % 5 == 0){  
+
+        m_aux= m.getMarker(pt,cont);
+        m_aux.color.b=1.0;
+        m_aux.color.a=1.0;
+        m_aux.color.g=0.2;
+        m_aux.color.r=0.2;
+        m_aux.lifetime = ros::Duration(duration);
+        ret.markers.push_back(m_aux);
+      }
+    }
+  }
+  
+  return ret;
+}
+
+
+
+>>>>>>> 2df3515c94b30e04a02f7a47107cd8e9ee46fc46
 visualization_msgs::Marker tbiRRT::getGraphMarker()
 {
   visualization_msgs::Marker m;
@@ -604,4 +659,37 @@ visualization_msgs::Marker tbiRRT::getGraphMarker()
   return m;
 }
 
+<<<<<<< HEAD
+=======
+
+double tbiRRT::retCostPath(const std::list< RRTNode >& path){
+  double ret;
+  int cont = 0;
+
+  for (auto it = path.begin(); it != path.end(); it++, cont++) {
+    if (cont > 0) {
+      double cost_node = fabs(it->cost);
+      ret += cost_node;
+    }
+  }
+  return ret;
+}
+
+double tbiRRT::getClosestNode(RRTNode *&c1, RRTNode *&c2) {
+  double dist = 1e100;
+  double new_dist;
+  for (auto n1: tree1){ 
+    for (auto n2: tree2){
+      new_dist = pow(n1->st.state[0] - n2->st.state[0],2) + pow(n1->st.state[1] - n2->st.state[1],2); 
+      if (new_dist < dist){
+        c1 = n1; 
+        c2 = n2; 
+        dist = new_dist;
+      }
+    }
+  }
+  return sqrt(dist);
+}
+
+>>>>>>> 2df3515c94b30e04a02f7a47107cd8e9ee46fc46
 #endif

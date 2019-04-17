@@ -48,6 +48,34 @@ protected:
   void expandNode(const NodeState& q_rand, RRTNode* q_near, int relaxation_mode = 0, bool direct = true);
   virtual std::list<RRTNode> getPath();
   void expandNearestNodes();
+<<<<<<< HEAD
+=======
+//   NodeState euclideanDistance(NodeState q_rand, std::list<NodeState> list);
+    
+  // Sets to test
+  bool file_test_set_init;
+  std::vector <geometry_msgs::Twist> test_set_forward, test_set_backward;
+  std::vector <geometry_msgs::Twist> file_test_set_forward, file_test_set_backward;  
+  
+  int K, n_iter, n_rounds;
+  double delta_t, cellsize_m, cellsize_rad;
+  double wheel_decrease, last_wheel;
+  double max_x, max_y, max_yaw, min_x, min_y, min_yaw; //de que tipo serian?
+  double x_g, y_g, x_0, y_0;
+  
+  SiarModel m;
+  double goal_gap_m, goal_gap_rad;
+  
+  int samp_cont, samp_goal_rate; //contadores de sampleo
+  bool tree_num;
+  
+  double getClosestNode(RRTNode *&n1, RRTNode *&n2);
+  
+  // Random numbers
+  std::random_device rd;
+  std::mt19937 gen;
+  std::uniform_real_distribution<> dis;
+>>>>>>> 2df3515c94b30e04a02f7a47107cd8e9ee46fc46
 };
 
 biRRT::biRRT(ros::NodeHandle &nh, ros::NodeHandle &pnh):Planner(nh, pnh)
@@ -177,40 +205,25 @@ double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
     while (cont < n_iter && !got_connected) { // n_iter Max. number of nodes to expand for each round
       NodeState q_rand;
       if (!(cont%samp_goal_rate == 0)){
-	q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
-	RRTNode *q_near = getNearestNode(q_rand, true);  
+	      q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
+	      RRTNode *q_near = getNearestNode(q_rand, true);  
         expandNode(q_rand, q_near, relax, true);
-	if(!got_connected){
-	  q_near = getNearestNode(q_rand, false);
-	  expandNode(q_rand, q_near, relax, false);
-	}
-// 	q_near = getNearestNode(q_rand, false);
-// 	expandNode(q_rand, q_near, relax, false);
+	      if(!got_connected){
+	        q_near = getNearestNode(q_rand, false);
+	        expandNode(q_rand, q_near, relax, false);
+	      }
       }
       else{
-// 	expandNearestNodes();
-	double dist = std::numeric_limits<double>::infinity();
-	RRTNode *q_closest1 = NULL;  
-	RRTNode *q_closest2 = NULL;
-	double new_dist;
-	for (auto n1: tree1){ 
-	  for (auto n2: tree2){
-	    new_dist = sqrt(pow(n1->st.state[0] - n2->st.state[0],2) + pow(n1->st.state[1] - n2->st.state[1],2)); 
-	    if (new_dist < dist){
-	      q_closest1 = n1; 
-	      q_closest2 = n2; 
-	      dist = new_dist;
-	    }
-	  }
-	}
-	//aqui llamo a expandNode
-	expandNode(q_closest2->st, q_closest1, relax, true); //expansion de q_closest1 que pertenece a tree1 hacia tree2
-// 	expandNode(q_closest1->st, q_closest2, relax, false);
-	if(!got_connected){
-	  expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1
-// 	  expandNode(q_closest2->st, q_closest1, relax, true);
-	}
-// 	expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1	
+      	double dist = std::numeric_limits<double>::infinity();
+	      RRTNode *q_closest1 = NULL;  
+	      RRTNode *q_closest2 = NULL;
+        getClosestNode(q_closest1, q_closest2);
+	      
+	      //aqui llamo a expandNode
+	      expandNode(q_closest2->st, q_closest1, relax, true); //expansion de q_closest1 que pertenece a tree1 hacia tree2
+	      if(!got_connected){
+	        expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1
+	      }
       }     
       cont++;
     }
@@ -236,6 +249,102 @@ double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
   return ret_val; 
 }
 
+<<<<<<< HEAD
+=======
+
+double biRRT::resolve_expand1(NodeState start, NodeState goal, std::list<RRTNode>& path)
+{
+  
+//   tree1.clear(); // Incremental algorithm --> the graph is generated in each calculation
+//   tree2.clear();
+  clear();
+  //path.clear(); //crearlo como variable de la clase??
+  
+  if (!m.isInit()) {
+    ROS_ERROR("biRRT::resolve --> The model has not been initialized --> could not calculate a path");
+    return -1.0;
+  }
+  
+  
+  //RRTNode start_node; //modificar addnode para hacer esto
+  start_node.st = start;
+  tree1.push_back(new RRTNode(start_node)); 
+  
+  //RRTNode goal_node;
+  goal_node.st = goal;
+  tree2.push_back(new RRTNode(goal_node));
+  //nodes.push_back(goal_node); //este nodo no se incluira en la lista
+  
+  double ret_val = -1.0; 
+  int relax = 0;
+  
+  while (relax < n_rounds && !got_connected){
+    int cont = 0; 
+    while (cont < n_iter && !got_connected) { // n_iter Max. number of nodes to expand for each round
+      NodeState q_rand;
+      if (!(cont%samp_goal_rate == 0)){
+	q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
+	
+	RRTNode *q_near = getNearestNode1(q_rand);  
+        expandNode(q_rand, q_near, relax, tree_num);
+      }
+      else{
+// 	expandNearestNodes();
+        double dist = std::numeric_limits<double>::infinity();
+        RRTNode *q_closest1 = NULL;  
+        RRTNode *q_closest2 = NULL;
+        getClosestNode(q_closest1, q_closest2);
+        // for (auto n1: tree1){ 
+        //   for (auto n2: tree2){
+        //     new_dist = sqrt(pow(n1->st.state[0] - n2->st.state[0],2) + pow(n1->st.state[1] - n2->st.state[1],2)); 
+        //     if (new_dist < dist){
+        //       q_closest1 = n1; 
+        //       q_closest2 = n2; 
+        //       dist = new_dist;
+        //     }
+        //   }
+        // }
+        //aqui llamo a expandNode
+        expandNode(q_closest2->st, q_closest1, relax, true); //expansion de q_closest1 que pertenece a tree1 hacia tree2
+      // 	expandNode(q_closest1->st, q_closest2, relax, false);
+        if(!got_connected){
+          expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1
+      // 	  expandNode(q_closest2->st, q_closest1, relax, true);
+        }
+      // 	expandNode(q_closest1->st, q_closest2, relax, false); //expansion de q_closest2 que pertenece a tree2 hacia tree1	
+      }     
+      cont++;
+    }
+    
+    if(got_connected){ 
+      //if got solution, may return path
+      path = getPath(); 
+      ret_val = 1;
+      ROS_INFO("Iteration %d. Solution found", relax);
+    } else { 
+      //if didnt get a solution, do relaxation
+      m.decreaseWheels(wheel_decrease, last_wheel);
+      relax++;
+      std::cout << "Numero de nodos en grafo: tree1 : " << tree1.size() << "  tree2: " <<tree2.size() <<std::endl;
+      ROS_ERROR("biRRT::resolve -->  could not find a path -->  trying relaxation");    
+    }
+  }
+  std::cout << "Numero de nodos en grafo: " << tree1.size()+tree2.size() <<std::endl;
+  return ret_val; 
+}
+
+
+NodeState biRRT::getRandomState(double max_x, double min_x, double max_y, double min_y, double max_yaw, double min_yaw) {
+  NodeState randomState;
+  randomState.state.resize(3);
+  randomState.state[0] = (dis(gen) * (max_x-min_x)) + min_x;  //set random value for each state varible
+  randomState.state[1] = (dis(gen) * (max_y-min_y)) + min_y;
+  randomState.state[2] = (dis(gen) * (max_yaw-min_yaw)) + min_yaw;
+  
+  return randomState;
+}
+
+>>>>>>> 2df3515c94b30e04a02f7a47107cd8e9ee46fc46
 RRTNode* biRRT::getNearestNode(NodeState q_rand, bool primary_tree) {
   RRTNode *q_near = NULL; 
   double dist = std::numeric_limits<double>::infinity(); 
@@ -271,6 +380,7 @@ void biRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_
   
   for (int i = 0; i < K; i++) {
     NodeState st = q_near->st;
+    
     geometry_msgs::Twist command = m.generateRandomCommand();
     //     std::cout << "El comando es " << command <<std::endl;
     double cost;
@@ -443,4 +553,37 @@ visualization_msgs::Marker biRRT::getGraphMarker()
   return m;
 }
 
+<<<<<<< HEAD
+=======
+
+double biRRT::retCostPath(const std::list< RRTNode >& path){
+  double ret;
+  int cont = 0;
+
+  for (auto it = path.begin(); it != path.end(); it++, cont++) {
+    if (cont > 0) {
+      double cost_node = fabs(it->cost);
+      ret += cost_node;
+    }
+  }
+  return ret;
+}
+
+double biRRT::getClosestNode(RRTNode *&c1, RRTNode *&c2) {
+  double dist = 1e100;
+  double new_dist;
+  for (auto n1: tree1){ 
+    for (auto n2: tree2){
+      new_dist = pow(n1->st.state[0] - n2->st.state[0],2) + pow(n1->st.state[1] - n2->st.state[1],2); 
+      if (new_dist < dist){
+        c1 = n1; 
+        c2 = n2; 
+        dist = new_dist;
+      }
+    }
+  }
+  return sqrt(dist);
+}
+
+>>>>>>> 2df3515c94b30e04a02f7a47107cd8e9ee46fc46
 #endif
