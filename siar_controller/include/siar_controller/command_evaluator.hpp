@@ -710,22 +710,22 @@ double CommandEvaluator::applyFootprintTransition(double x, double y, double th,
       }
     }
   }
-  if ((cont_Coll_pix_left_1 / cont_Tot_pix_left_1)> 0.6){
+  if ((cont_Coll_pix_left_1 / cont_Tot_pix_left_1)> 0.7){
     porctj_left_1 = 1;
   }
-  if ((cont_Coll_pix_left_2 / cont_Tot_pix_left_2)> 0.6){
+  if ((cont_Coll_pix_left_2 / cont_Tot_pix_left_2)> 0.7){
     porctj_left_2 = 1;
   }
-  if ((cont_Coll_pix_left_3 / cont_Tot_pix_left_3)> 0.6){
+  if ((cont_Coll_pix_left_3 / cont_Tot_pix_left_3)> 0.7){
     porctj_left_3 = 1;
   }
-  if ((cont_Coll_pix_right_1 / cont_Tot_pix_right_1)> 0.6){
+  if ((cont_Coll_pix_right_1 / cont_Tot_pix_right_1)> 0.7){
     porctj_right_1 = 1;
   }
-  if ((cont_Coll_pix_right_2 / cont_Tot_pix_right_2)> 0.6){
+  if ((cont_Coll_pix_right_2 / cont_Tot_pix_right_2)> 0.7){
     porctj_right_2 = 1;
   }
-  if ((cont_Coll_pix_right_3 / cont_Tot_pix_right_3)> 0.6){
+  if ((cont_Coll_pix_right_3 / cont_Tot_pix_right_3)> 0.7){
     porctj_right_3 = 1;
   }
 

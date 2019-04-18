@@ -43,13 +43,9 @@ protected:
   void expandNode(const NodeState& q_rand, RRTNode* q_near, int relaxation_mode = 0);
   virtual std::list<RRTNode> getPath();
 
-  //bool transitionTest (NodeState &q_near, NodeState &q_new, NodeState& q_rand, double cost, double parent_cost, double dist);
-  // bool transitionTest (NodeState q_near, NodeState q_new, NodeState q_rand);
-  // void calculateCost(NodeState q_near, NodeState q_new, NodeState q_rand,double &cost_Qnear,double &cost_Qnew);
-  
   Transition testTrans;
 
-  double K_normal, Temp_init, Temp; //(cost_initial - cost_goal)/2
+  double K_normal, Temp_init, Temp; 
   int alfa , nFail, nFailmax ;
   double cost_Qnear, cost_Qnew, cost_wheels_Qnew;
 
@@ -58,21 +54,7 @@ protected:
 
 tRRT::tRRT(ros::NodeHandle &nh, ros::NodeHandle &pnh):Planner(nh,pnh),testTrans(nh,pnh)
 {
-  if (!pnh.getParam("K_normal", K_normal)) {
-    K_normal = 1000000;
-  }
-  if (!pnh.getParam("alfa", alfa)) { 
-    alfa = 2;
-  }
-  if (!pnh.getParam("nFailmax", nFailmax)) {
-    nFailmax = 0.2;
-  }
-  if (!pnh.getParam("Temp_init",Temp_init)) {
-
-    Temp_init = 1e-6;
-  }
-
-  // ROS_INFO("n_iter = %d \t K: %d \t", n_iter, K); 
+//   ROS_INFO("K_normal = %f \t alfa: %f \t nFailmax: %f \t Temp_init: %f \t", K_normal,alfa,nFailmax,Temp_init); 
 }
 
 tRRT::~tRRT()
@@ -112,10 +94,10 @@ double tRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
   
   double ret_val = -1.0; 
   int relax = 0;
-  Temp = Temp_init;
-  while (relax < n_rounds && !got_to_goal){ //n_round=6
+  // Temp = Temp_init;
+  while (relax < n_rounds && !got_to_goal){ 
     int cont = 0; 
-    while (cont < n_iter && !got_to_goal) { // n_iter = 200 Max. number of nodes to expand for each round
+    while (cont < n_iter && !got_to_goal) { 
     
       NodeState q_rand;
       if (!(cont%samp_goal_rate == 0)){
@@ -134,13 +116,13 @@ double tRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
       ret_val = 1;
       ROS_INFO("Iteration %d. Solution found", relax);
     }
-    else{   //if didnt get a solution, do relaxation
+    else{   
       m.decreaseWheels(wheel_decrease, last_wheel);
       relax++;
       ROS_ERROR("tRRT::resolve -->  could not find a path -->  starting new iteration");    
     }
   }
-  std::cout << "Numero de nodos en grafo: " << nodes.size() <<std::endl;
+  std::cout << "Nodes in the graph: " << nodes.size() <<std::endl;
   return ret_val; 
 }
 
@@ -171,15 +153,13 @@ void tRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_m
     NodeState st = q_near->st;
     geometry_msgs::Twist command = m.generateRandomCommand(); //generate a random command of velocity
     cost_wheels_Qnew = m.integrateTransition(st, command, delta_t);
-    // ROS_INFO("value cost_wheels_Qnew %f",cost_wheels_Qnew);
     RRTNode q_try = q_new;
     q_try.st = st;
     q_try.cost = cost_wheels_Qnew;
     if (cost_wheels_Qnew < 0.0)
       continue;
-      ret_transition = testTrans.transitionTest(*q_near, q_try);
-// ROS_INFO("Value Transition: %d",ret_transition);
-    // ret_transition = transitionTest (st_near, st, st_rand);  //Get the value of Q_new from st of integrate function if there is not collision
+
+    ret_transition = testTrans.transitionTest(*q_near, q_try);
     if (ret_transition){
       is_new_node = true;
       new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
@@ -212,63 +192,7 @@ void tRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_m
 }
 
 
-
-// bool tRRT::transitionTest (NodeState q_near, NodeState q_new, NodeState q_rand){ // Retorna un true o false diciendo si se acepta o no la configuracion
-
-//   double transition_probability;
-  
-//   std::uniform_real_distribution<> dis_2(0,1);
-//   double random_prob = dis_2(gen);
-//   double cost_max = 10000000000;
-//   calculateCost(q_near, q_new, q_rand, cost_Qnear, cost_Qnew);
-//   double dist_Qnear_Qnew = sqrt(pow(q_near.state[0] - q_new.state[0],2) + pow(q_near.state[1] - q_new.state[1],2));;
-//   double slope_cost = (cost_Qnew - cost_Qnear)/dist_Qnear_Qnew;
-//   if (slope_cost > 0){
-//     transition_probability = exp (-(slope_cost)/(K_normal * Temp)); 
-//   }
-//   else {
-//     transition_probability = 1;
-//   }
-//   if (cost_Qnew > cost_max){
-//     return 0;
-//   }
-//   if(cost_Qnew < cost_Qnear ){ 
-//     return 1;
-//   }
-//   if (random_prob < transition_probability){
-//     Temp = Temp/ alfa;
-//     nFail = 0;
-//     return 1;
-//   }
-//   else{
-//     if (nFail > nFailmax){  // Set in 0 and 20 respectively
-//       Temp = Temp * 10 *alfa;
-//       nFail = 0;  
-//     }
-//     else
-//     {
-//       nFail = nFail+1 ; 
-//     }
-//     return 0;
-//   }
-// }
-
-
-// void tRRT::calculateCost(NodeState q_near, NodeState q_new, NodeState q_rand,double &cost_Qnear,double &cost_Qnew){
-//   //First calculate the Cost of Qnear
-//   double cost_dis_Qnear = sqrt(pow(q_rand.state[0] - q_near.state[0],2) + pow(q_rand.state[1] - q_near.state[1],2));
-//   double cost_wheels_Qnear = m.costWheelsQnear(q_near.state[0],q_near.state[1],q_near.state[2]);
-
-//   //Second calculate the Cost of Qnew
-//   double cost_dist_Qnew = sqrt(pow(q_rand.state[0] - q_new.state[0],2) + pow(q_rand.state[1] - q_new.state[1],2));
-  
-//   cost_Qnear = cost_dis_Qnear*1.5 + cost_wheels_Qnear;
-//   cost_Qnew = cost_dist_Qnew*1.5  + cost_wheels_Qnew;
-// }
-
-
 std::list<RRTNode> tRRT::getPath(){
-  //get path from finished graph
   std::list<RRTNode> path;
   RRTNode* current_node = &goal_node;
   path.push_front(*current_node);
@@ -303,7 +227,7 @@ visualization_msgs::Marker tRRT::getGraphMarker()
     new_color.b += color_step;
     p1.x = n->st.state[0];
     p1.y = n->st.state[1];
-    m.points.push_back(p1); //es correcto aqui?
+    m.points.push_back(p1); 
     m.colors.push_back(color);
     color = new_color;
   }

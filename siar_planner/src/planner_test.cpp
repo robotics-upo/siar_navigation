@@ -4,15 +4,12 @@
 #include "siar_planner/biRRT.hpp"
 #include "siar_planner/tbiRRT.hpp"
 #include "ros/ros.h"
-// #include <functions/functions.h>
 #include <iostream>
 #include <sstream>
-// #include <iomanip>
 #include <string.h>
 #include <visualization_msgs/MarkerArray.h>
 
 using functions::RealVector;
-// using namespace std;
 
 int main(int argc, char** argv){
   

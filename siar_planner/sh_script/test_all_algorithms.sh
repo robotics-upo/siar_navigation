@@ -2,14 +2,16 @@
 
 echo "Starting with TESTS to every algorithms in differents scenarios and cases problems"
 
-export SLEEP_TIME_1=1
-export SLEEP_TIME_2=2
+# export SLEEP_TIME_1=1
+# export SLEEP_TIME_2=2
 
 # roslaunch siar_planner test_1_straight_section_map.launch &
 # sleep 2
 
 
 #echo "Starting test_1_a_rrt"
+
+
 for i in {1..3..1}
 do
   roslaunch siar_planner test.launch planner_type:=rrt n_tests:=$1 problem_number:=$i 
@@ -18,6 +20,18 @@ do
   roslaunch siar_planner test.launch planner_type:=tbirrt n_tests:=$1 problem_number:=$i 
   #sleep $SLEEP_TIME_1
 done
+
+
+# for i in {1..3..1}
+# do
+#   roslaunch siar_planner test.launch planner_type:=rrt n_tests:=$1 problem_number:=$i 
+#   roslaunch siar_planner test.launch planner_type:=trrt n_tests:=$1 problem_number:=$i 
+#   roslaunch siar_planner test.launch planner_type:=birrt n_tests:=$1 problem_number:=$i 
+#   roslaunch siar_planner test.launch planner_type:=tbirrt n_tests:=$1 problem_number:=$i 
+#   #sleep $SLEEP_TIME_1
+# done
+
+
 # for i in {3..6..1}
 # do
 #   roslaunch siar_planner test.launch planner_type:=rrt n_tests:=$1 problem_number:=$i map:=test_map_complex_scenario.yaml
