@@ -36,7 +36,7 @@ public:
 
   planner = new T(nh,pnh);
   pnh.param("base_frame_id", base_frame_id, std::string("base_link"));
-  pnh.param("global_frame_id", base_frame_id, std::string("world"));
+  pnh.param("global_frame_id", global_frame_id, std::string("world"));
 }
 
   double getDeltaT() const {return planner->getDeltaT();}
@@ -121,9 +121,11 @@ protected:
       }
       auto ang = t.getRotation().getAngle();
       auto axis = t.getRotation().getAxis();
-      for (auto m:m_a.markers) {
+      for (auto &m:m_a.markers) {
+	ROS_INFO("Here");
         m.header.frame_id = global_frame_id;
-        for (auto p_:m.points) {
+	m.lifetime = ros::Duration(0);
+        for (auto &p_:m.points) {
           tf::Point p;
           tf::pointMsgToTF(p_, p);
           p.rotate(axis, ang);

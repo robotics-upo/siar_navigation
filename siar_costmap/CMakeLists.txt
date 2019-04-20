@@ -109,7 +109,7 @@ ENDIF()
 catkin_package(
    INCLUDE_DIRS include
    LIBRARIES ann
-   CATKIN_DEPENDS nav_msgs ros_pcl roscpp sensor_msgs tf
+   CATKIN_DEPENDS nav_msgs ros_pcl roscpp sensor_msgs tf tf2
 )
 
 ###########
@@ -141,6 +141,17 @@ target_link_libraries(costmap_node
   ann
 )
 
+add_executable(process_node src/process_node.cpp)
+target_link_libraries(process_node
+  ${catkin_LIBRARIES}
+  ann
+)
+
+
+add_executable(raw_map_saver src/raw_costmap_saver.cpp)
+target_link_libraries(raw_map_saver
+  ${catkin_LIBRARIES}
+)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
