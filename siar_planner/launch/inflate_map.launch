@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="map" default="test_scenario_1.yaml"/>
+  <arg name="filename" default="processed_map"/>
+  <arg name="exp_decay" default="40"/>
+  <arg name="positive_obstacle" default="127"/>
+  <arg name="negative_obstacle" default="-127"/>
+
+  <!--Start the map server for the path planner-->
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find siar_planner)/test/$(arg map)" output="screen"/>
+
+  <node name="process_costmap" pkg="siar_costmap" type="process_node" output="screen">
+    <remap from="/costmap" to="/map"/>
+    <param name="exp_decay" value="$(arg exp_decay)"/>
+    <param name="negative_obstacle" value="$(arg negative_obstacle)"/>
+    <param name="positive_obstacle" value="$(arg positive_obstacle)"/>
+  </node>
+  
+  <node pkg="siar_costmap" name="raw_map_saver" type="raw_map_saver" args="-f $(arg filename)">
+    <remap from="/map" to="/processed_costmap"/>
+  </node>
+  
+</launch>
