@@ -1,4 +1,4 @@
-image: test_scenario_2.pgm
+image: processed_map.pgm
 resolution: 0.020000
 origin: [-5.250000, -5.000000, 0.000000]
 negate: 0
