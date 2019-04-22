@@ -2,13 +2,13 @@
 #define _tbiRRT_HPP_
 
 #include "siar_planner/Planner.hpp"
-
 #include "siar_planner/NodeState.hpp"
 #include "siar_planner/RRTNode.h"
 #include "siar_planner/SiarModel.hpp"
 
 #include "visualization_msgs/Marker.h"
 #include <visualization_msgs/MarkerArray.h>
+
 #include <functions/functions.h>
 #include <math.h>
 
@@ -58,11 +58,17 @@ protected:
   double Temp_1,Temp_2,Temp_init; //(cost_initial - cost_goal)/2
   double cost_wheels_Qnew1, cost_wheels_Qnew2;
   double cost_Qnear, cost_Qnew, cost_wheels_Qnew;
+
+  ros::Publisher tree1_pub, tree2_pub;
+  visualization_msgs::Marker tree1Marker, tree2Marker;
+  geometry_msgs::Point ptree1, ptree2;
 };
 
 // tbiRRT::tbiRRT(ros::NodeHandle &nh, ros::NodeHandle &pnh):Planner(nh, pnh),testTrans1(nh,pnh),testTrans2(nh,pnh){
 tbiRRT::tbiRRT(ros::NodeHandle &nh, ros::NodeHandle &pnh):Planner(nh, pnh),testTrans1(nh,pnh) {
 //   ROS_INFO("K_normal = %f \t alfa: %f \t nFailmax: %f \t Temp_init: %f \t", K_normal,alfa,nFailmax,Temp_init); 
+  tree1_pub = nh.advertise<visualization_msgs::Marker>("tree1_marker", 2, true);
+  tree2_pub = nh.advertise<visualization_msgs::Marker>("tree2_marker", 2, true);
 }
 
 tbiRRT::~tbiRRT(){
@@ -105,6 +111,37 @@ double tbiRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path
   
   double ret_val = -1.0; 
   int relax = 0;
+
+  tree1Marker.header.frame_id = this->m.getFrameID();
+  tree1Marker.header.stamp = ros::Time::now();
+  tree1Marker.pose.orientation.w = 1.0;
+  tree1Marker.id = 0;
+  tree1Marker.type = visualization_msgs::Marker::POINTS;
+  tree1Marker.scale.x = 0.05;
+  // visualization_msgs::Marker::_color_type color;
+  tree1Marker.action = visualization_msgs::Marker::ADD;
+  tree1Marker.color.b=1.0;
+  tree1Marker.color.a=1.0;
+  tree1Marker.color.r=0.4;
+  tree1Marker.color.g=0.2;
+  tree1Marker.points.clear();
+  
+  
+  tree2Marker.header.frame_id = this->m.getFrameID();
+  tree2Marker.header.stamp = ros::Time::now();
+  tree2Marker.pose.orientation.w = 1.0;
+  tree2Marker.id = 0;
+  tree2Marker.type = visualization_msgs::Marker::POINTS;
+  tree2Marker.scale.x = 0.05;
+  // visualization_msgs::Marker::_color_type color;
+  tree2Marker.action = visualization_msgs::Marker::ADD;
+  tree2Marker.color.r=1.0;
+  tree2Marker.color.a=1.0;
+  tree2Marker.color.g=0.2;
+  tree2Marker.color.b=0.2;
+  tree2Marker.points.clear();
+  
+
   while (relax < n_rounds && !got_connected) {
     int cont = 0; 
     while (cont < n_iter && !got_connected) { // n_iter Max. number of nodes to expand for each round
@@ -116,7 +153,6 @@ double tbiRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path
 	      if(!got_connected){                              
 	        q_near = getNearestNode(q_rand, false);       
           expandNode2(q_rand, q_near, relax, false);      
-
         }
       }
       else{                                              
@@ -237,6 +273,14 @@ void tbiRRT::expandNode1(const NodeState &q_rand, RRTNode *q_near, int relaxatio
     }
   }
   if (is_new_node){
+    ptree1.x = q_new.st.state[0];
+    ptree1.y = q_new.st.state[1];
+    tree1Marker.ns = "tree1M";
+    tree1Marker.points.push_back(ptree1);
+    tree1Marker.lifetime = ros::Duration(3);
+    tree1_pub.publish(tree1Marker); 
+
+
     RRTNode *q_closest = areConnected(q_new.st, direct);   
     if(direct){
       q_new.parent = q_near;
@@ -305,6 +349,13 @@ void tbiRRT::expandNode2(const NodeState &q_rand, RRTNode *q_near, int relaxatio
       }
   }
   if (is_new_node){
+    ptree2.x = q_new.st.state[0];
+    ptree2.y = q_new.st.state[1];
+    tree2Marker.ns = "tree2M";
+    tree2Marker.points.push_back(ptree2);
+    tree2Marker.lifetime = ros::Duration(3);
+    tree2_pub.publish(tree2Marker);  
+
     RRTNode *q_closest = areConnected(q_new.st, direct); 
     if(direct){
       q_new.parent = q_near;

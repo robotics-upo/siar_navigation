@@ -12,34 +12,26 @@ echo "Starting with TESTS to every algorithms in differents scenarios and cases 
 #echo "Starting test_1_a_rrt"
 
 
-for i in {1..3..1}
-do
-  roslaunch siar_planner test.launch planner_type:=rrt n_tests:=$1 problem_number:=$i 
-  roslaunch siar_planner test.launch planner_type:=trrt n_tests:=$1 problem_number:=$i 
-  roslaunch siar_planner test.launch planner_type:=birrt n_tests:=$1 problem_number:=$i 
-  roslaunch siar_planner test.launch planner_type:=tbirrt n_tests:=$1 problem_number:=$i 
-  #sleep $SLEEP_TIME_1
-done
 
 
 # for i in {1..3..1}
 # do
 #   roslaunch siar_planner test.launch planner_type:=rrt n_tests:=$1 problem_number:=$i 
 #   roslaunch siar_planner test.launch planner_type:=trrt n_tests:=$1 problem_number:=$i 
-#   roslaunch siar_planner test.launch planner_type:=birrt n_tests:=$1 problem_number:=$i 
-#   roslaunch siar_planner test.launch planner_type:=tbirrt n_tests:=$1 problem_number:=$i 
+#   roslaunch siar_planner test.launch planner_type:=birrt n_tests:=$1 problem_number:=$i
+#   roslaunch siar_planner test.launch planner_type:=tbirrt n_tests:=$1 problem_number:=$i
 #   #sleep $SLEEP_TIME_1
 # done
 
 
-# for i in {3..6..1}
-# do
-#   roslaunch siar_planner test.launch planner_type:=rrt n_tests:=$1 problem_number:=$i map:=test_map_complex_scenario.yaml
-#   roslaunch siar_planner test.launch planner_type:=trrt n_tests:=$1 problem_number:=$i map:=test_map_complex_scenario.yaml
-#   roslaunch siar_planner test.launch planner_type:=birrt n_tests:=$1 problem_number:=$i map:=test_map_complex_scenario.yaml
-#   roslaunch siar_planner test.launch planner_type:=tbirrt n_tests:=$1 problem_number:=$i map:=test_map_complex_scenario.yaml
-#   #sleep $SLEEP_TIME_1
-# done
+for i in {4..6..1}
+do debug:=true
+  roslaunch siar_planner test.launch planner_type:=rrt n_tests:=$1 problem_number:=$i map:=test_scenario_2.yaml 
+  roslaunch siar_planner test.launch planner_type:=trrt n_tests:=$1 problem_number:=$i map:=test_scenario_2.yaml 
+  roslaunch siar_planner test.launch planner_type:=birrt n_tests:=$1 problem_number:=$i map:=test_scenario_2.yaml 
+  roslaunch siar_planner test.launch planner_type:=tbirrt n_tests:=$1 problem_number:=$i map:=test_scenario_2.yaml 
+  #sleep $SLEEP_TIME_1
+done
 
 #echo "Starting test_1_a_birrt"
 #for i in {1..100..1}

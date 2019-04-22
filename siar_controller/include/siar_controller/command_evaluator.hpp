@@ -102,8 +102,8 @@ namespace siar_controller {
       return min_wheel_right;
     }
 
-    inline void setDeltaT(double new_delta_t) {
-      m_delta_T = new_delta_t;
+    inline void setDeltaT(double new_delta_t){
+        m_delta_T = new_delta_t;
     }
 
     //! @brief Sets the parameters into the evaluator
@@ -171,6 +171,23 @@ namespace siar_controller {
 
     double applyFootprintTransition(double x, double y, double th, const nav_msgs::OccupancyGrid &alt_map, bool &collision, bool &collision_wheels);
 
+    inline int point2index(double x, double y)
+      {
+       int ret_val;
+       if (!rotate) {
+         int i = (x - origin_x)*m_divRes;
+         int j = (y - origin_y)*m_divRes;
+         ret_val = MAP_IDX(width, i, j);
+       } else {
+         // From siar costmap
+         ret_val =  ((int)((x-origin_x)*m_divRes))*width + width - (int)((y+origin_y)*m_divRes); //(int)(((x-origin_x)*m_divRes + 1)*width) - (int)((y - origin_y)*m_divRes);
+       }
+      if (ret_val >= total_points) {
+        ret_val = -1;
+      }
+        return ret_val;
+      }
+
   protected:
     double m_T; // Lookahead time
     double m_delta_T; // Timestep
@@ -217,25 +234,25 @@ namespace siar_controller {
     }
 
 
-    inline int point2index(double x, double y)
-        {
-          int ret_val;
+    // inline int point2index(double x, double y)
+    //     {
+    //       int ret_val;
 
-          if (!rotate) {
-            int i = (x - origin_x)*m_divRes;
-            int j = (y - origin_y)*m_divRes;
-            ret_val = MAP_IDX(width, i, j);
-          } else {
-            // From siar costmap
-            ret_val =  ((int)((x-origin_x)*m_divRes))*width + width - (int)((y+origin_y)*m_divRes); //(int)(((x-origin_x)*m_divRes + 1)*width) - (int)((y - origin_y)*m_divRes);
-          }
+    //       if (!rotate) {
+    //         int i = (x - origin_x)*m_divRes;
+    //         int j = (y - origin_y)*m_divRes;
+    //         ret_val = MAP_IDX(width, i, j);
+    //       } else {
+    //         // From siar costmap
+    //         ret_val =  ((int)((x-origin_x)*m_divRes))*width + width - (int)((y+origin_y)*m_divRes); //(int)(((x-origin_x)*m_divRes + 1)*width) - (int)((y - origin_y)*m_divRes);
+    //       }
 
-          if (ret_val >= total_points) {
-            ret_val = -1;
-          }
+    //       if (ret_val >= total_points) {
+    //         ret_val = -1;
+    //       }
 
-          return ret_val;
-        }
+    //       return ret_val;
+    //     }
   };
 
 CommandEvaluator::CommandEvaluator(double w_dist, double w_safe, double T, const RobotCharacteristics &model, double delta_T, SiarFootprint *footprint_p):footprint(NULL), footprint_params(NULL)

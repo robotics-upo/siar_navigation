@@ -72,13 +72,15 @@ int main(int argc, char** argv){
   goal.state = v;
   
   std::list<RRTNode> path; 
-  
+  std::list<NodeState> randomTree;
   
   
   ros::Publisher vis_pub = nh.advertise<visualization_msgs::Marker>("init_marker", 2, true);
   ros::Publisher goal_pub = nh.advertise<visualization_msgs::Marker>("goal_marker", 2, true);
-  ros::Publisher graph_pub = nh.advertise<visualization_msgs::Marker>("graph_marker", 2, true);
+  // ros::Publisher graph_pub = nh.advertise<visualization_msgs::Marker>("graph_marker", 2, true);
+  // ros::Publisher random_pub = nh.advertise<visualization_msgs::Marker>("random_marker", 2, true);
   ros::Publisher path_pub = nh.advertise<visualization_msgs::MarkerArray>("path_marker", 2, true);
+  
   
   ROS_INFO("Publishing visualization markers (init and goal)");
   vis_pub.publish(planner->getModel().getMarker(init));
@@ -89,6 +91,8 @@ int main(int argc, char** argv){
 
     ROS_INFO("Test number: %d", cont);
     ros::Time t = ros::Time::now();
+    bool clean=true;      // To clean RandomMarkers
+    planner->resetMarker(clean); // To clean RandomMarkers
     double cost = planner->resolve(init, goal, path);
     ros::Time t1 = ros::Time::now();
     if (cost > 0.0){ 
@@ -102,19 +106,20 @@ int main(int argc, char** argv){
         ROS_INFO("Could not get a path in %f seconds", (t1 - t).toSec());
     }
     
-    graph_pub.publish(planner->getGraphMarker());
+    // graph_pub.publish(planner->getGraphMarker());
+    // random_pub.publish(planner->randomTreeMarker(planner->randomTree));
     
     
 
     if (ofs.is_open()) {
-        std::cout << "Guardado en archivo de salida: " << output_file << std::endl;
+        std::cout << "Saving in output file: " << output_file << std::endl;
         ofs << (t1 - t).toSec() << "," << path.size()* planner->getDeltaT() << "," << path.size() 
         << "," << planner->getGraphSize()
         << "," << planner->retCostPath(path) 
         <<std::endl;
     } 
     else {
-        std::cout << "No se puede abrir el archivo de salida" << std::endl;
+        std::cout << "Couldn't be open the output file" << std::endl;
     }
   }
   ofs.close();

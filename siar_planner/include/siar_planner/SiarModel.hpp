@@ -30,6 +30,7 @@ public:
   double integrateTransition2(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T);
   
   virtual geometry_msgs::Twist generateRandomCommand();
+  virtual geometry_msgs::Twist generateStraightCommand();
   
   inline bool isInit() const {return map_init;}
 
@@ -79,9 +80,13 @@ public:
     return m_world.info.resolution * m_world.info.width * 0.5;
   }
   
-protected:
-  nav_msgs::OccupancyGrid m_world;
   siar_controller::CommandEvaluator m_ce;
+  nav_msgs::OccupancyGrid m_world;
+
+
+protected:
+  // nav_msgs::OccupancyGrid m_world;
+  // siar_controller::CommandEvaluator m_ce;
   double cost_wheels, cost_wheels_q_near;
   
   bool map_init;
@@ -224,6 +229,16 @@ geometry_msgs::Twist SiarModel::generateRandomCommand() {
   ret.linear.x = m_ce.getCharacteristics().v_max;
   ret.angular.z = dis(gen);
   ret.linear.y = ret.linear.z = ret.angular.x = ret.angular.y = 0.0;
+  
+  return ret;
+}
+
+geometry_msgs::Twist SiarModel::generateStraightCommand() {
+  
+  geometry_msgs::Twist ret;
+  
+  ret.linear.x = m_ce.getCharacteristics().v_max;
+  ret.angular.z = ret.linear.y = ret.linear.z = ret.angular.x = ret.angular.y = 0.0;
   
   return ret;
 }
