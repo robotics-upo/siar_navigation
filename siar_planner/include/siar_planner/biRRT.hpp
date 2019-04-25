@@ -67,8 +67,6 @@ biRRT::biRRT(ros::NodeHandle &nh, ros::NodeHandle &pnh):Planner(nh, pnh)
   tree1_pub = nh.advertise<visualization_msgs::Marker>("tree1_marker", 2, true);
   tree2_pub = nh.advertise<visualization_msgs::Marker>("tree2_marker", 2, true);
   // random_pub = nh.advertise<visualization_msgs::Marker>("random_marker", 2, true);
-
-
 }
 
 biRRT::~biRRT(){
@@ -141,30 +139,8 @@ double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
     int cont = 0; 
     while (cont < n_iter && !got_connected) { // n_iter Max. number of nodes to expand for each round
       NodeState q_rand;
-
-      // NodeState q_rand_straight1;//New
-      // RRTNode *q_farthest1 = NULL; //New
-      // double dist_far = 0;//New
-      // double new_dist_far;//New
-      // for (auto n1: tree1){ //New
-      //   new_dist_far = sqrt(pow(n1->st.state[0] - start_node.st.state[0],2) + pow(n1->st.state[1] - start_node.st.state[1],2)); //New
-      //   if (new_dist_far >= dist_far){//New
-      //     q_farthest1 = n1; //New
-      //     dist_far = new_dist_far;//New
-      //   }
-      // }
-      //  getStraightNode(q_farthest1,q_rand_straight1,relax);
-
-
-
       if (!(cont%samp_goal_rate == 0)){
-        // if (getStraightNode(q_farthest1,q_rand_straight1,relax)){ //New
-          // q_rand = q_rand_straight1; 
-          // ROS_INFO("dentro getStraightNode");                             //New
-        // }else{                                                    //New 
-
         q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
-        // } //new 
       	RRTNode *q_near = getNearestNode(q_rand, true);       
         expandNode1(q_rand, q_near, relax);
       	if(!got_connected){
@@ -212,25 +188,6 @@ double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
 }
 
 
-//New
-// bool biRRT::getStraightNode(RRTNode *q_near,NodeState &q_rand_straight, bool relaxation_mode){  //New
-//   NodeState st = q_near->st;
-//   geometry_msgs::Twist commandStraight = m.generateStraightCommand();
-  
-//   double cost = m.integrate(st, commandStraight, delta_t, relaxation_mode >= 1);
- 
-//   if (cost < 0.0) {
-//     return 0;
-//     // std::cout << "Colision tree 1 " <<std::endl;
-//   }
-//   else{
-//     NodeState q_rand_straight = st;
-//     return 1;
-//   } 
-// }
-
-
-
 RRTNode* biRRT::getNearestNode(NodeState q_rand, bool primary_tree) {
   RRTNode *q_near = NULL; 
   double dist = std::numeric_limits<double>::infinity(); 
@@ -273,6 +230,18 @@ void biRRT::expandNode1(const NodeState &q_rand, RRTNode *q_near, int relaxation
       is_new_node = true;
       new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
       if (new_dist<dist) {
+        // ******TO IMPROVE THE CONNECTION OF THE NODES
+        
+        // double ang,num, den;
+        // num = (q_rand.state[0]- q_near->st.state[0])*(q_rand.state[1]- q_near->st.state[1]) + (st.state[0]- q_near->st.state[0])*(st.state[1]- q_near->st.state[1]);
+        // den = sqrt(pow((q_rand.state[0] - q_near->st.state[0]) ,2) + pow(q_rand.state[1] - q_near->st.state[1],2)) * 
+        //       sqrt(pow((st.state[0] - q_near->st.state[0]) ,2) + pow(st.state[1] - q_near->st.state[1],2));
+        // ang = acos(num/den);
+        // if (ang > -M_PI/6 && ang < M_PI/6){
+        //   is_new_node = true;
+          // std::cout << "CONECTA" << std::endl;
+        
+        //***** TO IMPROVE THE CONNECTION OF THE NODES
         q_new.st = st; 
         q_new.command_lin = command.linear.x;
         q_new.command_ang = command.angular.z;
@@ -289,21 +258,20 @@ void biRRT::expandNode1(const NodeState &q_rand, RRTNode *q_near, int relaxation
     tree1Marker.lifetime = ros::Duration(3);
     tree1_pub.publish(tree1Marker); 
 
-
     RRTNode *q_closest = areConnected1(q_new.st); 
-      q_near->command_lin = q_new.command_lin;
-      q_near->command_ang = q_new.command_ang;
-      q_new.command_lin = 0;
-      q_new.command_ang = 0;
-      q_new.parent = q_near;
-      // q_new.cost += q_near->cost; // Accumulate the parent cost 
-      RRTNode *new_node = new RRTNode(q_new); 
-      q_near->children.push_back(new_node);
-      tree1.push_back(new_node);
-      if(got_connected){
-        q_final_1 = new_node;
-        q_final_2 = q_closest;
-      }    
+    q_near->command_lin = q_new.command_lin;
+    q_near->command_ang = q_new.command_ang;
+    q_new.command_lin = 0;
+    q_new.command_ang = 0;
+    q_new.parent = q_near;
+    // q_new.cost += q_near->cost; // Accumulate the parent cost 
+    RRTNode *new_node = new RRTNode(q_new); 
+    q_near->children.push_back(new_node);
+    tree1.push_back(new_node);
+    if(got_connected){
+      q_final_1 = new_node;
+      q_final_2 = q_closest;
+    }    
   }
 }
 
@@ -324,6 +292,17 @@ void biRRT::expandNode2(const NodeState &q_rand, RRTNode *q_near, int relaxation
       is_new_node = true;
       new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
       if (new_dist<dist) {
+        // ******TO IMPROVE THE CONNECTION OF THE NODES
+        // double ang,num, den;
+        // num = (q_rand.state[0]- q_near->st.state[0])*(q_rand.state[1]- q_near->st.state[1]) + (st.state[0]- q_near->st.state[0])*(st.state[1]- q_near->st.state[1]);
+        // den = sqrt(pow((q_rand.state[0] - q_near->st.state[0]) ,2) + pow(q_rand.state[1] - q_near->st.state[1],2)) * 
+        //       sqrt(pow((st.state[0] - q_near->st.state[0]) ,2) + pow(st.state[1] - q_near->st.state[1],2));
+        // ang = acos(num/den);
+        // if (ang > -M_PI/6 && ang < M_PI/6){
+        //   is_new_node = true;
+          // std::cout << "CONECTA" << std::endl;
+        
+        //***** TO IMPROVE THE CONNECTION OF THE NODES
         q_new.st = st; 
         q_near->command_lin = command.linear.x; 
         q_near->command_ang = command.angular.z;
@@ -339,8 +318,6 @@ void biRRT::expandNode2(const NodeState &q_rand, RRTNode *q_near, int relaxation
     tree2Marker.points.push_back(ptree2);
     tree2Marker.lifetime = ros::Duration(3);
     tree2_pub.publish(tree2Marker);  
-
-
 
     RRTNode *q_closest = areConnected2(q_new.st);     
       q_near->command_lin = q_new.command_lin;
@@ -373,6 +350,11 @@ RRTNode* biRRT::areConnected1(NodeState st) {
     } 
   got_connected = (fabs(st.state[0] - q_closest->st.state[0]) < goal_gap_m) && (fabs(st.state[1]-q_closest->st.state[1]) < goal_gap_m) && 
   (fabs(st.state[2] - q_closest->st.state[2]) < goal_gap_rad);
+  // std::cout << "FROM TREE 1" << std::endl;
+  // std::cout << "q_new:  x:" << st.state[0] << " ; y:" << st.state[1] << " ; ang:" << st.state[2] << std::endl;
+  // std::cout << "q_closest:  x:" << q_closest->st.state[0] << " ; y:" << q_closest->st.state[1] << " ; ang:" << q_closest->st.state[2] << std::endl;
+  // if (got_connected)
+  //   ROS_ERROR(" Finded the connected node");
 
   return q_closest;	  
 }
@@ -392,6 +374,12 @@ RRTNode* biRRT::areConnected2(NodeState st) {
   got_connected = (fabs(st.state[0] - q_closest->st.state[0]) < goal_gap_m) && (fabs(st.state[1]-q_closest->st.state[1]) < goal_gap_m) && 
   (fabs(st.state[2] - q_closest->st.state[2]) < goal_gap_rad);
 
+  // std::cout << "FROM TREE 2" << std::endl;
+  // std::cout << "q_new:   x: " << st.state[0] << " ;  y: " << st.state[1] << " ;  ang: " << st.state[2] << std::endl;
+  // std::cout << "q_closest:   x: " << q_closest->st.state[0] << " ;  y: " << q_closest->st.state[1] << " ;  ang: " << q_closest->st.state[2] << std::endl;
+  // if (got_connected)
+  //   ROS_ERROR(" Finded the connected node");
+  
    return q_closest;	  
 }
 

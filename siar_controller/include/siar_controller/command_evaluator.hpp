@@ -152,6 +152,7 @@ namespace siar_controller {
 
     inline SiarFootprint *getFootprint() {return footprint;}
 
+    void initializeFootprint(const nav_msgs::OccupancyGrid& alt_map, visualization_msgs::Marker& m);
     void initializeFootprint(const nav_msgs::OccupancyGrid& alt_map);
 
     inline functions::RealVector getLastState() const {return last_state;}
@@ -321,7 +322,7 @@ double CommandEvaluator::evaluateTrajectory(const geometry_msgs::Twist& v_ini, c
   int cont_footprint = 0;
 
   // Initialize the footprint if needed:
-  initializeFootprint(alt_map);
+  initializeFootprint(alt_map, m);
 
   bool collision = false;
   for(int i = 0; i < steps && !collision; i++)
@@ -379,8 +380,8 @@ double CommandEvaluator::evaluateTrajectoryMinVelocity(const geometry_msgs::Twis
 
   int cont_footprint = 0;
 
-  // Initialize the footprint if needed:
-  initializeFootprint(alt_map);
+  // Initialize the footprint if needed and clear marker:
+  initializeFootprint(alt_map, m);
 
   bool collision = false;
   double acc_dist = 0.0;
@@ -452,8 +453,9 @@ double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v
 
   int cont_footprint = 0;
 
-  // Initialize the footprint if needed:
-  initializeFootprint(alt_map);
+  m.points.clear();
+  // Initialize the footprint if needed and clear marker:
+  initializeFootprint(alt_map, m);
 
   bool collision = false;
   bool collision_relax = false;
@@ -516,8 +518,8 @@ double CommandEvaluator::evaluateTrajectoryTransition(const geometry_msgs::Twist
   double cont_footprint = 0;
   double ret = 0;
 
-  // Initialize the footprint if needed:
-  initializeFootprint(alt_map);
+  // Initialize the footprint if needed and clear marker:
+  initializeFootprint(alt_map, m);
 
   bool collision = false;
   bool collision_wheels =false;
@@ -766,6 +768,15 @@ double CommandEvaluator::applyFootprintTransition(double x, double y, double th,
   collision_relaxed |= ( 1 - (double)cont_right / (double)size ) < min_wheel_right;
 
   return ret_val;
+}
+
+
+
+void CommandEvaluator::initializeFootprint(const nav_msgs::OccupancyGrid& alt_map, visualization_msgs::Marker& m)
+{
+  m.points.clear();
+  initializeFootprint(alt_map);
+
 }
 
 void CommandEvaluator::initializeFootprint(const nav_msgs::OccupancyGrid& alt_map)

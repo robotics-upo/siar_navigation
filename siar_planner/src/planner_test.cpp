@@ -9,7 +9,11 @@
 #include <string.h>
 #include <visualization_msgs/MarkerArray.h>
 
+#include <dynamic_reconfigure/server.h>
+#include <siar_planner/plannerConfig.h>
+
 using functions::RealVector;
+void callback(siar_planner::plannerConfig &config, uint32_t level);
 
 int main(int argc, char** argv){
   
@@ -80,6 +84,12 @@ int main(int argc, char** argv){
   // ros::Publisher graph_pub = nh.advertise<visualization_msgs::Marker>("graph_marker", 2, true);
   // ros::Publisher random_pub = nh.advertise<visualization_msgs::Marker>("random_marker", 2, true);
   ros::Publisher path_pub = nh.advertise<visualization_msgs::MarkerArray>("path_marker", 2, true);
+
+  dynamic_reconfigure::Server<siar_planner::plannerConfig> server;
+  dynamic_reconfigure::Server<siar_planner::plannerConfig>::CallbackType f;
+   
+  f = boost::bind(&callback, _1, _2);
+  server.setCallback(f);
   
   
   ROS_INFO("Publishing visualization markers (init and goal)");
@@ -87,12 +97,16 @@ int main(int argc, char** argv){
   goal_pub.publish(planner->getModel().getMarker(goal, 1));
   
   ofs.open(output_file.c_str(), std::ofstream::app);
+
+  
+
   for (int cont = 0; cont < n_tests && ros::ok(); cont++) {
 
     ROS_INFO("Test number: %d", cont);
     ros::Time t = ros::Time::now();
     bool clean=true;      // To clean RandomMarkers
     planner->resetMarker(clean); // To clean RandomMarkers
+    path.clear();
     double cost = planner->resolve(init, goal, path);
     ros::Time t1 = ros::Time::now();
     if (cost > 0.0){ 
@@ -110,7 +124,6 @@ int main(int argc, char** argv){
     // random_pub.publish(planner->randomTreeMarker(planner->randomTree));
     
     
-
     if (ofs.is_open()) {
         std::cout << "Saving in output file: " << output_file << std::endl;
         ofs << (t1 - t).toSec() << "," << path.size()* planner->getDeltaT() << "," << path.size() 
@@ -125,5 +138,9 @@ int main(int argc, char** argv){
   ofs.close();
     
   return 0;
+}
+
+void callback(siar_planner::plannerConfig &config, uint32_t level) {
+  ROS_INFO("Reconfigure Request"); 
 }
 

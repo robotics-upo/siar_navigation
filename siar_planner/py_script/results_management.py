@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-"""
-Apertura de archivos CSV y gestion de datos
-"""
+
+#Apertura de archivos CSV y gestion de datos
+
 
 
 import os
 #iterate files in directory
-files = os.listdir('/home/domi/siar_ws/src/siar_navigation/siar_planner/py_script/outputs_rrt_antiguos/')
+files = os.listdir('/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/')
 for file_name in files:
-    file_path = '/home/domi/siar_ws/src/siar_navigation/siar_planner/py_script/outputs_rrt_antiguos/' + file_name
+    file_path = '/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/' + file_name
     #number of tests per file
     total_rows = 200
     success_rows = 0 
@@ -17,7 +17,7 @@ for file_name in files:
     
     test_time_col = 0
     path_time_col = 1
-    path_cost_col = 5
+    path_cost_col = 4
 
     '''
     #column numbers for birrt_antiguos
@@ -71,14 +71,14 @@ for file_name in files:
     print path_cost_average
     
     #Generar archivo de solucion, comprobar si existe, si no crearlo poniendole los titulos
-    if os.path.isfile('/home/domi/siar_ws/src/siar_navigation/siar_planner/py_script/tabla_resultados.csv')==False: #comprueba si existe el archivo
-        output_file = open('tabla_resultados.csv', 'w') #Si no existía el archivo, lo crea 
+    if os.path.isfile('/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/results_test.csv')==False: #comprueba si existe el archivo
+        output_file = open('/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/results_test.csv', 'w') #Si no existía el archivo, lo crea 
         #Añadimos titulos de columnas
         output_file.writelines('Test name;Fallos en 200;Test time average;Trajectory time average;Path cost average\n')
         output_file.close()
     
     
-    output_file = open('tabla_resultados.csv', 'a') #Si no existía el archivo, lo crea y escribe al final
+    output_file = open('/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/results_test.csv', 'a') #Si no existía el archivo, lo crea y escribe al final
     #Añadir resultados, segun columnas: nombre de test, tiempo medio de test, tiempo medio de path obtenido, coste medio de path obtenido
     output_file.writelines(file_name + ';' + str(fail_num) + ';' + str(test_time_average) + ';' + str(path_time_average) + ';' + str(path_cost_average) + '\n')
     output_file.close()
