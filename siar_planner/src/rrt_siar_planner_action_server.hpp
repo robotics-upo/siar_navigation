@@ -110,7 +110,13 @@ protected:
     t1 = ros::Time::now();
     ROS_INFO("Path calculated. Cost = %f.\t Expended time: %f", cost, (t1 - t0).toSec());
     
+    if (cost < -1.0) {
+      return;
+    }
+    
     visualization_msgs::MarkerArray m_a = planner->getPathMarker(curr_path);
+    
+    
 
     // Transform the path to a global frame
     tf::StampedTransform t;

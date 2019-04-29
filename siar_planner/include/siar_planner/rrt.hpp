@@ -75,7 +75,7 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
   
   if (!m.isInit()) {
     ROS_ERROR("RRT::resolve --> The model has not been initialized --> could not calculate a path");
-    return -1.0;
+    return -2.0;
   }
   start_node.st = start;
   nodes.push_back(new RRTNode(start_node)); 

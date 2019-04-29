@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="config" default="rrt_params_23.yaml"/>
+  <arg name="config" default="parameters_test.yaml"/>
   <arg name="map" default="/test_costmap"/>
   <arg name="velocity_file" default="velocityset"/>
-  <arg name="planner_type" default="tbirrt"/>
+  <arg name="planner_type" default="birrt"/>
         
-  <node name="rrt_siar_planner_action_server" pkg="siar_planner" type="rrt_siar_planner_node" output="screen" >
+  <node name="rrt_siar_planner_action_server" pkg="siar_planner" type="rrt_siar_planner_node" output="screen"  launch-prefix="xterm -e gdb --args">
     <remap from="/altitude_map" to="$(arg map)"/>
     <rosparam file="$(find siar_planner)/test/$(arg config)" command="load"  /> 
     <param name="velocity_file" value="$(find siar_planner)/test/$(arg velocity_file)" />
