@@ -1,23 +1,27 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="config" default="parameters_test.yaml"/>
+  <arg name="config" default="parameters_test_1.yaml"/>
   <arg name="map" default="/test_costmap"/>
   <arg name="velocity_file" default="velocityset"/>
-  <arg name="planner_type" default="birrt"/>
+  <arg name="planner_type" default="tbirrt"/>
         
-  <node name="rrt_siar_planner_action_server" pkg="siar_planner" type="rrt_siar_planner_node" output="screen"  launch-prefix="xterm -e gdb --args">
+  <node name="rrt_siar_planner_action_server" pkg="siar_planner" type="rrt_siar_planner_node" output="screen"  > #launch-prefix="xterm -e gdb --args">
     <remap from="/altitude_map" to="$(arg map)"/>
     <rosparam file="$(find siar_planner)/test/$(arg config)" command="load"  /> 
     <param name="velocity_file" value="$(find siar_planner)/test/$(arg velocity_file)" />
     <param name="planner_type" value="$(arg planner_type)"/>
   </node>
 
-  <node name="siar_tracker" pkg="siar_tracker" type="path_tracker.py" >
+  <node name="siar_tracker" pkg="siar_tracker" type="path_tracker.py">
     <remap from="/path" to="/planned_path"/>
     <remap from="/cmd_vel" to="/planned_cmd_vel"/>
-    <param name="a" value ="2"/>
-    <param name="lookahead" value ="5"/>
-    <param name="max_omega" value="0.1"/>
+    <param name="a" value ="5"/>
+    <param name="lookahead" value ="15"/>
+    <param name="max_omega" value="1.0"/>
   </node>
 
+  <node name="op" pkg="rostopic" type="rostopic" args='pub /operation_mode std_msgs/Int8 "data: 100"'/>
+  
+  <include file="$(find siar_model)/launch/siar_model_viz.launch"/>
+  <include file="$(find siar_costmap)/launch/siar_costmap_velodyne.launch"/>
 </launch>

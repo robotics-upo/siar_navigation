@@ -16,7 +16,7 @@
   <arg name="roi_h" default="228"/>
   <arg name="roi_w2" default="632"/>
   <arg name="roi_h2" default="472"/>
-  <arg name="exponential_decay" default="19"/>
+  <arg name="exponential_decay" default="50"/>
   
   <arg name="range_min" default="0.35"/>
   <arg name="range_max" default="5.0"/>

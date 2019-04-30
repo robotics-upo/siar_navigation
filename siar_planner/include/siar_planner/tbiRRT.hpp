@@ -277,7 +277,7 @@ void tbiRRT::expandNode1(const NodeState &q_rand, RRTNode *q_near, int relaxatio
     ptree1.y = q_new.st.state[1];
     tree1Marker.ns = "tree1M";
     tree1Marker.points.push_back(ptree1);
-    tree1Marker.lifetime = ros::Duration(3);
+    tree1Marker.lifetime = ros::Duration(40);
     tree1_pub.publish(tree1Marker); 
 
 
@@ -353,7 +353,7 @@ void tbiRRT::expandNode2(const NodeState &q_rand, RRTNode *q_near, int relaxatio
     ptree2.y = q_new.st.state[1];
     tree2Marker.ns = "tree2M";
     tree2Marker.points.push_back(ptree2);
-    tree2Marker.lifetime = ros::Duration(3);
+    tree2Marker.lifetime = ros::Duration(40);
     tree2_pub.publish(tree2Marker);  
 
     RRTNode *q_closest = areConnected(q_new.st, direct); 

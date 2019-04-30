@@ -85,7 +85,7 @@ protected:
       // tfl.waitForTransform(base_frame_id, pose.header.frame_id, ros::Time(0));
       pose_cpy.header.stamp = ros::Time(0);
 
-
+      ROS_INFO("Goal received: pose.header.frame_id = %s \t base_frame_id = %s", pose.header.frame_id.c_str(), base_frame_id.c_str());
 
       if (pose.header.frame_id != base_frame_id) {
         tfl.transformPose(base_frame_id, pose_cpy, tf_pose);
@@ -97,6 +97,8 @@ protected:
     
     goal.state.push_back(tf_pose.pose.position.x);
     goal.state.push_back(tf_pose.pose.position.y);
+    
+    ROS_INFO("Setting goal: %f, %f", tf_pose.pose.position.x, tf_pose.pose.position.y);
     
     // Conversion from quaternion message to yaw
     double roll, pitch, yaw;
@@ -121,14 +123,20 @@ protected:
     // Transform the path to a global frame
     tf::StampedTransform t;
     t.setIdentity();
-    try { 
-      if (m_a.markers.size() > 0 && m_a.markers.at(0).header.frame_id != global_frame_id) {
-        tfl.lookupTransform(global_frame_id, m_a.markers[0].header.frame_id, ros::Time(0), t);
+    bool got_transform = false;
+    if (m_a.markers.size() > 0 && m_a.markers.at(0).header.frame_id != global_frame_id) {
+      while (!got_transform) {
+	try { 
+	  tfl.lookupTransform(global_frame_id, m_a.markers[0].header.frame_id, ros::Time(0), t);
+	  got_transform = true;
+	}  catch (std::exception &e) {
+// 	  ROS_ERROR("siar_planner_as::calculatePath --> could not transform the pose");
+	}
       }
       auto ang = t.getRotation().getAngle();
       auto axis = t.getRotation().getAxis();
       for (auto &m:m_a.markers) {
-	ROS_INFO("Here");
+// 	ROS_INFO("Here");
         m.header.frame_id = global_frame_id;
 	m.lifetime = ros::Duration(0);
         for (auto &p_:m.points) {
@@ -139,10 +147,9 @@ protected:
           tf::pointTFToMsg(p, p_);
         }
       }
-    } catch (std::exception &e) {
-      ROS_ERROR("siar_planner_as::calculatePath --> could not transform the pose");
     }
-    path_marker_pub.publish(m_a);
+    if (cost > 0.0)
+      path_marker_pub.publish(m_a);
     graph_pub.publish(planner->getGraphMarker());
 
     nav_msgs::Path path;
@@ -150,21 +157,24 @@ protected:
     path.header.stamp = ros::Time::now();
 
     auto time_ = ros::Time::now();
-    for (auto x:curr_path) {
-      geometry_msgs::PoseStamped p;
-      p.header.stamp = time_;
-      p.header.frame_id = base_frame_id;
-      p.header.seq = seq++;
-      // time_ = time_ + ros::Duration(planner->getDeltaT);
-      p.pose.position.x = x.st.state[0];
-      p.pose.position.y = x.st.state[1];
-      tf::Quaternion q;
-      q.setRPY(0,0, x.st.state[2]);
-      tf::quaternionTFToMsg(q, p.pose.orientation);
-      path.poses.push_back(p);
+    if (cost > 0.0) {
+      for (auto x:curr_path) {
+	geometry_msgs::PoseStamped p;
+	p.header.stamp = time_;
+	p.header.frame_id = base_frame_id;
+	p.header.seq = seq++;
+	// time_ = time_ + ros::Duration(planner->getDeltaT);
+	p.pose.position.x = x.st.state[0];
+	p.pose.position.y = x.st.state[1];
+	tf::Quaternion q;
+	q.setRPY(0,0, x.st.state[2]);
+	tf::quaternionTFToMsg(q, p.pose.orientation);
+	path.poses.push_back(p);
+      }
+      path_pub.publish(path); 
     }
 
-    path_pub.publish(path); 
+    
   }
 };
 
