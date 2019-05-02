@@ -16,10 +16,10 @@ echo "Starting with TESTS to every algorithms in differents scenarios and cases 
 
 for i in {1..3..1}
 do
-  roslaunch siar_planner test.launch planner_type:=rrt n_tests:=$1 problem_number:=$i 
-  roslaunch siar_planner test.launch planner_type:=trrt n_tests:=$1 problem_number:=$i 
-  roslaunch siar_planner test.launch planner_type:=birrt n_tests:=$1 problem_number:=$i
-  roslaunch siar_planner test.launch planner_type:=tbirrt n_tests:=$1 problem_number:=$i
+  roslaunch siar_planner test.launch planner_type:=rrt n_tests:=$1 problem_number:=$i map:=test_scenario_1.yaml parameters_number:=1
+  roslaunch siar_planner test.launch planner_type:=trrt n_tests:=$1 problem_number:=$i map:=test_scenario_1.yaml parameters_number:=1
+  roslaunch siar_planner test.launch planner_type:=birrt n_tests:=$1 problem_number:=$i map:=test_scenario_1.yaml parameters_number:=1
+  roslaunch siar_planner test.launch planner_type:=tbirrt n_tests:=$1 problem_number:=$i map:=test_scenario_1.yaml parameters_number:=1
   #sleep $SLEEP_TIME_1
 done
 

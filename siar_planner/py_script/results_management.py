@@ -6,9 +6,9 @@
 
 import os
 #iterate files in directory
-files = os.listdir('/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/')
+files = os.listdir('/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/Experiments_04/')
 for file_name in files:
-    file_path = '/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/' + file_name
+    file_path = '/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/Experiments_04/' + file_name
     #number of tests per file
     total_rows = 200
     success_rows = 0 
@@ -71,14 +71,14 @@ for file_name in files:
     print path_cost_average
     
     #Generar archivo de solucion, comprobar si existe, si no crearlo poniendole los titulos
-    if os.path.isfile('/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/results_test.csv')==False: #comprueba si existe el archivo
-        output_file = open('/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/results_test.csv', 'w') #Si no existía el archivo, lo crea 
+    if os.path.isfile('/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/Experiments_04/results_test.csv')==False: #comprueba si existe el archivo
+        output_file = open('/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/Experiments_04/results_test.csv', 'w') #Si no existía el archivo, lo crea 
         #Añadimos titulos de columnas
         output_file.writelines('Test name;Fallos en 200;Test time average;Trajectory time average;Path cost average\n')
         output_file.close()
     
     
-    output_file = open('/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/results_test.csv', 'a') #Si no existía el archivo, lo crea y escribe al final
+    output_file = open('/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/Experiments_04/results_test.csv', 'a') #Si no existía el archivo, lo crea y escribe al final
     #Añadir resultados, segun columnas: nombre de test, tiempo medio de test, tiempo medio de path obtenido, coste medio de path obtenido
     output_file.writelines(file_name + ';' + str(fail_num) + ';' + str(test_time_average) + ';' + str(path_time_average) + ';' + str(path_cost_average) + '\n')
     output_file.close()

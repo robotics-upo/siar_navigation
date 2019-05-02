@@ -5,6 +5,7 @@
 #include "siar_planner/NodeState.hpp"
 #include "siar_planner/RRTNode.h"
 #include "siar_planner/SiarModel.hpp"
+#include "siar_planner/metrica.hpp"
 
 #include "visualization_msgs/Marker.h"
 #include "visualization_msgs/MarkerArray.h"
@@ -36,16 +37,18 @@ protected:
   void addNode(NodeState st, double comm_x = 0.0, double comm_ang = 0.0, RRTNode *parent = NULL); 
   virtual void clear();
   
-  virtual RRTNode *getNearestNode(NodeState q_rand);
+  virtual RRTNode *getNearestNode(NodeState q_rand, bool consider_dead = false);
   void expandNode(const NodeState& q_rand, RRTNode* q_near, int relaxation_mode = 0);
   virtual std::list<RRTNode> getPath();
 
   ros::Publisher tree1_pub;
   visualization_msgs::Marker tree1Marker;
-  geometry_msgs::Point ptree1;  
+  geometry_msgs::Point ptree1;
+
+  Metrica metrica;  
 };
 
-RRT::RRT(ros::NodeHandle &nh, ros::NodeHandle &pnh):Planner(nh,pnh)
+RRT::RRT(ros::NodeHandle &nh, ros::NodeHandle &pnh):Planner(nh,pnh), metrica(nh,pnh)
 {
     tree1_pub = nh.advertise<visualization_msgs::Marker>("tree1_marker", 2, true);
   
@@ -101,6 +104,7 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
   while (relax < n_rounds && !got_to_goal){
     int cont = 0; 
     while (cont < n_iter && !got_to_goal) { // n_iter Max. number of nodes to expand for each round
+
       NodeState q_rand;
       if (!(cont%samp_goal_rate == 0)){
 	      q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
@@ -109,6 +113,9 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
 	      q_rand = goal_node.st; 
       }     
       RRTNode *q_near = getNearestNode(q_rand);  
+      if (q_near == NULL){
+        q_near = getNearestNode(q_rand, true);
+      }
       expandNode(q_rand, q_near, relax);
       cont++;
     }
@@ -121,21 +128,23 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
     else{ 
       m.decreaseWheels(wheel_decrease, last_wheel);
       relax++;
-      ROS_ERROR("RRT::resolve -->  could not find a path -->  starting new iteration");    
+      ROS_ERROR("RRT::resolve -->  could not find a path -->  starting iteration: %i", relax);    
     }
   }
   std::cout << "Numero de nodos en grafo: " << nodes.size() <<std::endl;
   return ret_val; 
 }
 
-RRTNode* RRT::getNearestNode(NodeState q_rand) {
+
+RRTNode* RRT::getNearestNode(NodeState q_rand, bool consider_dead) {
   RRTNode *q_near = NULL; 
   double dist = std::numeric_limits<double>::infinity(); 
   double new_dist;
   for (auto n: nodes){ 
-    new_dist = sqrt(pow(q_rand.state[0] - n->st.state[0],2) + pow(q_rand.state[1] - n->st.state[1],2)); 
+    // new_dist = sqrt(pow(q_rand.state[0] - n->st.state[0],2) + pow(q_rand.state[1] - n->st.state[1],2)); 
+    new_dist = metrica.metrica3D(q_rand,n->st);
     
-    if (new_dist < dist) {
+    if (new_dist < dist && (!n->dead || consider_dead)) {
       q_near = n; 
       dist = new_dist;
     }    
@@ -143,29 +152,41 @@ RRTNode* RRT::getNearestNode(NodeState q_rand) {
   return q_near;
 }
 
+
 void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mode){
   RRTNode q_new;
   double dist = std::numeric_limits<double>::infinity(); 
   double new_dist;
   bool is_new_node = false;
+  bool is_dead = true;
+
   for (int i = 0; i < K; i++) {
     NodeState st = q_near->st;
     geometry_msgs::Twist command = m.generateRandomCommand();
     double cost = m.integrate(st, command, delta_t, relaxation_mode >= 1); // If relaxation_mode >= 1 --> allow two wheels
-    if (cost < 0.0) {
-      // Collision
+    if (cost < 0.0) {  // Collision
       } 
     else {
-      is_new_node = true;
-      new_dist = sqrt(pow(q_rand.state[0] - st.state[0],2) + pow(q_rand.state[1] - st.state[1],2));
-      if (new_dist<dist) {
-      q_new.st = st; 
-      q_new.command_lin = command.linear.x;
-      q_new.command_ang = command.angular.z;
-      dist = new_dist;
-      q_new.cost = cost; // New field:cost
+      RRTNode *near_ = getNearestNode(st, true);
+      double d = 0.2;
+      
+      if (near_ != NULL) {
+        d = metrica.metrica3D(near_->st, st);
       }
-    }    
+      if (d > 0.01) {
+        
+        is_dead = false;
+        is_new_node = true;
+        new_dist = metrica.metrica3D(q_rand,st);
+        if (new_dist<dist) {
+          q_new.st = st; 
+          q_new.command_lin = command.linear.x;
+          q_new.command_ang = command.angular.z;
+          dist = new_dist;
+          q_new.cost = cost; 
+        }
+      }    
+    }
   }
   if (is_new_node){
     ptree1.x = q_new.st.state[0];
@@ -181,14 +202,21 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
       goal_node.parent = q_near; 
       goal_node.command_lin = q_new.command_lin; 
       goal_node.command_ang = q_new.command_ang;
-      goal_node.cost = q_new.cost + q_near->cost; // New field:cost
+      // goal_node.cost = q_new.cost + q_near->cost; 
     }
     else{
       q_new.parent = q_near;
-      q_new.cost += q_near-> cost; // Accumulate the parent cost 
+      // q_new.cost += q_near-> cost; // Accumulate the parent cost 
       RRTNode *new_node = new RRTNode(q_new); 
       q_near->children.push_back(new_node);
       nodes.push_back(new_node);	
+    }
+  } else if (is_dead) {
+    q_near->dead = true;
+    RRTNode *curr = q_near->parent;
+    int cont = 0;
+    for (;curr != NULL && cont < num_delete_parents; cont++, curr = q_near->parent) {
+      curr->dead = true;
     }
   }
 }

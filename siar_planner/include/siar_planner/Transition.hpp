@@ -23,7 +23,7 @@ public:
 
 protected:
 
-  double alfa , nFail, nFailmax ,K_normal, Temp_init, Temp; //(cost_initial - cost_goal)/2
+  double alfa, alfa2 , nFail, nFailmax ,K_normal, Temp_init, Temp; //(cost_initial - cost_goal)/2
   double cost_Qnear, cost_Qnew,Cost_max_transition;
 
   std::mt19937 gen;
@@ -38,6 +38,9 @@ Transition::Transition(ros::NodeHandle &nh, ros::NodeHandle &pnh)
   }
   if (!pnh.getParam("alfa", alfa)) { 
     alfa = 2;
+  }
+  if (!pnh.getParam("alfa2", alfa2)) { 
+    alfa2 = 2;
   }
   if (!pnh.getParam("nFailmax", nFailmax)) {
     nFailmax = 4;
@@ -85,7 +88,7 @@ bool Transition::transitionTest (RRTNode q_near, RRTNode q_new){
   }
 
   if (random_prob < transition_probability){
-    Temp = Temp/ alfa;
+    Temp = Temp/ alfa2;
     nFail = 0;
     return 1;
   }
@@ -103,4 +106,3 @@ bool Transition::transitionTest (RRTNode q_near, RRTNode q_new){
 }
 
 #endif
-
