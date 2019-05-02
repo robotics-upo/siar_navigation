@@ -11,10 +11,12 @@ struct RRTNode
   RRTNode *parent;
   std::vector<RRTNode*> children;
   //std::list<RRTNode*> children;
-  RRTNode(void)
+  RRTNode()
   {
     parent = NULL;
+    dead = false;
   }
+  bool dead;
 };
   
   

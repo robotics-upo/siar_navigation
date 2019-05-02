@@ -41,20 +41,21 @@ public:
 protected:
   virtual void clear() = 0;
   
-  virtual void isGoal(NodeState st);
+  virtual bool isGoal(NodeState st);
   bool got_to_goal = false;
   
   //new functions
   NodeState getRandomState(double max_x, double max_y, double max_yaw, double min_x, double min_y, double min_yaw);
   virtual std::list<RRTNode> getPath() = 0;
     
-  int K, n_iter, n_rounds;
+  int K, n_iter, n_rounds, num_delete_parents;
   double delta_t, cellsize_m, cellsize_rad;
   double wheel_decrease, last_wheel;
   double max_x, max_y, max_yaw, min_x, min_y, min_yaw; 
   
   SiarModel m;
   double goal_gap_m, goal_gap_rad;
+  double same_node_dist;
   
   int samp_cont, samp_goal_rate; 
   
@@ -138,6 +139,12 @@ Planner::Planner(ros::NodeHandle &nh, ros::NodeHandle &pnh):m(nh, pnh), gen(rd()
   if (!pnh.getParam("cellsize_rad", cellsize_rad)) {
     cellsize_rad = 0.2;
   }
+  if (!pnh.getParam("num_delete_parents", num_delete_parents)) {
+    num_delete_parents = 6;
+  }
+  if (!pnh.getParam("same_node_dist", same_node_dist)) {
+    same_node_dist = 0.005;
+  }
    
   ROS_INFO("n_iter = %d \t K: %d \t", n_iter, K); 
 
@@ -184,11 +191,15 @@ NodeState Planner::getRandomState(double max_x, double min_x, double max_y, doub
     randomState.state[1] = (dis(gen) * (max_y-min_y)) + min_y;
     randomState.state[2] = (dis(gen) * (max_yaw-min_yaw)) + min_yaw;
 
-    index = m.m_ce.point2index(randomState.state[0], randomState.state[1]);
+    // index = m.m_ce.point2index(randomState.state[0], randomState.state[1]);  
 
-    if (m.m_world.data[index] == 127){
+    // if (m.m_world.data[index] == 127){
+    //   continue;
+    // }
+
+    if (m.isCollisionTransition(randomState))
       continue;
-    }
+
     else{
       randomTree.push_back(randomState);
       ptrandom.x = randomState.state[0];
@@ -201,9 +212,12 @@ NodeState Planner::getRandomState(double max_x, double min_x, double max_y, doub
   }
 }
 
-void Planner::isGoal(NodeState st) {
-  got_to_goal = (fabs(st.state[0] - goal_node.st.state[0]) < goal_gap_m) && (fabs(st.state[1]-goal_node.st.state[1]) < goal_gap_m) &&
-            (fabs(st.state[2] - goal_node.st.state[2]) < goal_gap_rad);
+bool Planner::isGoal(NodeState st) {
+  got_to_goal = (fabs(st.state[0] - goal_node.st.state[0]) < goal_gap_m) && (fabs(st.state[1]-goal_node.st.state[1]) < goal_gap_m); //&&
+            // (fabs(st.state[2] - goal_node.st.state[2]) < goal_gap_rad);
+
+
+  return got_to_goal;
 }
 
 visualization_msgs::MarkerArray Planner::getPathMarker(const std::list< RRTNode >& path) 

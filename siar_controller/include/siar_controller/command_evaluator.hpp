@@ -545,6 +545,11 @@ double CommandEvaluator::evaluateTrajectoryTransition(const geometry_msgs::Twist
       applyFootprint(x, y, th, alt_map, collision, true); // Search for positive collisions too
   }
 
+  last_state.resize(3);
+  last_state[0] = x;
+  last_state[1] = y;
+  last_state[2] = th;
+
   if (collision) {
     m.color.r = 1.0;
     m.color.g = 0.0;
@@ -552,11 +557,6 @@ double CommandEvaluator::evaluateTrajectoryTransition(const geometry_msgs::Twist
   }
 
   ret = cont_footprint;
-
-  last_state.resize(3);
-  last_state[0] = x;
-  last_state[1] = y;
-  last_state[2] = th;
 
   return ret;
 }
@@ -729,22 +729,22 @@ double CommandEvaluator::applyFootprintTransition(double x, double y, double th,
       }
     }
   }
-  if ((cont_Coll_pix_left_1 / cont_Tot_pix_left_1)> 0.7){
+  if ((cont_Coll_pix_left_1 / cont_Tot_pix_left_1)> 0.8){
     porctj_left_1 = 1;
   }
-  if ((cont_Coll_pix_left_2 / cont_Tot_pix_left_2)> 0.7){
+  if ((cont_Coll_pix_left_2 / cont_Tot_pix_left_2)> 0.8){
     porctj_left_2 = 1;
   }
-  if ((cont_Coll_pix_left_3 / cont_Tot_pix_left_3)> 0.7){
+  if ((cont_Coll_pix_left_3 / cont_Tot_pix_left_3)> 0.8){
     porctj_left_3 = 1;
   }
-  if ((cont_Coll_pix_right_1 / cont_Tot_pix_right_1)> 0.7){
+  if ((cont_Coll_pix_right_1 / cont_Tot_pix_right_1)> 0.8){
     porctj_right_1 = 1;
   }
-  if ((cont_Coll_pix_right_2 / cont_Tot_pix_right_2)> 0.7){
+  if ((cont_Coll_pix_right_2 / cont_Tot_pix_right_2)> 0.8){
     porctj_right_2 = 1;
   }
-  if ((cont_Coll_pix_right_3 / cont_Tot_pix_right_3)> 0.7){
+  if ((cont_Coll_pix_right_3 / cont_Tot_pix_right_3)> 0.8){
     porctj_right_3 = 1;
   }
 
