@@ -6,6 +6,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+# import seaborn as sns
+
+
 # import os
 #iterate files in directory
 file_path = '/home/saimon/siar_ws/src/siar_navigation/siar_planner/output_files/Experiments_05/results_test.csv' 
@@ -146,24 +149,23 @@ biRRT_cost = ax.bar(ind + 2*width/4, biRRT_cost_tuple, width, yerr=biRRT_SEM_tup
 tbiRRT_cost = ax.bar(ind + 6*width/4, tbiRRT_cost_tuple, width, yerr=tbiRRT_SEM_tuple,
                   color='SeaGreen', label='tbiRRT trajectory time')
 
-
 # # Add some text for labels, title and custom x-axis tick labels, etc.
-# ax.set_ylabel('Costs')                                                 #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
-# ax.set_title('Costs for algorithms in each problem')                   #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
-# ax.set_ylabel('Execution Time')                                             #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
-# ax.set_title('Execution Time for algorithms in each problem')               #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
-ax.set_ylabel('Trajectory Time')                                             #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
-ax.set_title('Trajectory Time for algorithms in each problem')               #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
+# ax.set_ylabel('Costs', labelpad = 28)                                                 
+# ax.set_title('Costs for algorithms in each problem')                   
+# ax.set_ylabel('Execution Time')                                             
+# ax.set_title('Execution Time for algorithms in each problem')               
+#ax.set_ylabel('Trajectory Time')                                             
+#ax.set_title('Trajectory Time for algorithms in each problem')              
 
 ax.set_xticks(ind)
-ax.legend(loc=0)
+ax.legend(loc=0, fontsize=18)
 
 # ax.set_xticklabels(('Problem 1', 'Problem 2', 'Problem 3'))           #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
 ax.set_xticklabels(('Problem 4', 'Problem 5', 'Problem 6'))           #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
 
 
 ax.errorbar(ind - 6*width/4+width/2, RRT_cost_tuple, yerr=RRT_SEM_tuple,
-            fmt='.', ecolor='b', elinewidth=3,  capthick=2, capsize= 10)
+            fmt='.', alpha = 0.5, ecolor='b', elinewidth=3,  capthick=2, capsize= 10)
 
 ax.errorbar(ind - 2*width/4+width/2, tRRT_cost_tuple, yerr=tRRT_SEM_tuple,
             fmt='.', ecolor='darkred',elinewidth=3,  capthick=2, capsize= 10)
@@ -192,15 +194,20 @@ def autolabel(rects, xpos='center'):
     for rect in rects:
         height = rect.get_height()
         ax.text(rect.get_x() + rect.get_width()*offset[xpos], 1.01*height,
-                '{}'.format(height), ha=ha[xpos], va='bottom')
-
+                '{}'.format(height), ha=ha[xpos], va='bottom', size = 18)
+        for tick in ax.xaxis.get_major_ticks():                #to change the size of values in axi X
+                tick.label.set_fontsize(18)
+        for tick in ax.yaxis.get_major_ticks():                #to change the size of values in axi Y
+                tick.label.set_fontsize(18)  
+ 
 
 autolabel(RRT_cost, "center")
 autolabel(tRRT_cost, "center")
 autolabel(biRRT_cost, "center")
 autolabel(tbiRRT_cost, "center")
 
-fig.tight_layout(pad = 0, w_pad = 0, h_pad = 0, rect = (0.0,0.001,0.99,0.99))
+# # rect parameter to define the margins of the graph
+fig.tight_layout(pad = 0, w_pad = 0, h_pad = 0, rect = (0.0,0.001,0.99,0.99)) 
 
 
 plt.show()
