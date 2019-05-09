@@ -3,7 +3,7 @@
   <arg name="config" default="parameters_test_1.yaml"/>
   <arg name="map" default="/test_costmap"/>
   <arg name="velocity_file" default="velocityset"/>
-  <arg name="planner_type" default="tbirrt"/>
+  <arg name="planner_type" default="birrt"/>
         
   <node name="rrt_siar_planner_action_server" pkg="siar_planner" type="rrt_siar_planner_node" output="screen"  > #launch-prefix="xterm -e gdb --args">
     <remap from="/altitude_map" to="$(arg map)"/>
@@ -16,12 +16,12 @@
     <remap from="/path" to="/planned_path"/>
     <remap from="/cmd_vel" to="/planned_cmd_vel"/>
     <param name="a" value ="5"/>
-    <param name="lookahead" value ="15"/>
-    <param name="max_omega" value="1.0"/>
+    <param name="lookahead" value ="12"/>
+    <param name="max_omega" value="1.5"/>
   </node>
 
   <node name="op" pkg="rostopic" type="rostopic" args='pub /operation_mode std_msgs/Int8 "data: 100"'/>
   
   <include file="$(find siar_model)/launch/siar_model_viz.launch"/>
-  <include file="$(find siar_costmap)/launch/siar_costmap_velodyne.launch"/>
+<!--   <include file="$(find siar_costmap)/launch/siar_costmap_velodyne.launch"/> -->
 </launch>
