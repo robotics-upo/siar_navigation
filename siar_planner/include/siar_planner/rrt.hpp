@@ -80,6 +80,12 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
     ROS_ERROR("RRT::resolve --> The model has not been initialized --> could not calculate a path");
     return -2.0;
   }
+
+  if (m.isCollisionTransition(goal) || m.isCollisionTransition(goal)) {
+    ROS_ERROR("tbiRRT::resolve --> The goal or the starting point is not valid");
+    return -3.0;
+  }
+
   start_node.st = start;
   nodes.push_back(new RRTNode(start_node)); 
   goal_node.st = goal;
