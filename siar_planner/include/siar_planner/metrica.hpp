@@ -47,8 +47,11 @@ double Metrica::metrica3D (const NodeState &s1, const NodeState &s2){
 
 double Metrica::getAngDist(double a, double b) const {
     double dif_angle = fabs(a - b);
+    if (dif_angle > 2*M_PI) {
+        dif_angle = dif_angle - floor(0.5*dif_angle/M_PI)*2*M_PI; // Reduces the difference into [0,2*PI]
+    }
     if (dif_angle > M_PI) {
-        dif_angle = dif_angle - floor(dif_angle/M_PI)*M_PI; // Reduces the difference into [0,PI]
+        dif_angle = 2*M_PI - dif_angle; // Then to 0 to PI
     }
 
     return dif_angle;

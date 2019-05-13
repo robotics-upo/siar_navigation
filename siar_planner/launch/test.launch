@@ -2,11 +2,13 @@
 <launch>
   <arg name="debug" default="false"/>
   <arg name="required" default="true"/>
+  <arg name="parameters_common" default="parameters_test_common.yaml"/>
   <arg name="parameters_number" default="1"/>
   <arg name="parameters" default="parameters_test_$(arg parameters_number).yaml"/>
   <arg name="problem_number" default="1"/>
   <arg name="problem" default="problem_test_$(arg problem_number)_a.yaml"/>
-  <arg name="map" default="test_scenario_1.yaml"/>
+  <arg name="map_number" default="1"/>
+  <arg name="map" default="test_scenario_$(arg map_number).yaml"/>
   <arg name="planner_type" default="rrt"/>
   <arg name="n_tests" default="1"/>
 
@@ -23,6 +25,7 @@
   <node name="planner_test" pkg="siar_planner" type="planner_test" output="screen" if="$(arg debug)" launch-prefix="xterm -e gdb --args" >
     <!-- <remap from="/altitude_map" to="/processed_costmap"/> -->
     <remap from="/altitude_map" to="/map"/>
+    <rosparam file="$(find siar_planner)/test/$(arg parameters_common)" command="load"  /> 
     <rosparam file="$(find siar_planner)/test/$(arg parameters)" command="load"  /> 
     <rosparam file="$(find siar_planner)/test/$(arg problem)" command="load"  /> 
     <param name="output_file" type="string" value="$(find siar_planner)/output_files/test_$(arg problem_number)_a_$(arg planner_type)_results.txt" />
@@ -32,6 +35,7 @@
   <node name="planner_test" pkg="siar_planner" type="planner_test" output="screen" unless="$(arg debug)" required="$(arg required)" >
     <!-- <remap from="/altitude_map" to="/processed_costmap"/> -->
     <remap from="/altitude_map" to="/map"/>
+    <rosparam file="$(find siar_planner)/test/$(arg parameters_common)" command="load"  /> 
     <rosparam file="$(find siar_planner)/test/$(arg parameters)" command="load"  /> 
     <rosparam file="$(find siar_planner)/test/$(arg problem)" command="load"  /> 
     <param name="output_file" type="string" value="$(find siar_planner)/output_files/test_$(arg problem_number)_a_$(arg planner_type)_results.txt" />
