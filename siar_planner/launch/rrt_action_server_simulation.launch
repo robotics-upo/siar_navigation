@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="config" default="parameters_test_1.yaml"/>
+  <arg name="config" default="parameters_test_simulation.yaml"/>
   <arg name="map" default="/test_costmap"/>
   <arg name="velocity_file" default="velocityset"/>
   <arg name="planner_type" default="birrt"/>

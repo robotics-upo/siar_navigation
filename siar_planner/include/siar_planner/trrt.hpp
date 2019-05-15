@@ -217,7 +217,7 @@ void tRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_m
     ptree1.y = q_new.st.state[1];
     tree1Marker.ns = "tree1M";
     tree1Marker.points.push_back(ptree1);
-    tree1Marker.lifetime = ros::Duration(3);
+    tree1Marker.lifetime = ros::Duration(40);
     tree1_pub.publish(tree1Marker); 
 
     isGoal(q_new.st);

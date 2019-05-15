@@ -193,7 +193,7 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
     ptree1.y = q_new.st.state[1];
     tree1Marker.ns = "tree1M";
     tree1Marker.points.push_back(ptree1);
-    tree1Marker.lifetime = ros::Duration(50);
+    tree1Marker.lifetime = ros::Duration(3);
     tree1_pub.publish(tree1Marker); 
     
     isGoal(q_new.st);
@@ -261,7 +261,7 @@ visualization_msgs::Marker RRT::getGraphMarker()
     m.colors.push_back(color);
     color = new_color;
   }
-  m.lifetime = ros::Duration(2);
+  m.lifetime = ros::Duration(0);
   
   return m;
 }

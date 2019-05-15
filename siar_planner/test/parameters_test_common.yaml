@@ -2,5 +2,5 @@
 wheel_decrease: 0.05, last_wheel: 0.1, optimize: false, min_wheel: 0.2, cost_weight: 0.000000002, consider_body: false,  
 samp_goal_rate: 10, limit_exploration: 1.2, omega_max: 1.5, 
 positive_obs: 127, negative_obs: -127, 
-K_normal:  1000000000, Temp_init: 0.000001, alfa: 4, alfa2: 4, nFailmax: 10,Cost_max_transition: 120000, K_metrica: 0.0001, 
+K_normal:  1000000000, Temp_init: 0.000001, alfa: 4, alfa2: 4, nFailmax: 30,Cost_max_transition: 120000, K_metrica: 0.0001, 
 num_delete_parents: 3, same_node_dist: 0.003}

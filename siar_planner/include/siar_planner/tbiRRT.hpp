@@ -459,7 +459,7 @@ visualization_msgs::Marker tbiRRT::getGraphMarker()
     m.points.push_back(p1);
     m.colors.push_back(color);
   }
-  m.lifetime = ros::Duration(2);
+  m.lifetime = ros::Duration(0);
   return m;
 }
 
