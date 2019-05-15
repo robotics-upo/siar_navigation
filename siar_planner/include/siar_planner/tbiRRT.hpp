@@ -99,7 +99,12 @@ double tbiRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path
   clear();
   if (!m.isInit()) {
     ROS_ERROR("tbiRRT::resolve --> The model has not been initialized --> could not calculate a path");
-    return -1.0;
+    return -2.0;
+  }
+
+  if (m.isCollisionTransition(goal) || m.isCollisionTransition(goal)) {
+    ROS_ERROR("tbiRRT::resolve --> The goal or the starting point is not valid");
+    return -3.0;
   }
 
   RRTNode start_node, goal_node;
@@ -224,7 +229,7 @@ void tbiRRT::getNearestNodeAndExpand(const NodeState &q, int relax) {
 
   if (q2 == NULL) {
     q2 = getNearestNode(q, tree2,true);
-  } 
+  }
 
   if (metrica.metrica3D(q1->st, q) < metrica.metrica3D(q2->st,q)) {
     expandNode1(q, q1, relax, false);
@@ -248,10 +253,10 @@ void tbiRRT::expandNode1(const NodeState &q_rand, RRTNode *q_near, int relaxatio
     geometry_msgs::Twist command = m.generateRandomCommand();
     cost_wheels_Qnew1 = m.integrateTransition(st, command, delta_t); // If relaxation_mode >= 1 --> allow two wheels
     // RRTNode q_try ;
-    
+
     if (cost_wheels_Qnew1 < 0.0) {
       continue;
-    } 
+    }
     q_try.st = st;
     q_try.cost = cost_wheels_Qnew1;
 
@@ -260,10 +265,10 @@ void tbiRRT::expandNode1(const NodeState &q_rand, RRTNode *q_near, int relaxatio
     if (near_ != NULL) {
       d = metrica.metrica3D(near_->st, st);
     }                                                 // Finish proccess to deside if node id dead using metrica
-    
+
     if (d > same_node_dist) {
       is_dead = false;
-      
+
       ret_transition1 = testTrans1.transitionTest(*q_near, q_try);
       if (ret_transition1){
         is_new_node = true;
@@ -298,7 +303,7 @@ void tbiRRT::expandNode1(const NodeState &q_rand, RRTNode *q_near, int relaxatio
 	    q_final_1 = new_node;
       got_connected = true;
     }
-  } else if (is_dead) { 
+  } else if (is_dead) {
     q_near->dead = true;
     RRTNode *curr = q_near->parent;
     int cont = 0;
@@ -321,7 +326,7 @@ void tbiRRT::expandNode2(const NodeState &q_rand, RRTNode *q_near, int relaxatio
     NodeState st = q_near->st;
     geometry_msgs::Twist command = m.generateRandomCommand();
     cost_wheels_Qnew2 = m.integrateTransition2(st, command, -(delta_t));
-    
+
     if (cost_wheels_Qnew2 < 0.0) {
       continue;
     }
@@ -398,9 +403,9 @@ bool tbiRRT::areConnected(const NodeState &st, const std::list<RRTNode *> &tree,
         break;
       }
 
-    
+
   }
-  
+
 
   return ret_val;
 }
