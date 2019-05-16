@@ -8,7 +8,7 @@ For the ECMR (European Conference on Mobile Robots) 2019 the planner was testing
 
 To execute the synthetic map test you can follow two different ways: 
 - The first using: roslaunch siar_planner test_synthetic.launch, which allow you to execute just one planner in a problem , a number of time.
-- The secod using: rosrun siar_planner test_all_algorithms.sh,  which allow you to execute all the planners in all the problem, a number of time. E.g, for ten times rosrun siar_planner test_all_algorithms.sh 10.
+- The second using: rosrun siar_planner test_all_algorithms.sh,  which allow you to execute all the planners in all the problem, a number of time. E.g, for ten times rosrun siar_planner test_all_algorithms.sh 10.
 
 To execute Gazebo Simulation is necessary to follow the next steps:
 
