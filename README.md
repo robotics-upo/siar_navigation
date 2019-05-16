@@ -17,7 +17,7 @@ To execute Gazebo Simulation is necessary to follow the next steps:
 2. Execute: "roslaunch siar_gazebo siar_simulator_complete_T130_gut30.launch" to have a SIAR with seven cameras or "roslaunch siar_gazebo siar_simulator_complete_T130_gut30_velodyne.launch" to have SIAR with six cameras and one velodyne. 
 IMPORTANT: the launch in siar_simulator start in pause to avoid conflict in the spawn of the models Gazebo. This will generate a ROS_ERROR from siar_costmap, because is waiting to recieve the map. To finish with ROS_ERROR just push play in the simulation.
 
-3. Exetuce "roslaunch siar_planner planner_action_server_simulation.launch" (To use differents planners change the parameter "planner type"). Congratulations !!!, now you are ready to use SIAR to navigate in sewer environment.
+3. Exetuce "roslaunch siar_planner planner_action_server_simulation.launch" (To use differents planners change the parameter "planner type"). Congratulations !!!, now you are ready to navigate with SIAR in sewer environment.
 
 
 # Compilation and execution package in simulation
