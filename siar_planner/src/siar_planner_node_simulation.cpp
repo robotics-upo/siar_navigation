@@ -1,10 +1,10 @@
-#include "rrt_siar_planner_action_server.hpp"
+#include "siar_planner_action_server_simulation.hpp"
 #include "ros/ros.h"
 
 using namespace std;
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "rrt_siar_planner_node");
+  ros::init(argc, argv, "siar_planner_node_simulation");
   
   ROS_INFO("Starting SIAR planner");
   

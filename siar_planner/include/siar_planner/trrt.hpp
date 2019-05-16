@@ -291,7 +291,7 @@ visualization_msgs::Marker tRRT::getGraphMarker()
     m.colors.push_back(color);
     color = new_color;
   }
-  m.lifetime = ros::Duration(2);
+  m.lifetime = ros::Duration(0);
 
   return m;
 }
