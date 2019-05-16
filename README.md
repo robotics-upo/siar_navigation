@@ -43,7 +43,7 @@ roslaunch siar_planner test_synthetic.launch
 ``` 
 which allow you to execute just one planner in a problem , a number of time.
 
-* Second using: 
+* Second using:
 ```
 rosrun siar_planner test_all_algorithms.sh
 ```
