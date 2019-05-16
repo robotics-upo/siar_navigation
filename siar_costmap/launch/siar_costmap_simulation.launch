@@ -72,7 +72,7 @@
     <remap from="cloud2" to="$(arg camera_3)/point_cloud"/>                  # Input cloud 2
     <remap from="cloud3" to="$(arg camera_4)/point_cloud"/>                  # Input cloud 3
     <remap from="cloud4" to="$(arg camera_5)/point_cloud"/>                  # Input cloud 4
-    <remap from="cloud5" to="$(arg camera_6)/point_cloud"/>                  # Input cloud 5
+    <remap from="cloud5" to="velodyne_points"/>                  # Input cloud 5
 
     <param name="hz" value = "5.0"/>							# Costmap update rate
     <param name="obstacle_height" value = "0.1"/>				# Absolute value of obstacle height (or hole depth)

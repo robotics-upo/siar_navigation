@@ -87,7 +87,12 @@ double tRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
 
   if (!m.isInit()) {
     ROS_ERROR("tRRT::resolve --> The model has not been initialized --> could not calculate a path");
-    return -1.0;
+    return -2.0;
+  }
+
+  if (m.isCollisionTransition(goal) || m.isCollisionTransition(goal)) {
+    ROS_ERROR("tbiRRT::resolve --> The goal or the starting point is not valid");
+    return -3.0;
   }
   
   
@@ -217,7 +222,7 @@ void tRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_m
     ptree1.y = q_new.st.state[1];
     tree1Marker.ns = "tree1M";
     tree1Marker.points.push_back(ptree1);
-    tree1Marker.lifetime = ros::Duration(3);
+    tree1Marker.lifetime = ros::Duration(40);
     tree1_pub.publish(tree1Marker); 
 
     isGoal(q_new.st);
@@ -286,7 +291,7 @@ visualization_msgs::Marker tRRT::getGraphMarker()
     m.colors.push_back(color);
     color = new_color;
   }
-  m.lifetime = ros::Duration(2);
+  m.lifetime = ros::Duration(0);
 
   return m;
 }

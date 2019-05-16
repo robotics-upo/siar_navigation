@@ -99,7 +99,11 @@ double biRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
   clear();
   if (!m.isInit()) {
     ROS_ERROR("biRRT::resolve --> The model has not been initialized --> could not calculate a path");
-    return -1.0;
+    return -2.0;
+  }
+  if (m.isCollisionTransition(goal) || m.isCollisionTransition(goal)) {
+    ROS_ERROR("tbiRRT::resolve --> The goal or the starting point is not valid");
+    return -3.0;
   }
   
   start_node.st = start;
@@ -438,7 +442,7 @@ visualization_msgs::Marker biRRT::getGraphMarker()
     m.points.push_back(p2); 
     m.colors.push_back(color);   
   }
-  m.lifetime = ros::Duration(2);
+  m.lifetime = ros::Duration(0);
   return m;
 }
 

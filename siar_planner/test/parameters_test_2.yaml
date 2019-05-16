@@ -1,1 +1,4 @@
-{max_x: 5.0, max_y: 10.0, max_yaw: 3.1415, min_x: -1.2, min_y: -1.2, min_yaw: -3.1415,}
+{
+## Parameter to set the sampling area in synthetic map for scenario with two fork
+max_x: 5.0, max_y: 10.0, max_yaw: 3.1415, min_x: -1.2, min_y: -1.2, min_yaw: -3.1415,
+}

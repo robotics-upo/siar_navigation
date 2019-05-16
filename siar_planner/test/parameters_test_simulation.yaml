@@ -1,9 +1,9 @@
 {
 ## Parameter to set performance of the planner
-samp_goal_rate: 10, goal_gap_m: 0.1, goal_gap_rad: 0.4 , K: 14, n_iter: 500, n_rounds: 80, optimize: false,
+samp_goal_rate: 10, goal_gap_m: 0.1, goal_gap_rad: 0.4 , K: 14, n_iter: 200, n_rounds: 30, optimize: false,
 
 ## Parameters common for planners, used in COMMAND EVALUATOR
-T: 0.2, delta_T: 0.05, delta_t: 0.05, 
+T: 0.2, delta_T: 0.05, delta_t: 0.05, width: 0.71,
 
 ## Parameters that define the characteristic of SIAR FOOTPRINT
 wheel_decrease: 0.05, last_wheel: 0.1,  min_wheel: 0.2, cost_weight: 0.000000002, consider_body: false, limit_exploration: 1.2, 
@@ -22,5 +22,9 @@ num_delete_parents: 3, same_node_dist: 0.003, K_metrica: 0.0001,
   # alfa2: value to decrease the temperature
   # nFailmax: maximum value of fail transition test before start to increase the temperature
   # Cost_max_transition: max value allow for a trajectory in a transition test
-K_normal:  1000000000, Temp_init: 0.000001, alfa: 4, alfa2: 4, nFailmax: 30,Cost_max_transition: 120000, 
+K_normal:  1000000000, Temp_init: 0.000001, alfa: 4, alfa2: 4, nFailmax: 10,Cost_max_transition: 500000,  
+
+
+## Parameter that define the sampling area
+max_x: 6.0, max_y: 1.5, max_yaw: 3.1415, min_x: -3.5, min_y: -1.5, min_yaw: -3.1415,
 }

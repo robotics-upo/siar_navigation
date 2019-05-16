@@ -56,7 +56,7 @@ class PathTracker:
     self.base_frame_id = rospy.get_param('~base_frame_id', default="/base_link")
     self.global_frame_id = rospy.get_param('~global_frame_id', default="/world")
     self.goal_gap = rospy.get_param('~goal_gap',default=0.2)
-    self.v = rospy.get_param('~v', default=0.2)
+    self.v = rospy.get_param('~v', default=0.4)
     self.a = rospy.get_param('~a', default=0.2)
     self.omega_max = rospy.get_param('~omega_max', default=0.2)
     self.lookahead = rospy.get_param('~lookahead', default=2)

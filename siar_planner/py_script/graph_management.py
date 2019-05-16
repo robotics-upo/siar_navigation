@@ -60,41 +60,41 @@ tbiRRT_SEM_list = []
 # # This part is to considerate to graph only the information of the FIRST three experiments (1, 2 and 3)
 # # Is cheking in CSV every 4 lines to take only the RRT values
 
-# for i in range (1,12,4):                                                #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
-#         RRT_cost_list.append(cost_list[i])        
-#         RRT_SEM_list.append(SEM_list[i])      
+for i in range (1,12,4):                                                #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
+        RRT_cost_list.append(cost_list[i])        
+        RRT_SEM_list.append(SEM_list[i])      
 
-# for i in range (3,12,4):
-#         tRRT_cost_list.append(cost_list[i])        
-#         tRRT_SEM_list.append(SEM_list[i]) 
+for i in range (3,12,4):
+        tRRT_cost_list.append(cost_list[i])        
+        tRRT_SEM_list.append(SEM_list[i]) 
 
-# for i in range (0,12,4):
-#         biRRT_cost_list.append(cost_list[i])        
-#         biRRT_SEM_list.append(SEM_list[i])   
+for i in range (0,12,4):
+        biRRT_cost_list.append(cost_list[i])        
+        biRRT_SEM_list.append(SEM_list[i])   
 
-# for i in range (2,12,4):
-#         tbiRRT_cost_list.append(cost_list[i])        
-#         tbiRRT_SEM_list.append(SEM_list[i])    
+for i in range (2,12,4):
+        tbiRRT_cost_list.append(cost_list[i])        
+        tbiRRT_SEM_list.append(SEM_list[i])    
 
 
 # This part is to considerate to graph only the information of the SENCOND three experiments (4, 5 and 6)ç
 # Is cheking in CSV every 4 lines to take only the RRT values
 
-for i in range (13,24,4):                                               #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM      
-        RRT_cost_list.append(cost_list[i])        
-        RRT_SEM_list.append(SEM_list[i])      
+# for i in range (13,24,4):                                               #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM      
+#         RRT_cost_list.append(cost_list[i])        
+#         RRT_SEM_list.append(SEM_list[i])      
 
-for i in range (15,24,4):
-        tRRT_cost_list.append(cost_list[i])        
-        tRRT_SEM_list.append(SEM_list[i]) 
+# for i in range (15,24,4):
+#         tRRT_cost_list.append(cost_list[i])        
+#         tRRT_SEM_list.append(SEM_list[i]) 
 
-for i in range (12,24,4):
-        biRRT_cost_list.append(cost_list[i])        
-        biRRT_SEM_list.append(SEM_list[i])   
+# for i in range (12,24,4):
+#         biRRT_cost_list.append(cost_list[i])        
+#         biRRT_SEM_list.append(SEM_list[i])   
 
-for i in range (14,24,4):
-        tbiRRT_cost_list.append(cost_list[i])        
-        tbiRRT_SEM_list.append(SEM_list[i])    
+# for i in range (14,24,4):
+#         tbiRRT_cost_list.append(cost_list[i])        
+#         tbiRRT_SEM_list.append(SEM_list[i])    
 
 
 
@@ -160,8 +160,8 @@ tbiRRT_cost = ax.bar(ind + 6*width/4, tbiRRT_cost_tuple, width, yerr=tbiRRT_SEM_
 ax.set_xticks(ind)
 ax.legend(loc=0, fontsize=22)
 
-# ax.set_xticklabels(('Problem 1', 'Problem 2', 'Problem 3'))           #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
-ax.set_xticklabels(('Problem 4', 'Problem 5', 'Problem 6'))           #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
+ax.set_xticklabels(('Problem 1', 'Problem 2', 'Problem 3'))           #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
+# ax.set_xticklabels(('Problem 4', 'Problem 5', 'Problem 6'))           #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
 
 
 ax.errorbar(ind - 6*width/4+width/2, RRT_cost_tuple, yerr=RRT_SEM_tuple,
