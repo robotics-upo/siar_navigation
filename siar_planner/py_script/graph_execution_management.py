@@ -60,41 +60,41 @@ tbiRRT_SEM_list = []
 # # This part is to considerate to graph only the information of the FIRST three experiments (1, 2 and 3)
 # # Is cheking in CSV every 4 lines to take only the RRT values
 
-# for i in range (1,12,4):                                                #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
-#         RRT_cost_list.append(cost_list[i])        
-#         RRT_SEM_list.append(SEM_list[i])      
-
-# for i in range (3,12,4):
-#         tRRT_cost_list.append(cost_list[i])        
-#         tRRT_SEM_list.append(SEM_list[i]) 
-
-# for i in range (0,12,4):
-#         biRRT_cost_list.append(cost_list[i])        
-#         biRRT_SEM_list.append(SEM_list[i])   
-
-# for i in range (2,12,4):
-#         tbiRRT_cost_list.append(cost_list[i])        
-#         tbiRRT_SEM_list.append(SEM_list[i])    
-
-
-# This part is to considerate to graph only the information of the SENCOND three experiments (4, 5 and 6)ç
-# Is cheking in CSV every 4 lines to take only the RRT values
-
-for i in range (13,24,4):                                               #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM      
+for i in range (1,24,4):                                                #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
         RRT_cost_list.append(cost_list[i])        
         RRT_SEM_list.append(SEM_list[i])      
 
-for i in range (15,24,4):
+for i in range (3,24,4):
         tRRT_cost_list.append(cost_list[i])        
         tRRT_SEM_list.append(SEM_list[i]) 
 
-for i in range (12,24,4):
+for i in range (0,24,4):
         biRRT_cost_list.append(cost_list[i])        
         biRRT_SEM_list.append(SEM_list[i])   
 
-for i in range (14,24,4):
+for i in range (2,24,4):
         tbiRRT_cost_list.append(cost_list[i])        
         tbiRRT_SEM_list.append(SEM_list[i])    
+
+
+# This part is to considerate to graph only the information of the SENCOND three experiments (4, 5 and 6)
+# Is cheking in CSV every 4 lines to take only the RRT values
+
+# for i in range (13,24,4):                                               #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM      
+#         RRT_cost_list.append(cost_list[i])        
+#         RRT_SEM_list.append(SEM_list[i])      
+
+# for i in range (15,24,4):
+#         tRRT_cost_list.append(cost_list[i])        
+#         tRRT_SEM_list.append(SEM_list[i]) 
+
+# for i in range (12,24,4):
+#         biRRT_cost_list.append(cost_list[i])        
+#         biRRT_SEM_list.append(SEM_list[i])   
+
+# for i in range (14,24,4):
+#         tbiRRT_cost_list.append(cost_list[i])        
+#         tbiRRT_SEM_list.append(SEM_list[i])    
 
 
 
@@ -113,7 +113,7 @@ tbiRRT_SEM_tuple = tuple(tbiRRT_SEM_list)
 
 
 ind = np.arange(len(RRT_cost_tuple))  # the x locations for the groups
-width = 0.15  # the width of the bars
+width = 0.20  # the width of the bars
 fig, ax = plt.subplots()
 
 
@@ -158,10 +158,10 @@ tbiRRT_cost = ax.bar(ind + 6*width/4, tbiRRT_cost_tuple, width, yerr=tbiRRT_SEM_
 #ax.set_title('Trajectory Time for algorithms in each problem')              
 
 ax.set_xticks(ind)
-ax.legend(loc=0, fontsize=22)
+ax.legend(loc=2, fontsize=24)
 
 # ax.set_xticklabels(('Problem 1', 'Problem 2', 'Problem 3'))           #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
-ax.set_xticklabels(('Problem 4', 'Problem 5', 'Problem 6'))           #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
+ax.set_xticklabels(('Problem 1', 'Problem 2', 'Problem 3','Problem 4', 'Problem 5', 'Problem 6'))           #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
 
 
 ax.errorbar(ind - 6*width/4+width/2, RRT_cost_tuple, yerr=RRT_SEM_tuple,
@@ -193,8 +193,8 @@ def autolabel(rects, xpos='center'):
 
     for rect in rects:
         height = rect.get_height()
-        ax.text(rect.get_x() + rect.get_width()*offset[xpos], height + 0.2,
-                '{}'.format(height), ha=ha[xpos], va='bottom', size = 24, rotation = 90)
+        ax.text(rect.get_x() + rect.get_width()*offset[xpos], height + 0.1,
+                '{}'.format(height), ha=ha[xpos], va='bottom', size = 24, rotation = 90, weight= 'ultralight')
         for tick in ax.xaxis.get_major_ticks():                #to change the size of values in axi X
                 tick.label.set_fontsize(24)
         for tick in ax.yaxis.get_major_ticks():                #to change the size of values in axi Y
