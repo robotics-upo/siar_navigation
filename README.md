@@ -4,7 +4,7 @@ Planning navigation for SIAR robotics platform.
 
 ### Description
 
-siar_navigation allows you to implement a navigation system based in a controller, costmap and a planner. The controller is base on `siar_controller` package and allows avoid positive and negative obstacles. The costmap is based on `siar_costmap` package and using a cost function compute the cost of a trajectory considering positive and negative obstacles. The planner is based on `siar_planner` package and computes a path using the trajectories values from costmap . The planner can use the next algorithms: RRT, bi-RRT, t-RRT and t-bi-RRT.
+siar_navigation allows you to implement a navigation system based in a controller, costmap and a planner. The controller is base on `siar_controller` package and allows avoid positive and negative obstacles. The costmap is based on `siar_costmap` package and using a cost function compute the trajectory value considering positive and negative obstacles. The planner is based on `siar_planner` package and computes a path using the trajectories values from costmap . The planner can use the next algorithms to compute the path: RRT, bi-RRT, t-RRT and t-bi-RRT.
 
 ### Dependencies
 
