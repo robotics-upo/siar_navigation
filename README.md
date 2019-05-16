@@ -4,7 +4,7 @@ Planning navigation for SIAR robotics platform.
 
 ### Description
 
-siar_navigation allows you to implement a navigation system based in a controller, costmap and a planner. The controller is base on `siar_controller` package and allows avoid positive and negative obstacles. The costmap is based on `siar_costmap` package and using a cost function compute the trajectory value considering positive and negative obstacles. The planner is based on `siar_planner` package and computes a path using the trajectories values from costmap . The planner can use the next algorithms to compute the path: RRT, bi-RRT, t-RRT and t-bi-RRT.
+siar_navigation allows you to implement a navigation system based in a controller, costmap and a planner. The controller is implemented in the `siar_controller` package and allows avoid positive and negative obstacles. The costmap is implemented in `siar_costmap` package and detects positive and negative obstacles from sensor data and provides the user with a cost map taking into account the position of the obstacles. The planner is implemented in the `siar_planner` package and computes a path taking into account a costmap. The planner can use the next algorithms to compute the path: RRT, bi-RRT, t-RRT and t-bi-RRT.
 
 ### Dependencies
 
@@ -35,19 +35,16 @@ For the publishing in ECMR (European Conference on Mobile Robots) 2019 the plann
 
 #### Synthetic map
 
-To execute the synthetic map test you can follow two different ways: 
+To execute all the synthetic map presented in the paper you should execute: 
 
-* First using: 
 ```
-roslaunch siar_planner test_synthetic.launch
-``` 
-which allow you to execute just one planner in a problem , a number of time.
+rosrun siar_planner test_all_algorithms_synthetic.sh <number_of_tests>
+```
+which allow you to execute all the proposed tests in the scenarios a given number of times. E.g, for ten times:
 
-* Second using:
 ```
-rosrun siar_planner test_all_algorithms.sh
+rosrun siar_planner test_all_algorithms.sh 10
 ```
-which allow you to execute all the planners in all the problem, a number of time. E.g, for ten times `rosrun siar_planner test_all_algorithms.sh 10`.
 
 #### Gazebo simulation
 
@@ -67,11 +64,11 @@ to have SIAR with six cameras and one velodyne.
 
 *IMPORTANT*: the launch in siar_simulator start in pause to avoid conflict in the spawn of the models Gazebo. This will generate a ROS_ERROR from `siar_costmap`, because is waiting to recieve the map. To finish with ROS_ERROR just push play in the simulation.
 
-3. Exetuce:
+3. Execute:
 ```
 roslaunch siar_planner planner_action_server_simulation.launch
 ``` 
-To use differents planners change the parameter `planner_type`. Congratulations !!! now you are ready to navigate with SIAR in sewer environment.
+To use differents planners change the parameter `planner_type` from to one of the following options: 'rrt', 'trrt', 'birrt', 'tbirrt'. Congratulations !!! now you are ready to navigate with SIAR in sewer environment.
 
 
 
