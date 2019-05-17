@@ -37,10 +37,10 @@ SEM_list = []
 
 for l in lines:
         line = l.split(',') #return list
-        # cost_list.append(float(line[path_cost_col]))                  #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
-        # SEM_list.append(float(line[SEM_cost_col]))                    #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
-        cost_list.append(float(line[test_time_col]))                  #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
-        SEM_list.append(float(line[SEM_test_time]))                    #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
+        cost_list.append(float(line[path_cost_col]))                  #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
+        SEM_list.append(float(line[SEM_cost_col]))                    #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
+        # cost_list.append(float(line[test_time_col]))                  #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
+        # SEM_list.append(float(line[SEM_test_time]))                    #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
         # cost_list.append(float(line[path_time_col]))                  #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
         # SEM_list.append(float(line[SEM_path_time]))                    #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS
 
@@ -60,24 +60,24 @@ tbiRRT_SEM_list = []
 # # This part is to considerate to graph only the information of the FIRST three experiments (1, 2 and 3)
 # # Is cheking in CSV every 4 lines to take only the RRT values
 
-for i in range (1,12,4):                                                #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
+for i in range (1,24,4):                                                #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
         RRT_cost_list.append(cost_list[i])        
         RRT_SEM_list.append(SEM_list[i])      
 
-for i in range (3,12,4):
+for i in range (3,24,4):
         tRRT_cost_list.append(cost_list[i])        
         tRRT_SEM_list.append(SEM_list[i]) 
 
-for i in range (0,12,4):
+for i in range (0,24,4):
         biRRT_cost_list.append(cost_list[i])        
         biRRT_SEM_list.append(SEM_list[i])   
 
-for i in range (2,12,4):
+for i in range (2,24,4):
         tbiRRT_cost_list.append(cost_list[i])        
         tbiRRT_SEM_list.append(SEM_list[i])    
 
 
-# This part is to considerate to graph only the information of the SENCOND three experiments (4, 5 and 6)ç
+# This part is to considerate to graph only the information of the SENCOND three experiments (4, 5 and 6)
 # Is cheking in CSV every 4 lines to take only the RRT values
 
 # for i in range (13,24,4):                                               #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM      
@@ -113,7 +113,7 @@ tbiRRT_SEM_tuple = tuple(tbiRRT_SEM_list)
 
 
 ind = np.arange(len(RRT_cost_tuple))  # the x locations for the groups
-width = 0.15  # the width of the bars
+width = 0.20  # the width of the bars
 fig, ax = plt.subplots()
 
 
@@ -122,23 +122,23 @@ fig, ax = plt.subplots()
 
 ##First argument neccessary to give the position of the bar in the grahp
 
-# RRT_cost = ax.bar(ind - 6*width/4, RRT_cost_tuple, width, yerr=RRT_SEM_tuple,                 #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS  
-#                   color='DodgerBlue', label='RRT cost')
-# tRRT_cost = ax.bar(ind - 2*width/4, tRRT_cost_tuple, width, yerr=tRRT_SEM_tuple,
-#                   color='IndianRed', label='tRRT cost')
-# biRRT_cost = ax.bar(ind + 2*width/4, biRRT_cost_tuple, width, yerr=biRRT_SEM_tuple,
-#                   color='Orange', label='biRRT cost')
-# tbiRRT_cost = ax.bar(ind + 6*width/4, tbiRRT_cost_tuple, width, yerr=tbiRRT_SEM_tuple,
-#                   color='SeaGreen', label='tbiRRT cost')
-
-RRT_cost = ax.bar(ind - 6*width/4, RRT_cost_tuple, width, yerr=RRT_SEM_tuple,                 #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS     
-                  color='DodgerBlue', label='RRT execution time')
+RRT_cost = ax.bar(ind - 6*width/4, RRT_cost_tuple, width, yerr=RRT_SEM_tuple,                 #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS  
+                  color='DodgerBlue', label='RRT cost')
 tRRT_cost = ax.bar(ind - 2*width/4, tRRT_cost_tuple, width, yerr=tRRT_SEM_tuple,
-                  color='IndianRed', label='tRRT execution time')
+                  color='IndianRed', label='tRRT cost')
 biRRT_cost = ax.bar(ind + 2*width/4, biRRT_cost_tuple, width, yerr=biRRT_SEM_tuple,
-                  color='Orange', label='biRRT execution time')
+                  color='Orange', label='biRRT cost')
 tbiRRT_cost = ax.bar(ind + 6*width/4, tbiRRT_cost_tuple, width, yerr=tbiRRT_SEM_tuple,
-                  color='SeaGreen', label='tbiRRT execution time')
+                  color='SeaGreen', label='tbiRRT cost')
+
+# RRT_cost = ax.bar(ind - 6*width/4, RRT_cost_tuple, width, yerr=RRT_SEM_tuple,                 #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS     
+#                   color='DodgerBlue', label='RRT execution time')
+# tRRT_cost = ax.bar(ind - 2*width/4, tRRT_cost_tuple, width, yerr=tRRT_SEM_tuple,
+#                   color='IndianRed', label='tRRT execution time')
+# biRRT_cost = ax.bar(ind + 2*width/4, biRRT_cost_tuple, width, yerr=biRRT_SEM_tuple,
+#                   color='Orange', label='biRRT execution time')
+# tbiRRT_cost = ax.bar(ind + 6*width/4, tbiRRT_cost_tuple, width, yerr=tbiRRT_SEM_tuple,
+#                   color='SeaGreen', label='tbiRRT execution time')
 
 # RRT_cost = ax.bar(ind - 6*width/4, RRT_cost_tuple, width,                                      #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS     
 #                   color='DodgerBlue', label='RRT trajectory time')
@@ -158,10 +158,10 @@ tbiRRT_cost = ax.bar(ind + 6*width/4, tbiRRT_cost_tuple, width, yerr=tbiRRT_SEM_
 #ax.set_title('Trajectory Time for algorithms in each problem')              
 
 ax.set_xticks(ind)
-ax.legend(loc=0, fontsize=22)
+ax.legend(loc=2, fontsize=24)
 
-ax.set_xticklabels(('Problem 1', 'Problem 2', 'Problem 3'))           #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
-# ax.set_xticklabels(('Problem 4', 'Problem 5', 'Problem 6'))           #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
+# ax.set_xticklabels(('Problem 1', 'Problem 2', 'Problem 3'))           #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
+ax.set_xticklabels(('Problem 1', 'Problem 2', 'Problem 3','Problem 4', 'Problem 5', 'Problem 6'))           #UNCOMMENT HERE TO CHANGE GRAPH OPTIONS OF KIND PROBLEM
 
 
 ax.errorbar(ind - 6*width/4+width/2, RRT_cost_tuple, yerr=RRT_SEM_tuple,
@@ -193,8 +193,8 @@ def autolabel(rects, xpos='center'):
 
     for rect in rects:
         height = rect.get_height()
-        ax.text(rect.get_x() + rect.get_width()*offset[xpos], height + 0.2,
-                '{}'.format(height), ha=ha[xpos], va='bottom', size = 24, rotation = 90)
+        ax.text(rect.get_x() + rect.get_width()*offset[xpos], height -0.2e6,
+                '{:.3e}'.format(height), ha=ha[xpos], va='top', size = 24, rotation = 90, weight= 'ultralight')
         for tick in ax.xaxis.get_major_ticks():                #to change the size of values in axi X
                 tick.label.set_fontsize(24)
         for tick in ax.yaxis.get_major_ticks():                #to change the size of values in axi Y

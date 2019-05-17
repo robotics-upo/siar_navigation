@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
   double cellsize = 0.02;
   // POINTS markers use x and y scale for width/height respectively
   
-  double x = 0.0;
+  double x = 0.4;
   double y = 0.0;
   double theta = 0.0;
   double width = 0.8;
