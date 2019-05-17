@@ -31,16 +31,16 @@ From the repository `robotics-upo` are necessary the next packages:
 
 ### ECMR 2019
 
-For the publishing in ECMR (European Conference on Mobile Robots) 2019 the planner was testing in the siar_simulator, and previously in a synthetic map, where the planner with the best performance was t-RRT.
+Here you can find the instruction for executing the simulations presented in the paper "Sampling-based planning for a sewer inspection ground robot" in the European Conference on Mobile Robots (EMCR 2019). The four different planners were tested in the in a testbench of simulations in synthetic maps, where the planner with the best performance was t-RRT. Finally, this t-RRT planner in realistic simulations using the Gazebo high fidelity robot simulator. The model and world used in the simulations can be found at [https://github.com/robotics-upo/siar_simulator].
 
 #### Synthetic map
 
-To execute all the synthetic map presented in the paper you should execute: 
+Run the following command to execute all the synthetic map simulations presented in the paper: 
 
 ```
 rosrun siar_planner test_all_algorithms_synthetic.sh <number_of_tests>
 ```
-which allow you to execute all the proposed tests in the scenarios a given number of times. E.g, for ten times:
+It allows you to execute all the proposed tests in the scenarios a given number of times. E.g, for ten times:
 
 ```
 rosrun siar_planner test_all_algorithms.sh 10
@@ -48,11 +48,17 @@ rosrun siar_planner test_all_algorithms.sh 10
 
 #### Gazebo simulation
 
-To execute Gazebo Simulation is necessary to follow the next steps:
+To execute the Gazebo simulations, it is necessary to follow the next steps:
 
-1. Compile the siar_simulator package from [https://github.com/robotics-upo/siar_simulator]
+1. Download the siar_simulator package into a ROS workspace from [https://github.com/robotics-upo/siar_simulator]
 
-2. Execute: 
+2. Compile the ROS workspace
+
+```
+catkin_make
+```
+
+3. Execute: 
 ```
 roslaunch siar_gazebo siar_simulator_complete_T130_gut30.launch
 ``` 
@@ -62,13 +68,15 @@ roslaunch siar_gazebo siar_simulator_complete_T130_gut30_velodyne.launch
 ```
 to have SIAR with six cameras and one velodyne. 
 
-*IMPORTANT*: the launch in siar_simulator start in pause to avoid conflict in the spawn of the models Gazebo. This will generate a ROS_ERROR from `siar_costmap`, because is waiting to recieve the map. To finish with ROS_ERROR just push play in the simulation.
+*IMPORTANT*: this launchers will start the simulator in pause mode to avoid conflict when spawing the different models. The `siar_costmap` module will generate some errors that will no longer thrown just by pushing play in the Gazebo simulator.
 
-3. Execute:
+4. Execute:
 ```
 roslaunch siar_planner planner_action_server_simulation.launch
 ``` 
-To use differents planners change the parameter `planner_type` from to one of the following options: 'rrt', 'trrt', 'birrt', 'tbirrt'. Congratulations !!! now you are ready to navigate with SIAR in sewer environment.
+To use differents planners just change the parameter `planner_type` from to one of the following options: 'rrt', 'trrt', 'birrt', 'tbirrt'. 
+
+Congratulations !!! now you are ready to navigate with SIAR in sewer environment.
 
 
 
