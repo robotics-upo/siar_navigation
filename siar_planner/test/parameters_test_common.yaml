@@ -17,6 +17,7 @@ wheel_decrease: 0.05,         # value that wheel decrease in relax mode
 last_wheel: 0.1,              # Minimum part of the wheel allowed in RRT and bi-RRT in first relaxed iteration
 min_wheel: 0.2,               # Minimum part of the wheel allowed in RRT and bi-RRT in first relaxed iteration
 
+
 # Model related parameters
 omega_max: 1.5,               # maximum angular allowed velocity 
 
@@ -30,7 +31,6 @@ same_node_dist: 0.003,        # If we try to expand a node and there is already 
 
 ## Weight value for the angular distance in the distance metric
 K_metrica: 0.0001,            # weight value to angular distance
-
 
 ## Parameters to change the performance of TRANSITION ALGORITHMS
 K_normal:  1000000000,        # normalization constant
