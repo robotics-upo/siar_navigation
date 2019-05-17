@@ -8,7 +8,7 @@ siar_navigation allows you to implement a navigation system based in a controlle
 
 ### Dependencies
 
-To compile and execute successfully `siar_navegation` is necessary to compile the next packages:
+To compile and execute successfully `siar_navegation` is necessary to install compile the next packages into a Ubuntu 16.04 system with ROS Kinetic:
   
 * costmap-2d, navigation, gazebo-ros, gazebo-ros-pkgs, gazebo-ros-control and libann-dev.
 ```
