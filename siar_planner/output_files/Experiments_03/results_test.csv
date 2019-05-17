@@ -1,0 +1,5 @@
+Test name;Fallos en 200;Test time average;Trajectory time average;Path cost average
+test_4_a_birrt_results.txt;100;46.45624245;14.284;10874149.0
+test_4_a_trrt_results.txt;101;2.153773465;12.6146464646;10454631.7172
+test_4_a_tbirrt_results.txt;100;5.611200835;12.685;10209699.2
+test_4_a_rrt_results.txt;100;0.996142295;13.494;12179005.0
