@@ -205,6 +205,7 @@ NodeState Planner::getRandomState(double max_x, double min_x, double max_y, doub
       ptrandom.x = randomState.state[0];
       ptrandom.y = randomState.state[1];
       randomMarker.points.push_back(ptrandom);
+      randomMarker.lifetime = ros::Duration(0);
       random_pub.publish(randomMarker);
       // randomMarker.lifetime= ros::Duration(3);  
       return randomState;

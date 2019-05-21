@@ -1,0 +1,48 @@
+{
+## Parameters to set PLANNER performance 
+samp_goal_rate: 10,           # RRT based algorithms will sample the goal (or the closest tree node) one out of 10 times
+goal_gap_m: 0.1,              # maximum distance tolerance to find the goal
+goal_gap_rad: 0.4 ,           # maximum angle tolerance to find the goal 
+n_rounds: 30,                 # total number of rounds to make grow the tree
+n_iter: 200,                  # number expand calls in each round
+K: 14,                        # number of random commands tried in the expand calls
+
+## Parameters to set COMMAND EVALUATOR performance
+T: 0.2,                       # total time that trajectories are evaluated
+delta_T: 0.05,                # time step that a trajectory is evaluate in Algorithms RRT 
+delta_t: 0.05,                # time step that a trajectory is evaluate in Algorithm Astar
+
+## Parameters that define SIAR FOOTPRINT performance
+wheel_decrease: 0.05,         # value that wheel decrease in relax mode  
+last_wheel: 0.1,              # Minimum part of the wheel allowed in RRT and bi-RRT in first relaxed iteration
+min_wheel: 0.2,               # Minimum part of the wheel allowed in RRT and bi-RRT in first relaxed iteration
+width: 0.71,                  # reference actual value of widths
+
+# Model related parameters
+omega_max: 1.5,               # maximum angular allowed velocity 
+
+## Parameters that define characteristic to define obstacles in costmap 
+positive_obs: 127,            
+negative_obs: -127,
+
+## Parameters used to find and label dead nodes 
+num_delete_parents: 3,        # number or node that child_node go back to star a new branch of the tree 
+same_node_dist: 0.003,        # If we try to expand a node and there is already another with less distance that same_node_dist --> not a candidate
+
+## Weight value for the angular distance in the distance metric
+K_metrica: 0.0001,            # weight value to angular distance
+
+## Parameters to change the performance of TRANSITION ALGORITHMS
+K_normal:  1000000000,        # normalization constant
+Temp_init: 0.000001,          # initial value of temperature
+alfa: 4,                      # constant to increase the temperature 
+alfa2: 4,                     # value to decrease the temperature
+nFailmax: 10,                 # maximum value of failed transition tests before increasing the temperature
+Cost_max_transition: 500000,  # max allowed value for a trajectory in a transition test
+
+## Parameter to set the sampling area in real platform
+max_x: 2.5, 
+max_y: 1.25,  
+min_x: -2.5, 
+min_y: -1.25,  
+}

@@ -112,9 +112,9 @@ int main(int argc, char** argv){
     if (cost > 0.0){ 
         
         ROS_INFO("Path calculated. Expended time: %f. Cost: %f", (t1 - t).toSec(), cost);
-        
         visualization_msgs::MarkerArray m = planner->getPathMarker(path);
         path_pub.publish(m);
+        
     } 
     else{
         ROS_INFO("Could not get a path in %f seconds", (t1 - t).toSec());
