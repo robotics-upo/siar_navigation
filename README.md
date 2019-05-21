@@ -8,7 +8,7 @@ siar_navigation allows you to implement a navigation system based in a controlle
 
 ### Dependencies
 
-To compile and execute successfully `siar_navegation` is necessary to compile the next packages:
+To compile and execute successfully `siar_navegation` is necessary to install compile the next packages into a Ubuntu 16.04 system with ROS Kinetic:
   
 * costmap-2d, navigation, gazebo-ros, gazebo-ros-pkgs, gazebo-ros-control and libann-dev.
 ```
@@ -32,6 +32,8 @@ From the repository `robotics-upo` are necessary the next packages:
 ### ECMR 2019
 
 Here you can find the instruction for executing the simulations presented in the paper "Sampling-based planning for a sewer inspection ground robot" in the European Conference on Mobile Robots (EMCR 2019). The four different planners were tested in the in a testbench of simulations in synthetic maps, where the planner with the best performance was t-RRT. Finally, this t-RRT planner in realistic simulations using the Gazebo high fidelity robot simulator. The model and world used in the simulations can be found at [https://github.com/robotics-upo/siar_simulator].
+
+All the code was developed and tested in Ubuntu 16.04 and ROS Kinetic. 
 
 #### Synthetic map
 
