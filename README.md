@@ -6,9 +6,29 @@ Planning navigation for SIAR robotics platform.
 
 siar_navigation allows you to implement a navigation system based in a controller, costmap and a planner. The controller is implemented in the `siar_controller` package and allows avoid positive and negative obstacles. The costmap is implemented in `siar_costmap` package and detects positive and negative obstacles from sensor data and provides the user with a cost map taking into account the position of the obstacles. The planner is implemented in the `siar_planner` package and computes a path taking into account a costmap. The planner can use the next algorithms to compute the path: RRT, bi-RRT, t-RRT and t-bi-RRT.
 
+## How to use
+
+We recommend to use the provided docker for testing the developments.
+
+### Option 1: Docker
+
+Just build the provided DockerFile in its folder:
+
+```
+ $ cd docker
+ $ docker build . -t siar_navigation
+
+```
+
+Then, you can start the docker with the provided file and run the experiments as listed in section Experiments
+
+```
+ $ ./run_container_linux.bash
+```
+
 ### Dependencies
 
-To compile and execute successfully `siar_navegation` is necessary to install compile the next packages into a Ubuntu 16.04 system with ROS Kinetic:
+To compile and execute successfully `siar_navigation` is necessary to install compile the next packages into a Ubuntu 16.04 system with ROS Kinetic:
   
 * costmap-2d, navigation, gazebo-ros, gazebo-ros-pkgs, gazebo-ros-control and libann-dev.
 ```
@@ -29,13 +49,13 @@ From the repository `robotics-upo` are necessary the next packages:
 * depth2cloud [https://github.com/robotics-upo/depth2cloud.git]
 
 
-### ECMR 2019
+## Robotics paper simulations
 
-Here you can find the instruction for executing the simulations presented in the paper "Sampling-based planning for a sewer inspection ground robot" in the European Conference on Mobile Robots (EMCR 2019). The four different planners were tested in the in a testbench of simulations in synthetic maps, where the planner with the best performance was t-RRT. Finally, this t-RRT planner in realistic simulations using the Gazebo high fidelity robot simulator. The model and world used in the simulations can be found at [https://github.com/robotics-upo/siar_simulator].
+Here you can find the instruction for executing the simulations presented in the paper "Advanced sampling-based planning strategies for a sewer inspection reconfigurable robot" submitted to the Robotics journal of MDPI. The three different planners were tested in the in a testbench of simulations in synthetic maps, where the planner with the best performance was t-RRT. Finally, the RRT* planner was tested in realistic simulations using the Gazebo high fidelity robot simulator. The model and world used in the simulations can be found at [https://github.com/robotics-upo/siar_simulator].
 
-All the code was developed and tested in Ubuntu 16.04 and ROS Kinetic. 
+All the code was developed and tested in Ubuntu 18.04 and ROS Melodic. 
 
-#### Synthetic map
+### Synthetic map
 
 Run the following command to execute all the synthetic map simulations presented in the paper: 
 
