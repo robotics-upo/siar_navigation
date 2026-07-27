@@ -81,7 +81,7 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
     return -2.0;
   }
 
-  if (m.isCollisionTransition(goal) || m.isCollisionTransition(goal)) {
+  if (m.isCollision(goal) || m.isCollision(start)) {
     ROS_ERROR("tbiRRT::resolve --> The goal or the starting point is not valid");
     return -3.0;
   }

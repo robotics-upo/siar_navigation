@@ -302,8 +302,8 @@ void SiarController::modeCallback(const std_msgs::Int8& msg)
   
   if (operation_mode == 5) {
     ROS_INFO("Setting width to: %f", constant_width);
-    cmd_eval->setWidth(constant_width);
-    _conf.robot_width = constant_width;
+    // cmd_eval->setWidth(constant_width);
+    // _conf.robot_width = constant_width;
   }
 }
 

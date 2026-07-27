@@ -1,8 +1,6 @@
 #include "siar_planner/Planner.hpp"
 #include "siar_planner/rrt.hpp"
-#include "siar_planner/trrt.hpp"
-#include "siar_planner/biRRT.hpp"
-#include "siar_planner/tbiRRT.hpp"
+#include "siar_planner/rrt_star.hpp"
 #include "ros/ros.h"
 #include <iostream>
 #include <sstream>
@@ -28,15 +26,9 @@ int main(int argc, char** argv){
   std::string planner_type;
   pnh.param("planner_type", planner_type, std::string("rrt"));
   
-  if (planner_type == "trrt") {
-      ROS_INFO("Planner type: tRRT");
-      planner = new tRRT(nh, pnh);
-  } else if (planner_type == "tbirrt") {
-      ROS_INFO("Planner type: t-bi-RRT");
-      planner = new tbiRRT(nh, pnh);
-  } else if (planner_type == "birrt") {
-      ROS_INFO("Planner type: bi-RRT");
-      planner = new biRRT(nh, pnh);
+  if (planner_type == "rrtstar") {
+      ROS_INFO("Planner type: RRTStar");
+      planner = new RRTStar(nh, pnh);
   } else {
       ROS_INFO("Planner type: RRT");
       planner = new RRT(nh, pnh);

@@ -1,12 +1,11 @@
-#ifndef _tRRT_HPP_
-#define _tRRT_HPP_
+#ifndef _RRT_STAR_HPP_
+#define _RRT_STAR_HPP_
 
 #include "siar_planner/Planner.hpp"
 
 #include "siar_planner/NodeState.hpp"
 #include "siar_planner/RRTNode.h"
 #include "siar_planner/SiarModel.hpp"
-#include "siar_planner/Transition.hpp"
 #include "siar_planner/metrica.hpp"
 
 #include "visualization_msgs/Marker.h"
@@ -17,12 +16,12 @@
 
 #include <ros/ros.h>
 
-class tRRT:public Planner
+class RRTStar:public Planner
 {
 public:
-  tRRT(ros::NodeHandle &nh, ros::NodeHandle &pnh);
+  RRTStar(ros::NodeHandle &nh, ros::NodeHandle &pnh);
   
-  ~tRRT();
+  ~RRTStar();
   
   virtual double resolve(NodeState start, NodeState goal, std::list<RRTNode>& path);    
   
@@ -35,7 +34,7 @@ public:
   std::list<RRTNode *> nodes;
 
 protected:
-  // tRRT();
+  // RRTStar();
   void addNode(NodeState st, double comm_x = 0.0, double comm_ang = 0.0, RRTNode *parent = NULL); 
   virtual void clear();
   
@@ -44,10 +43,6 @@ protected:
   void expandNode(const NodeState& q_rand, RRTNode* q_near, int relaxation_mode = 0);
   virtual std::list<RRTNode> getPath();
 
-  Transition testTrans;
-
-  double K_normal, Temp_init, Temp; 
-  int alfa , nFail, nFailmax ;
   double cost_Qnear, cost_Qnew, cost_wheels_Qnew;
 
   ros::Publisher tree1_pub;
@@ -58,20 +53,18 @@ protected:
 
 };
 
-tRRT::tRRT(ros::NodeHandle &nh, ros::NodeHandle &pnh):Planner(nh,pnh),testTrans(nh,pnh), metrica(nh,pnh)
+RRTStar::RRTStar(ros::NodeHandle &nh, ros::NodeHandle &pnh):Planner(nh,pnh), metrica(nh,pnh)
 {
   tree1_pub = nh.advertise<visualization_msgs::Marker>("tree1_marker", 2, true);
-
-//   ROS_INFO("K_normal = %f \t alfa: %f \t nFailmax: %f \t Temp_init: %f \t", K_normal,alfa,nFailmax,Temp_init); 
 }
 
-tRRT::~tRRT()
+RRTStar::~RRTStar()
 {
   clear();
 }
 
 
-inline void tRRT::clear()
+inline void RRTStar::clear()
 {
   for (auto n:nodes) {
     delete n;
@@ -81,29 +74,27 @@ inline void tRRT::clear()
 }
 
 
-double tRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
+double RRTStar::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
 {
   clear(); 
 
   if (!m.isInit()) {
-    ROS_ERROR("tRRT::resolve --> The model has not been initialized --> could not calculate a path");
+    ROS_ERROR("RRTStar::resolve --> The model has not been initialized --> could not calculate a path");
     return -2.0;
   }
 
-  if (m.isCollisionTransition(goal) || m.isCollisionTransition(goal)) {
-    ROS_ERROR("tbiRRT::resolve --> The goal or the starting point is not valid");
+  if (m.isCollision(goal) || m.isCollision(start)) {
+    ROS_ERROR("RRTStar::resolve --> The goal or the starting point is not valid");
     return -3.0;
   }
-  
   
   RRTNode start_node;
   geometry_msgs::Twist command_init=m.generateRandomCommand(); 
 
   start_node.st = start;
-  start_node.cost = m.integrateTransition(start_node.st, command_init, delta_t);
+  start_node.cost = m.integrate(start_node.st, command_init, delta_t);
   nodes.push_back(new RRTNode(start_node)); 
   goal_node.st = goal;
-
   
   double ret_val = -1.0; 
   int relax = 0;
@@ -129,8 +120,7 @@ double tRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
       NodeState q_rand;
       if (!(cont%samp_goal_rate == 0)){
 	      q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
-      }
-      else{
+      } else {
       	q_rand = goal_node.st; 
       }     
       RRTNode *q_near = getNearestNode(q_rand);
@@ -149,7 +139,7 @@ double tRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
     else{   
       m.decreaseWheels(wheel_decrease, last_wheel);
       relax++;
-      ROS_ERROR("tRRT::resolve -->  could not find a path -->  starting iteration: %i", relax);    
+      ROS_ERROR("RRTstar::resolve -->  could not find a path -->  starting iteration: %i", relax);    
     }
   }
   std::cout << "Nodes in the graph: " << nodes.size() <<std::endl;
@@ -157,7 +147,7 @@ double tRRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
 }
 
 
-RRTNode* tRRT::getNearestNode(NodeState q_rand, bool consider_dead) {
+RRTNode* RRTStar::getNearestNode(NodeState q_rand, bool consider_dead) {
   RRTNode *q_near = NULL; 
   double dist = std::numeric_limits<double>::infinity(); 
   double new_dist;
@@ -174,7 +164,7 @@ RRTNode* tRRT::getNearestNode(NodeState q_rand, bool consider_dead) {
 }
 
 
-void tRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mode){
+void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mode){
   RRTNode q_new;
   double dist = std::numeric_limits<double>::infinity(); 
   double new_dist;
@@ -183,11 +173,9 @@ void tRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_m
   bool is_dead = true;
   RRTNode q_try;
   for (int i = 0; i < K; i++) {   //Are generate K different nodes (4) with different STATES to evaluate !!
-    // ret_transition = false;
-    // is_new_node = false;
     NodeState st = q_near->st;
     geometry_msgs::Twist command = m.generateRandomCommand(); //generate a random command of velocity
-    cost_wheels_Qnew = m.integrateTransition(st, command, delta_t);
+    cost_wheels_Qnew = m.integrate(st, command, delta_t);
     // RRTNode q_try;
     q_try.st = st;
     q_try.cost = cost_wheels_Qnew;
@@ -203,24 +191,21 @@ void tRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_m
 
     if (d > 0.01) {
       is_dead = false;
-      ret_transition = testTrans.transitionTest(*q_near, q_try);
-      if (ret_transition){      
-        is_new_node = true;
-        new_dist = metrica.metrica3D(q_rand,st);
-        if (new_dist<dist) {
-          q_new.st = st; 
-          q_new.command_lin = command.linear.x;
-          q_new.command_ang = command.angular.z;
-          dist = new_dist;
-          q_new.cost = cost_wheels_Qnew;   
-        }    
-      }
+      is_new_node = true;
+      new_dist = metrica.metrica3D(q_rand,st);
+      if (new_dist<dist) {
+        q_new.st = st; 
+        q_new.command_lin = command.linear.x;
+        q_new.command_ang = command.angular.z;
+        dist = new_dist;
+        q_new.cost = cost_wheels_Qnew;   
+      }    
     } 
   }
   if (is_new_node){   //check if there is a new node and add it to the graph (unless its the goal)
     ptree1.x = q_new.st.state[0];
     ptree1.y = q_new.st.state[1];
-    tree1Marker.ns = "tree1M";
+    tree1Marker.ns = "treeStar";
     tree1Marker.points.push_back(ptree1);
     tree1Marker.lifetime = ros::Duration(40);
     tree1_pub.publish(tree1Marker); 
@@ -252,7 +237,7 @@ void tRRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_m
 }
 
 
-std::list<RRTNode> tRRT::getPath(){
+std::list<RRTNode> RRTStar::getPath(){
   std::list<RRTNode> path;
   RRTNode* current_node = &goal_node;
   path.push_front(*current_node);
@@ -263,7 +248,7 @@ std::list<RRTNode> tRRT::getPath(){
   return path;
 }
 
-visualization_msgs::Marker tRRT::getGraphMarker()
+visualization_msgs::Marker RRTStar::getGraphMarker()
 {
   visualization_msgs::Marker m;
   m.header.frame_id = this->m.getFrameID();

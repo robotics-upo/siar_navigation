@@ -29,9 +29,7 @@ public:
   //! @brief Adds points to a marker
   void addPoints(double x, double y, double yaw, visualization_msgs::Marker &m, int id = 0, bool init = false, const std::string link = "/base_link");
   
-  void setWidth(double new_width) ;
-  
-  void setXElec(double new_elec);
+  void resize(double new_width, double new_elec);
   
   inline double getWidth() const {
     return m_width;
@@ -88,16 +86,21 @@ void SiarFootprint::init()
   footprint_p_2.clear();
   
   // Add points
-  double x = -m_length/2.0;
+  double length_third = m_length*0.333333;
+  double x = -length_third; // Start at -1/3 of the length
   geometry_msgs::Point p;
-  for (int i = 0; x < m_length/2.0; x += m_cellsize, i++) {
+
+
+  // Get only the wheel part of the footprint
+
+  for (int i = 0; x < m_length/2.0; x += length_third, i++) {
     double y = -m_width/2.0;
     p.x = x;
     for (int j = 0; y < m_width/2.0; y += m_cellsize, j++) {
       if (j < n_cel_wheel || n_width - j <= n_cel_wheel ) {
         p.y = y;
         if (!m_simplified || i%2 == j%2) {
-          footprint_p.push_back(p); // If simplified, alternate for make the collision detection simpler
+          footprint_p.push_back(p); // If simplified, alternate for making the collision detection simpler
         }
       }
     }
@@ -207,14 +210,9 @@ void SiarFootprint::addPoints(double x, double y, double th, visualization_msgs:
   }
 }
 
-void SiarFootprint::setWidth(double new_width)
+void SiarFootprint::resize(double new_width, double new_elec)
 {
   m_width = new_width;
-  init();
-}
-
-void SiarFootprint::setXElec(double new_elec)
-{
   m_x_elec = new_elec;
   init();
 }

@@ -197,7 +197,7 @@ NodeState Planner::getRandomState(double max_x, double min_x, double max_y, doub
     //   continue;
     // }
 
-    if (m.isCollisionTransition(randomState))
+    if (m.isCollision(randomState))
       continue;
 
     else{
