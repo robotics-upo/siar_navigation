@@ -71,8 +71,6 @@ int main(int argc, char** argv) {
   
   graph_pub.publish(a.getGraphMarker());
   
-  
-  
   ros::spin();
   
   return 0;

@@ -70,7 +70,6 @@ int main(int argc, char** argv){
   std::list<RRTNode> path; 
   std::list<NodeState> randomTree;
   
-  
   ros::Publisher vis_pub = nh.advertise<visualization_msgs::Marker>("init_marker", 2, true);
   ros::Publisher goal_pub = nh.advertise<visualization_msgs::Marker>("goal_marker", 2, true);
   // ros::Publisher graph_pub = nh.advertise<visualization_msgs::Marker>("graph_marker", 2, true);

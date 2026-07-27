@@ -5,8 +5,7 @@
 
 #include "siar_planner/rrt.hpp"
 #include "siar_planner/biRRT.hpp"
-#include "siar_planner/trrt.hpp"
-#include "siar_planner/tbiRRT.hpp"
+#include "siar_planner/rrt_star.hpp"
 
 #include <std_msgs/Bool.h>
 #include <nav_msgs/OccupancyGrid.h>

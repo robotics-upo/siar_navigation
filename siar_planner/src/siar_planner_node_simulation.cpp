@@ -22,13 +22,9 @@ int main(int argc, char** argv) {
     ROS_INFO("STARTING BIRRT planner");
     SiarPlannerActionServer<biRRT> spas(nh, pnh);
     ros::spin();
-  } else if (planner_type == "trrt") {
-    ROS_INFO("STARTING TRRT planner");
-    SiarPlannerActionServer<tRRT> spas(nh, pnh);
-    ros::spin();
-  } else if (planner_type == "tbirrt") {
-    ROS_INFO("STARTING TBIRRT planner");
-    SiarPlannerActionServer<tbiRRT> spas(nh, pnh);
+  } else if (planner_type == "rrt_star") {
+    ROS_INFO("STARTING RRT* planner");
+    SiarPlannerActionServer<RRTStar> spas(nh, pnh);
     ros::spin();
   }
   
