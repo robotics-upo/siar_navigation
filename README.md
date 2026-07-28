@@ -95,7 +95,7 @@ to have SIAR with six cameras and one velodyne.
 ```
 roslaunch siar_planner planner_action_server_simulation.launch
 ``` 
-To use differents planners just change the parameter `planner_type` from to one of the following options: 'rrt', 'trrt', 'birrt', 'tbirrt'. 
+To use differents planners just change the parameter `planner_type` from to one of the following options: 'rrt', 'rrt_star', 'birrt'. 
 
 Congratulations !!! now you are ready to navigate with SIAR in sewer environment.
 
