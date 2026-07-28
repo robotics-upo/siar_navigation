@@ -37,9 +37,10 @@ protected:
   void addNode(NodeState st, double comm_x = 0.0, double comm_ang = 0.0, RRTNode *parent = NULL); 
   virtual void clear();
   
-  virtual RRTNode *getNearestNode(NodeState q_rand, bool consider_dead = false);
-  void expandNode(const NodeState& q_rand, RRTNode* q_near, int relaxation_mode = 0);
+  virtual void expandNode(const NodeState& q_rand, RRTNode* q_near, int relaxation_mode = 0);
   virtual std::list<RRTNode> getPath();
+
+  virtual RRTNode* getNearestNode(NodeState q_rand, bool consider_dead = false);
 
   ros::Publisher tree1_pub;
   visualization_msgs::Marker tree1Marker;

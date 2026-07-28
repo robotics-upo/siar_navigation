@@ -114,7 +114,7 @@ Planner::Planner(ros::NodeHandle &nh, ros::NodeHandle &pnh):m(nh, pnh), gen(rd()
   }
   
   if (!pnh.getParam("max_yaw", max_yaw)) {
-    max_yaw = 1;
+    max_yaw = M_PI;
   }
   
   if (!pnh.getParam("min_x", min_x)) { 
@@ -126,7 +126,7 @@ Planner::Planner(ros::NodeHandle &nh, ros::NodeHandle &pnh):m(nh, pnh), gen(rd()
   }
   
   if (!pnh.getParam("min_yaw", min_yaw)) {
-    min_yaw = 0;
+    min_yaw = -M_PI;
   }
   
   if (!pnh.getParam("samp_goal_rate", samp_goal_rate)) {

@@ -1,7 +1,7 @@
 #ifndef _RRT_STAR_HPP_
 #define _RRT_STAR_HPP_
 
-#include "siar_planner/Planner.hpp"
+#include "siar_planner/rrt.hpp"
 
 #include "siar_planner/NodeState.hpp"
 #include "siar_planner/RRTNode.h"
@@ -16,46 +16,36 @@
 
 #include <ros/ros.h>
 
-class RRTStar:public Planner
+class RRTStar:public RRT
 {
 public:
   RRTStar(ros::NodeHandle &nh, ros::NodeHandle &pnh);
   
   ~RRTStar();
+
+  
   
   virtual double resolve(NodeState start, NodeState goal, std::list<RRTNode>& path);    
   
-  virtual visualization_msgs::Marker getGraphMarker();
   
-  virtual int getGraphSize() {
-    return nodes.size();
-  }
-
-  std::list<RRTNode *> nodes;
-
 protected:
   // RRTStar();
   void addNode(NodeState st, double comm_x = 0.0, double comm_ang = 0.0, RRTNode *parent = NULL); 
-  virtual void clear();
   
   //new functions
-  RRTNode *getNearestNode(NodeState q_rand, bool consider_dead = false);
   void expandNode(const NodeState& q_rand, RRTNode* q_near, int relaxation_mode = 0);
-  virtual std::list<RRTNode> getPath();
+
+  virtual void clear();
 
   double cost_Qnear, cost_Qnew, cost_wheels_Qnew;
-
-  ros::Publisher tree1_pub;
-  visualization_msgs::Marker tree1Marker;
-  geometry_msgs::Point ptree1;
 
   Metrica metrica;
 
 };
 
-RRTStar::RRTStar(ros::NodeHandle &nh, ros::NodeHandle &pnh):Planner(nh,pnh), metrica(nh,pnh)
+RRTStar::RRTStar(ros::NodeHandle &nh, ros::NodeHandle &pnh):RRT(nh,pnh), metrica(nh,pnh)
 {
-  tree1_pub = nh.advertise<visualization_msgs::Marker>("tree1_marker", 2, true);
+  // tree1_pub = nh.advertise<visualization_msgs::Marker>("tree1_marker", 2, true);
 }
 
 RRTStar::~RRTStar()
@@ -66,11 +56,12 @@ RRTStar::~RRTStar()
 
 inline void RRTStar::clear()
 {
-  for (auto n:nodes) {
-    delete n;
-  }
-  nodes.clear();
-  got_to_goal = false;
+  RRT::clear();
+  // for (auto n:nodes) {
+  //   delete n;
+  // }
+  // nodes.clear();
+  // got_to_goal = false;
 }
 
 
@@ -147,21 +138,7 @@ double RRTStar::resolve(NodeState start, NodeState goal, std::list<RRTNode>& pat
 }
 
 
-RRTNode* RRTStar::getNearestNode(NodeState q_rand, bool consider_dead) {
-  RRTNode *q_near = NULL; 
-  double dist = std::numeric_limits<double>::infinity(); 
-  double new_dist;
-  for (auto n: nodes){ 
-    // new_dist = sqrt(pow(q_rand.state[0] - n->st.state[0],2) + pow(q_rand.state[1] - n->st.state[1],2)); 
-    new_dist = metrica.metrica3D(q_rand,n->st);
-    
-    if (new_dist < dist  && (!n->dead || consider_dead)) {
-      q_near = n; 
-      dist = new_dist;
-    }    
-  }
-  return q_near;
-}
+
 
 
 void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mode){
@@ -237,49 +214,49 @@ void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxatio
 }
 
 
-std::list<RRTNode> RRTStar::getPath(){
-  std::list<RRTNode> path;
-  RRTNode* current_node = &goal_node;
-  path.push_front(*current_node);
-  while (current_node->parent != NULL) {  
-    current_node = current_node->parent;
-    path.push_front(*current_node);
-  }
-  return path;
-}
+// std::list<RRTNode> RRTStar::getPath(){
+//   std::list<RRTNode> path;
+//   RRTNode* current_node = &goal_node;
+//   path.push_front(*current_node);
+//   while (current_node->parent != NULL) {  
+//     current_node = current_node->parent;
+//     path.push_front(*current_node);
+//   }
+//   return path;
+// }
 
-visualization_msgs::Marker RRTStar::getGraphMarker()
-{
-  visualization_msgs::Marker m;
-  m.header.frame_id = this->m.getFrameID();
-  m.header.stamp = ros::Time::now();
-  m.pose.orientation.w = 1.0;
-  m.id = 0;
-  m.points.clear();
-  m.type = visualization_msgs::Marker::POINTS;
-  m.scale.x = 0.05;
-  visualization_msgs::Marker::_color_type color;
-  color.r = 1.0;
-  color.b = 0;
-  color.g = 0;
-  color.a = 1.0;
-  double color_step = 1.0/(double)nodes.size();
-  geometry_msgs::Point p1;
-  geometry_msgs::Point p2;
-  for (auto n : nodes){  
-    auto new_color = color;
-    new_color.r -= color_step;
-    new_color.b += color_step;
-    p1.x = n->st.state[0];
-    p1.y = n->st.state[1];
-    m.points.push_back(p1); 
-    m.colors.push_back(color);
-    color = new_color;
-  }
-  m.lifetime = ros::Duration(0);
+// visualization_msgs::Marker RRTStar::getGraphMarker()
+// {
+//   visualization_msgs::Marker m;
+//   m.header.frame_id = this->m.getFrameID();
+//   m.header.stamp = ros::Time::now();
+//   m.pose.orientation.w = 1.0;
+//   m.id = 0;
+//   m.points.clear();
+//   m.type = visualization_msgs::Marker::POINTS;
+//   m.scale.x = 0.05;
+//   visualization_msgs::Marker::_color_type color;
+//   color.r = 1.0;
+//   color.b = 0;
+//   color.g = 0;
+//   color.a = 1.0;
+//   double color_step = 1.0/(double)nodes.size();
+//   geometry_msgs::Point p1;
+//   geometry_msgs::Point p2;
+//   for (auto n : nodes){  
+//     auto new_color = color;
+//     new_color.r -= color_step;
+//     new_color.b += color_step;
+//     p1.x = n->st.state[0];
+//     p1.y = n->st.state[1];
+//     m.points.push_back(p1); 
+//     m.colors.push_back(color);
+//     color = new_color;
+//   }
+//   m.lifetime = ros::Duration(0);
 
-  return m;
-}
+//   return m;
+// }
 
 #endif
 
