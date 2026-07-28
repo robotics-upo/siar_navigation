@@ -28,30 +28,29 @@ Then, you can start the docker with the provided file and run the experiments as
 
 ### Dependencies
 
-To compile and execute successfully `siar_navigation` is necessary to install compile the next packages into a Ubuntu 16.04 system with ROS Kinetic:
+To compile and execute successfully `siar_navigation` is necessary to install compile the next packages into a Ubuntu 18.04 system with ROS melodic:
   
 * costmap-2d, navigation, gazebo-ros, gazebo-ros-pkgs, gazebo-ros-control and libann-dev.
 ```
-sudo apt-get install ros-kinetic-costmap-2d
-sudo apt-get install ros-kinetic-navigation
-sudo apt-get install ros-kinetic-gazebo-ros
-sudo apt-get install ros-kinetic-gazebo-ros-pkgs
-sudo apt-get install ros-kinetic-gazebo-ros-control
+sudo apt-get install ros-melodic-costmap-2d
+sudo apt-get install ros-melodic-navigation
+sudo apt-get install ros-melodic-gazebo-ros
+sudo apt-get install ros-melodic-gazebo-ros-pkgs
+sudo apt-get install ros-melodic-gazebo-ros-control
 
 sudo apt-get install libann-dev
 ```
 
-From the repository `robotics-upo` are necessary the next packages:
+We need the following packages to be downloaded in a catkin_ws from our GitHub organization `robotics-upo`:
  
 * function [https://github.com/robotics-upo/functions.git]
-* siar_package (banch kinetic) [https://github.com/robotics-upo/siar_packages.git]
+* siar_package (banch melodic) [https://github.com/robotics-upo/siar_packages.git]
 * arduimu_v3 [https://github.com/robotics-upo/arduimu_v3.git]
 * depth2cloud [https://github.com/robotics-upo/depth2cloud.git]
 
-
 ## Robotics paper simulations
 
-Here you can find the instruction for executing the simulations presented in the paper "Advanced sampling-based planning strategies for a sewer inspection reconfigurable robot" submitted to the Robotics journal of MDPI. The three different planners were tested in the in a testbench of simulations in synthetic maps, where the planner with the best performance was t-RRT. Finally, the RRT* planner was tested in realistic simulations using the Gazebo high fidelity robot simulator. The model and world used in the simulations can be found at [https://github.com/robotics-upo/siar_simulator].
+Here you can find the instruction for executing the simulations presented in the paper "Advanced sampling-based planning strategies for a sewer inspection reconfigurable robot" submitted to the Robotics journal of MDPI. The three different planners were tested in the in a testbench of simulations in synthetic maps, where the planner with the best performance was RRT* with path guidance. Finally, the RRT* planner was tested in realistic simulations using the Gazebo high fidelity robot simulator. The model and world used in the simulations can be found at [https://github.com/robotics-upo/siar_simulator].
 
 All the code was developed and tested in Ubuntu 18.04 and ROS Melodic. 
 
