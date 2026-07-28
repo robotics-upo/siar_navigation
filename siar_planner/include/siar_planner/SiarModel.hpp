@@ -32,7 +32,6 @@ public:
 
   // inline double costWheelsQnew() const {return cost_wheels;}
   double costWheelsQnear(double x, double y, double th);
-
   
   inline std::string getFrameID() const {
     if (map_init) {
@@ -56,12 +55,85 @@ public:
   
   inline void decreaseWheels(double decrement, double last_wheel) {
     double m_w = m_ce.getMinWheelLeft() - decrement; // Decrease the minimum allowed wheel on the floor 
-    m_w = (m_w < last_wheel)?last_wheel:m_w; // Check if the allowed wheel is below the maximum
-    m_ce.setMinWheelLeft(m_w);
-    // Right wheel
-    m_w = m_ce.getMinWheelRight() - decrement; // Decrease the minimum allowed wheel on the floor 
-    m_w = (m_w < last_wheel)?last_wheel:m_w; // Check if the allowed wheel is below the maximum
-    m_ce.setMinWheelRight(m_w); 
+  }
+
+  inline double getWidth(double command) {
+    if (command < 0.0) 
+      return -1.0;
+    if (command < 10) {
+      return 0.51 + 0.007 * command;
+    } else if (command < 20) {
+      return 0.58 + 0.006 * (command - 10);
+    } else if (command < 30) {
+      return 0.64 + 0.004 * (command - 20);
+    } else if (command < 40) {
+      return 0.68 + 0.002 * (command - 30);
+    } else if (command < 50) {
+      return 0.7 + 0.001 * (command - 40);
+    } else if (command < 60) {
+      return 0.71;
+    } else if (command < 70) {
+      return 0.71;
+    } else if (command < 80) {
+      return 0.71 - 0.001 * (command - 70);
+    } else if (command < 90) {
+      return 0.7 - 0.0001 * (command - 80);
+    } else if (command < 100) {
+      return 0.69 - 0.0001 * (command - 90); 
+    } else if (command < 110) {
+      return 0.68 + 0.0002 * (command - 100);
+    } else if (command < 120) {
+      return 0.66 - 0.0002 * (command - 110);
+    } else if (command < 130) {
+      return 0.64 - 0.0003 * (command - 120);
+    } else if (command < 140) {
+      return 0.61 - 0.0003 * (command - 130);
+    } else if (command < 150) {
+      return 0.58 - 0.0006 * (command - 140);
+    }
+    return 0.51;
+  }
+
+  inline double getXElec(double command) {
+    if (command < 0.0) 
+      return -1.0;
+    if (command < 10) {
+      return 0.14 - 0.002 * command;
+    } else if (command < 20) {
+      return 0.12 - 0.003 * (command - 10);
+    } else if (command < 30) {
+      return 0.09 - 0.003 * (command - 20);
+    } else if (command < 40) {
+      return 0.06 - 0.002 * (command - 30);
+    } else if (command < 50) {
+      return 0.04 - 0.002 * (command - 40);
+    } else if (command < 60) {
+      return 0.02 - 0.002 * (command - 50);
+    } else if (command < 70) {
+      return 0.00 - 0.001 * (command - 60);
+    } else if (command < 80) {
+      return -0.01 - 0.002 * (command - 70);
+    } else if (command < 90) {
+      return -0.03 - 0.002 * (command - 80);
+    } else if (command < 100) {
+      return -0.05 - 0.001 * (command - 90);
+    } else if (command < 110) {
+      return -0.07 - 0.002 * (command - 100);
+    } else if (command < 120) {
+      return -0.08 - 0.0002 * (command - 110);
+    } else if (command < 130) {
+      return -0.10 - 0.001 * (command - 120);
+    } else if (command < 140) {
+      return -0.11 - 0.001 * (command - 130);
+    } else if (command < 150) {
+      return -0.12 - 0.002 * (command - 140);
+    }
+    return -0.14;
+  }
+
+  inline void setWidthMotorRef(double command) {
+    
+    m_ce.setWidthElec(getWidth(command), getXElec(command));
   }
   
   inline void setMinWheel(double v) {
@@ -123,6 +195,11 @@ double SiarModel::integrate(visualization_msgs::Marker& m, NodeState& st, geomet
 {
   geometry_msgs::Twist v_ini;
   v_ini.linear.x = m_ce.getCharacteristics().v_max;
+
+
+  double command_mot = st.state.size() > 3 ? st.state[3] : 60.0;
+  setWidthMotorRef(command_mot);
+  
   
   if (st.state.size() < 3) {
     ROS_ERROR("SiarModel::integrate --> cannot integrate the model --> too few states. State size: %u", (unsigned int) st.state.size());
@@ -138,6 +215,9 @@ double SiarModel::integrate(visualization_msgs::Marker& m, NodeState& st, geomet
 
   st.state = m_ce.getLastState();
   
+  if (st.state.size() < 4) {
+    st.state.push_back(command_mot);
+  }
   
   return ret_val;
 }

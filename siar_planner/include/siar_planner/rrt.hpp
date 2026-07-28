@@ -25,6 +25,8 @@ public:
   virtual double resolve(NodeState start, NodeState goal, std::list<RRTNode>& path);      
 
   std::list<RRTNode *> nodes; // TODO: single tree planners
+
+  std::list<geometry_msgs::Twist> command_list; // List of commands to expand the tree
   
   virtual visualization_msgs::Marker getGraphMarker();
 
@@ -42,6 +44,8 @@ protected:
 
   virtual RRTNode* getNearestNode(NodeState q_rand, bool consider_dead = false);
 
+  virtual void getCommandList(); // Generate a list of commands to expand the tree
+
   ros::Publisher tree1_pub;
   visualization_msgs::Marker tree1Marker;
   geometry_msgs::Point ptree1;
@@ -51,8 +55,8 @@ protected:
 
 RRT::RRT(ros::NodeHandle &nh, ros::NodeHandle &pnh):Planner(nh,pnh), metrica(nh,pnh)
 {
-    tree1_pub = nh.advertise<visualization_msgs::Marker>("tree1_marker", 2, true);
-  
+  tree1_pub = nh.advertise<visualization_msgs::Marker>("tree1_marker", 2, true);
+  getCommandList();
   // ROS_INFO("n_iter = %d \t K: %d \t", n_iter, K); 
 }
 
@@ -83,7 +87,7 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
   }
 
   if (m.isCollision(goal) || m.isCollision(start)) {
-    ROS_ERROR("tbiRRT::resolve --> The goal or the starting point is not valid");
+    ROS_ERROR("RRT::resolve --> The goal or the starting point is not valid");
     return -3.0;
   }
 
@@ -133,8 +137,13 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
       ROS_INFO("Iteration %d. Solution found", relax);
     }
     else{ 
-      m.decreaseWheels(wheel_decrease, last_wheel);
-      relax++;
+      // if (rand() % 2 == 0) {
+      //   m.decreaseWheels(wheel_decrease, last_wheel);
+      // }
+      // else {
+      //   m.increaseWheels(wheel_decrease, last_wheel);
+      // }
+      // relax++;
       ROS_ERROR("RRT::resolve -->  could not find a path -->  starting iteration: %i", relax);    
     }
   }
@@ -167,9 +176,9 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
   bool is_new_node = false;
   bool is_dead = true;
 
-  for (int i = 0; i < K; i++) {
+  for (auto command:command_list) {
     NodeState st = q_near->st;
-    geometry_msgs::Twist command = m.generateRandomCommand();
+
     double cost = m.integrate(st, command, delta_t, relaxation_mode >= 1); // If relaxation_mode >= 1 --> allow two wheels
     if (cost < 0.0) {  // Collision
       } 
@@ -185,10 +194,11 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
         is_dead = false;
         is_new_node = true;
         new_dist = metrica.metrica3D(q_rand,st);
-        if (new_dist<dist) {
+        if (new_dist < dist) {
           q_new.st = st; 
           q_new.command_lin = command.linear.x;
           q_new.command_ang = command.angular.z;
+          q_new.command_mot = q_near->command_mot; // Set the width motor command
           dist = new_dist;
           q_new.cost = cost; 
         }
@@ -209,6 +219,7 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
       goal_node.parent = q_near; 
       goal_node.command_lin = q_new.command_lin; 
       goal_node.command_ang = q_new.command_ang;
+      goal_node.command_mot = q_near->command_mot;
       // goal_node.cost = q_new.cost + q_near->cost; 
     }
     else{
@@ -271,6 +282,52 @@ visualization_msgs::Marker RRT::getGraphMarker()
   m.lifetime = ros::Duration(0);
   
   return m;
+}
+
+void RRT::getCommandList() {
+  command_list.clear();
+  geometry_msgs::Twist command;
+
+  command.linear.x = 0.35; // Random linear velocity between -1 and 1
+  command.angular.z = 0; // Random angular velocity between -1 and 1
+
+  command.linear.x = 0.25; // Random linear velocity between -1 and 1
+  command.angular.z = 0; // Random angular velocity between -1 and 1
+  command_list.push_back(command);
+  command.angular.z = 0.1; // Random angular velocity between -1 and 1
+  command_list.push_back(command);
+  command.angular.z = -0.1; // Random angular velocity between -1 and 1
+  command_list.push_back(command);
+
+  command.linear.x = 0.15; // Random linear velocity between -1 and 1
+  command.angular.z = 0.1; // Random angular velocity between -1 and 1
+  command_list.push_back(command);
+  command.angular.z = 0.2; // Random angular velocity between -1 and 1
+  command_list.push_back(command);
+  command.angular.z = -0.1; // Random angular velocity between -1 and 1
+  command_list.push_back(command);
+  command.angular.z = -0.2; // Random angular velocity between -1 and 1
+  command_list.push_back(command);
+
+  command.linear.x = 0.1; // Random linear velocity between -1 and 1
+  command.angular.z = 0.2; // Random angular velocity between -1 and 1
+  command_list.push_back(command);
+  command.angular.z = 0.3; // Random angular velocity between -1 and 1
+  command_list.push_back(command);
+  command.angular.z = -0.2; // Random angular velocity between -1 and 1
+  command_list.push_back(command);
+  command.angular.z = -0.3; // Random angular velocity between -1 and 1
+  command_list.push_back(command);
+
+  command.linear.x = 0.15; // Random linear velocity between -1 and 1
+  command.angular.z = 0.1; // Random angular velocity between -1 and 1
+  command_list.push_back(command);
+  command.angular.z = 0.2; // Random angular velocity between -1 and 1
+  command_list.push_back(command);
+  command.angular.z = -0.1; // Random angular velocity between -1 and 1
+  command_list.push_back(command);
+  command.angular.z = -0.2; // Random angular velocity between -1 and 1
+  command_list.push_back(command);
 }
 
 #endif

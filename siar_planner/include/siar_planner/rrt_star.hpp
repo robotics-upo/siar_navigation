@@ -35,6 +35,9 @@ protected:
   //new functions
   void expandNode(const NodeState& q_rand, RRTNode* q_near, int relaxation_mode = 0);
 
+  // rewire
+  void rewire(RRTNode* q_new, RRTNode* q_near, double radius);
+
   virtual void clear();
 
   double cost_Qnear, cost_Qnew, cost_wheels_Qnew;
@@ -128,18 +131,13 @@ double RRTStar::resolve(NodeState start, NodeState goal, std::list<RRTNode>& pat
       ROS_INFO("Iteration %d. Solution found", relax);
     }
     else{   
-      m.decreaseWheels(wheel_decrease, last_wheel);
-      relax++;
+      // TODO increase or decrease the wheels randomly
       ROS_ERROR("RRTstar::resolve -->  could not find a path -->  starting iteration: %i", relax);    
     }
   }
   std::cout << "Nodes in the graph: " << nodes.size() <<std::endl;
   return ret_val; 
 }
-
-
-
-
 
 void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mode){
   RRTNode q_new;
@@ -213,50 +211,35 @@ void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxatio
   }
 }
 
+void RRTStar::rewire(RRTNode* q_new, RRTNode* q_near, double radius){
+  for (auto n:nodes) {
+    if (n != q_near && n != q_new && !n->dead) {
+      double d = metrica.metrica3D(n->st, q_new->st);
+      if (d < radius) {
+        for (auto &command:command_list) {
+          auto Qint = q_new->st;
+          double cost = m.integrate(Qint, command, delta_t);
+          double d_new = metrica.metrica3D(n->st, Qint);
 
-// std::list<RRTNode> RRTStar::getPath(){
-//   std::list<RRTNode> path;
-//   RRTNode* current_node = &goal_node;
-//   path.push_front(*current_node);
-//   while (current_node->parent != NULL) {  
-//     current_node = current_node->parent;
-//     path.push_front(*current_node);
-//   }
-//   return path;
-// }
+          if (d_new < 0.05 && d_new < d && cost > 0.0 && cost + q_new->cost < n->cost) {
+            // Rewire
+            if (n->parent != NULL) {
+              auto it = std::find(n->parent->children.begin(), n->parent->children.end(), n);
+              if (it != n->parent->children.end()) {
+                n->parent->children.erase(it);
+              }
+            }
+            n->parent = q_new;
+            q_new->children.push_back(n);
+            n->cost = cost + q_new->cost;
+            break;
+          }
+        }
+      }
+    }
+  }
+}
 
-// visualization_msgs::Marker RRTStar::getGraphMarker()
-// {
-//   visualization_msgs::Marker m;
-//   m.header.frame_id = this->m.getFrameID();
-//   m.header.stamp = ros::Time::now();
-//   m.pose.orientation.w = 1.0;
-//   m.id = 0;
-//   m.points.clear();
-//   m.type = visualization_msgs::Marker::POINTS;
-//   m.scale.x = 0.05;
-//   visualization_msgs::Marker::_color_type color;
-//   color.r = 1.0;
-//   color.b = 0;
-//   color.g = 0;
-//   color.a = 1.0;
-//   double color_step = 1.0/(double)nodes.size();
-//   geometry_msgs::Point p1;
-//   geometry_msgs::Point p2;
-//   for (auto n : nodes){  
-//     auto new_color = color;
-//     new_color.r -= color_step;
-//     new_color.b += color_step;
-//     p1.x = n->st.state[0];
-//     p1.y = n->st.state[1];
-//     m.points.push_back(p1); 
-//     m.colors.push_back(color);
-//     color = new_color;
-//   }
-//   m.lifetime = ros::Duration(0);
-
-//   return m;
-// }
 
 #endif
 

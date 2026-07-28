@@ -52,6 +52,7 @@ protected:
   double delta_t, cellsize_m, cellsize_rad;
   double wheel_decrease, last_wheel;
   double max_x, max_y, max_yaw, min_x, min_y, min_yaw; 
+  double min_width, max_width; 
   
   SiarModel m;
   double goal_gap_m, goal_gap_rad;
@@ -129,6 +130,14 @@ Planner::Planner(ros::NodeHandle &nh, ros::NodeHandle &pnh):m(nh, pnh), gen(rd()
     min_yaw = -M_PI;
   }
   
+  if (!pnh.getParam("min_width", min_width)) {
+    min_width = 0.51;
+  }
+  
+  if (!pnh.getParam("max_width", max_width)) {
+    max_width = 0.81;
+  }
+
   if (!pnh.getParam("samp_goal_rate", samp_goal_rate)) {
     samp_goal_rate = 10;
   }

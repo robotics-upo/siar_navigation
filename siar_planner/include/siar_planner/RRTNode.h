@@ -7,10 +7,11 @@ struct RRTNode
   NodeState st;
   double command_lin; //parent to child command
   double command_ang;
+  double command_mot = 60; // parent to child command to set width motor
   double cost;
   RRTNode *parent;
   std::vector<RRTNode*> children;
-  //std::list<RRTNode*> children;
+
   RRTNode()
   {
     parent = NULL;
