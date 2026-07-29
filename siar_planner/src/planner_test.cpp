@@ -127,6 +127,8 @@ int main(int argc, char** argv){
     }
   }
   ofs.close();
+
+  ros::spin();
     
   return 0;
 }

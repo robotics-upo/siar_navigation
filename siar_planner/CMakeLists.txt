@@ -24,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
   genmsg actionlib_msgs actionlib
 )
 
+
 add_action_files(DIRECTORY action FILES PassFork.action)
 generate_messages(DEPENDENCIES actionlib_msgs)
 
@@ -101,7 +102,7 @@ add_dependencies(planner_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPOR
 #  ${catkin_LIBRARIES}
 #)
 target_link_libraries(planner_test
-  ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES} 
 )
 # target_link_libraries(siar_planner_node_simulation
 #   ${catkin_LIBRARIES}

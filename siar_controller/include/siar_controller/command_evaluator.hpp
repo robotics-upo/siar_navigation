@@ -251,7 +251,7 @@ CommandEvaluator::CommandEvaluator(double w_dist, double w_safe, double T, const
   orig_m_w_safe = w_safe;
   positive_obs = 127;
   negative_obs = -127;
-  ROS_INFO("Created the evaluater. Positive obstacle: %d", positive_obs);
+  ROS_INFO("Created the evaluator. Positive obstacle: %d", positive_obs);
 }
 
 CommandEvaluator::CommandEvaluator(ros::NodeHandle& pn):m_model(pn),footprint(NULL)
@@ -272,8 +272,6 @@ CommandEvaluator::CommandEvaluator(ros::NodeHandle& pn):m_model(pn),footprint(NU
 
   ROS_INFO("Created the evaluator. Positive obstacle: %d", positive_obs);
 }
-
-
 
 void CommandEvaluator::setParameters(double w_dist, double w_safe, double T, const RobotCharacteristics &model, double delta_T, SiarFootprint *footprint_p) {
   m_w_dist = w_dist;
@@ -309,7 +307,7 @@ double CommandEvaluator::evaluateTrajectory(const geometry_msgs::Twist& v_ini, c
   int cont_footprint = 0;
 
   // Initialize the footprint if needed:
-  initializeFootprint(alt_map, m);
+  initializeFootprint(alt_map, m); 
 
   bool collision = false;
   for(int i = 0; i < steps && !collision; i++)
@@ -359,7 +357,7 @@ double CommandEvaluator::evaluateTrajectoryMinVelocity(const geometry_msgs::Twis
 {
   double dt = m_delta_T;
 //   int steps = m_T / m_delta_T;
-  int steps = std::abs(m_T / m_delta_T);  //valor absoluto para evaluar tambien delta negativo
+  int steps = std::abs(m_T / m_delta_T);  //valor absol uto para evaluar tambien delta negativo
 
   double lv = v_ini.linear.x;
   double av = v_ini.angular.z;
@@ -490,64 +488,47 @@ double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v
   return ret;
 }
 
-// double CommandEvaluator::evaluateTrajectoryTransition(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command,
-//                                                    const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map,
-//                                                    visualization_msgs::Marker& m, double x, double y, double th)
-// {
-//   double dt = m_delta_T;
-//   int steps = std::abs(m_T / m_delta_T); //m_T =3 y m_delta_T= 0.2 => step =15
+// Function to check if a point is inside a polygon using
+// the ray-casting algorithm
+bool isPointInPolygon(const std::vector<geometry_msgs::Point>& polygon,
+                      const geometry_msgs::Point& point)
+{
+    // Number of vertices in the polygon
+    int n = polygon.size();
+    // Count of intersections
+    int count = 0;
 
-//   double lv = v_command.linear.x;
-//   double av = v_command.angular.z;
+    // Iterate through each edge of the polygon
+    for (int i = 0; i < n; i++) {
+        geometry_msgs::Point p1 = polygon[i];
+        // Ensure the last point connects to the first point
+        geometry_msgs::Point p2 = polygon[(i + 1) % n];
 
-//   setParams(alt_map);
-
-//   double cont_footprint = 0;
-//   double ret = 0;
-
-//   // Initialize the footprint if needed and clear marker:
-//   initializeFootprint(alt_map, m);
-
-//   bool collision = false;
-//   bool collision_wheels =false;
-//   for(int i = 0; i <= steps && !collision; i++){ //Here is the beginin of the model integration
-//     double lin_dist = lv * dt;
-
-//     if (dt > 0){
-//       th = th + (av * dt);
-//       x = x + lin_dist*cos(th); // Euler 1
-//       y = y + lin_dist*sin(th);
-//     }
-//     else{
-//       x = x + lin_dist*cos(th); // Euler 1
-//       y = y + lin_dist*sin(th);
-//       th = th + (av * dt); //th is update after
-//     }
-//     // Represent downsampled
-//     if (i % 5 == 0)
-//       footprint->addPoints(x, y, th, m, 0, i == 0);
-
-//     cont_footprint += applyFootprintTransition(x, y, th, alt_map, collision, collision_wheels);
-//     if (!collision )
-//       applyFootprint(x, y, th, alt_map, collision, true); // Search for positive collisions too
-//   }
-
-//   last_state.resize(3);
-//   last_state[0] = x;
-//   last_state[1] = y;
-//   last_state[2] = th;
-
-//   if (collision) {
-//     m.color.r = 1.0;
-//     m.color.g = 0.0;
-//     return -1;
-//   }
-
-//   ret = cont_footprint;
-
-//   return ret;
-// }
-
+        // Check if the point's y-coordinate is within the
+        // edge's y-range and if the point is to the left of
+        // the edge
+        if ((point.y > std::min(p1.y, p2.y))
+            && (point.y <= std::max(p1.y, p2.y))
+            && (point.x <= std::max(p1.x, p2.x))) {
+            // Calculate the x-coordinate of the
+            // intersection of the edge with a horizontal
+            // line through the point
+            double xIntersect = (point.y - p1.y)
+                                    * (p2.x - p1.x)
+                                    / (p2.y - p1.y)
+                                + p1.x;
+            // If the edge is vertical or the point's
+            // x-coordinate is less than or equal to the
+            // intersection x-coordinate, increment count
+            if (p1.x == p2.x || point.x <= xIntersect) {
+                count++;
+            }
+        }
+    }
+    // If the number of intersections is odd, the point is
+    // inside the polygon
+    return count % 2 == 1;
+}
 
 int CommandEvaluator::applyFootprint(double x, double y, double th,
                                      const nav_msgs::OccupancyGrid &alt_map,
@@ -555,7 +536,8 @@ int CommandEvaluator::applyFootprint(double x, double y, double th,
 {
   int ret_val = 0;
 
-  FootprintType fp;
+  FootprintType fp, polygon;
+
   if (!apply_collision)
     fp = footprint->getFootprint(x, y, th);
   else
@@ -564,19 +546,30 @@ int CommandEvaluator::applyFootprint(double x, double y, double th,
   collision = false;
 
   int index;
+  bool wheels[6] = {false, false, false, false, false, false};
   for (unsigned int i = 0; i < fp.size() && !collision; i++) {
 
     index = point2index(fp[i].x, fp[i].y);
     // ROS_INFO("Point2index(%f,%f) = %d,%d. Value = %d", fp.at(i).x, fp.at(i).y,index/alt_map.info.width, index%alt_map.info.width, alt_map.data[index]);
 
+
     if (index < 0) {
       continue;
     }
-    if (alt_map.data[index] == positive_obs || (alt_map.data[index] == negative_obs && !apply_collision))
+    if (alt_map.data[index] == positive_obs) {
       collision = true; // Collision detected! (if applying the collision map, only consider positive obstacles)
+    } else if (alt_map.data[index] != negative_obs && !apply_collision && i < 6) {
+      wheels[i] = true;
+      polygon.push_back(fp[i]);
+      ret_val ++;
+    }
+  }
 
-    ret_val += abs(alt_map.data[index]);
-
+  if (!apply_collision && !collision) {
+    geometry_msgs::Point p; // TODO incorporate CoM
+    p.x = 0;
+    p.y = 0;
+    collision = isPointInPolygon(polygon, p) < 0.0; // Check if the center of the robot is inside the polygon formed by the wheels
   }
 
   return ret_val;
@@ -659,7 +652,6 @@ void CommandEvaluator::initializeFootprint(const nav_msgs::OccupancyGrid& alt_ma
     ROS_INFO("Alt map: height = %d \t width = %d", alt_map.info.height, alt_map.info.width);
   }
 }
-
 
 }
 

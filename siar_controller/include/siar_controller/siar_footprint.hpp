@@ -101,6 +101,12 @@ void SiarFootprint::init()
         p.y = y;
         if (!m_simplified || i%2 == j%2) {
           footprint_p.push_back(p); // If simplified, alternate for making the collision detection simpler
+
+          if (m_simplified) { 
+            p.y += m_width;
+            footprint_p.push_back(p); // Add the point of the other wheel
+            break; // If simplified, only one point per wheel
+          }
         }
       }
     }

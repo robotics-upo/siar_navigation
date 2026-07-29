@@ -24,7 +24,7 @@ public:
 
   SiarModel &getModel() {return m;}
 
-  virtual visualization_msgs::MarkerArray getPathMarker(const std::list< RRTNode >& path);
+  virtual visualization_msgs::MarkerArray getPathMarker(const std::list< RRTNode >& path, int skip = 20);
   
   virtual visualization_msgs::Marker getGraphMarker() = 0;
   
@@ -230,7 +230,7 @@ bool Planner::isGoal(NodeState st) {
   return got_to_goal;
 }
 
-visualization_msgs::MarkerArray Planner::getPathMarker(const std::list< RRTNode >& path) 
+visualization_msgs::MarkerArray Planner::getPathMarker(const std::list< RRTNode >& path, int skip) 
 {
   visualization_msgs::MarkerArray ret;
   visualization_msgs::Marker m_aux;
@@ -241,7 +241,7 @@ visualization_msgs::MarkerArray Planner::getPathMarker(const std::list< RRTNode 
     if (cont > 0) { 
       pt = (--it)->st;
       it++;
-      if (cont % 5 == 0) { 
+      if (cont % skip == 0) { 
         m_aux= m.getMarker(pt,cont);
         m_aux.color.b=1.0;
         m_aux.color.a=1.0;
