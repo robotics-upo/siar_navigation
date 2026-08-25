@@ -16,7 +16,7 @@ Just build the provided DockerFile in its folder:
 
 ```
  $ cd docker
- $ docker build . -t siar_navigation
+ $ docker build . -t siar
 
 ```
 
