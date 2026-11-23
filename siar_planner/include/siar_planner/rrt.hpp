@@ -136,16 +136,7 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
       ret_val = 1;
       ROS_INFO("Iteration %d. Solution found", relax);
     }
-    else{ 
-      // if (rand() % 2 == 0) {
-      //   m.decreaseWheels(wheel_decrease, last_wheel);
-      // }
-      // else {
-      //   m.increaseWheels(wheel_decrease, last_wheel);
-      // }
-      // relax++;
-      ROS_ERROR("RRT::resolve -->  could not find a path -->  starting iteration: %i", relax);    
-    }
+
   }
   std::cout << "Numero de nodos en grafo: " << nodes.size() <<std::endl;
   return ret_val; 
@@ -179,7 +170,7 @@ void RRT::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mo
   for (auto command:command_list) {
     NodeState st = q_near->st;
 
-    double cost = m.integrate(st, command, delta_t, relaxation_mode >= 1); // If relaxation_mode >= 1 --> allow two wheels
+    double cost = m.integrate(st, command, delta_t); 
     if (cost < 0.0) {  // Collision
       } 
     else {

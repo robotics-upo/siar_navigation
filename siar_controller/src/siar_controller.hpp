@@ -550,15 +550,7 @@ void SiarController::evaluateAndActualizeBest(const geometry_msgs::Twist& cmd_ve
   double m_w_r = min_wheel_right[operation_mode - 1];
   
 
-  if ((m_w_l < 1e-3 && m_w_r < 1e-3) || 
-    (m_w_l > 0.97 && m_w_r > 0.97)
-  ) {
-    curr_cost = cmd_eval->evaluateTrajectory(v_ini, curr_cmd, cmd_vel, last_map, m);
-  } else {
-    cmd_eval->setMinWheelLeft(m_w_l);
-    cmd_eval->setMinWheelRight(m_w_r);
-    curr_cost = cmd_eval->evaluateTrajectoryRelaxed(v_ini, curr_cmd, cmd_vel, last_map, m);
-  }
+  curr_cost = cmd_eval->evaluateTrajectory(v_ini, curr_cmd, cmd_vel, last_map, m);
     
   if (curr_cost < lowest_cost && curr_cost >= 0.0) {
     best_cmd = curr_cmd;

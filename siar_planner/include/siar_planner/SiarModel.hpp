@@ -15,15 +15,15 @@ public:
   
   void occupancyGridCallback(nav_msgs::OccupancyGridConstPtr msg);
   
-  visualization_msgs::Marker testIntegration(NodeState &st, bool relaxed = false);
+  visualization_msgs::Marker testIntegration(NodeState &st);
   
   //! @brief Integrates the model and returns the cost associated with 
   //! @return Negative --> collision. Positive --> Arc's longitude
-  double integrate(NodeState &st, geometry_msgs::Twist &cmd, double T, bool relaxed = false);
+  double integrate(NodeState &st, geometry_msgs::Twist &cmd, double T);
   
   //! @brief Integrates the model and returns the cost associated with 
   //! @return Negative --> collision. Positive --> Arc's longitude
-  double integrate(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T, bool relaxed);
+  double integrate(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T);
   
   virtual geometry_msgs::Twist generateRandomCommand();
   virtual geometry_msgs::Twist generateRandomCommandJustRot();
@@ -132,7 +132,6 @@ public:
   }
 
   inline void setWidthMotorRef(double command) {
-    
     m_ce.setWidthElec(getWidth(command), getXElec(command));
   }
   
@@ -185,13 +184,12 @@ void SiarModel::occupancyGridCallback(nav_msgs::OccupancyGridConstPtr msg)
   
 }
 
-double SiarModel::integrate(NodeState& st, geometry_msgs::Twist& cmd, double T, bool relaxed)
+double SiarModel::integrate(NodeState& st, geometry_msgs::Twist& cmd, double T)
 {
-  return integrate(m, st, cmd, T, relaxed);
+  return integrate(m, st, cmd, T);
 }
 
-
-double SiarModel::integrate(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T, bool relaxed)
+double SiarModel::integrate(visualization_msgs::Marker& m, NodeState& st, geometry_msgs::Twist& cmd, double T)
 {
   geometry_msgs::Twist v_ini;
   v_ini.linear.x = m_ce.getCharacteristics().v_max;
@@ -208,10 +206,8 @@ double SiarModel::integrate(visualization_msgs::Marker& m, NodeState& st, geomet
   m_ce.setDeltaT(T);
   
   double ret_val;
-  if (!relaxed) 
-    ret_val = m_ce.evaluateTrajectory(v_ini, cmd, cmd, m_world, m, st.state[0], st.state[1], st.state[2]);
-  else
-    ret_val = m_ce.evaluateTrajectoryRelaxed(v_ini, cmd, cmd, m_world, m, st.state[0], st.state[1], st.state[2]);
+
+  ret_val = m_ce.evaluateTrajectory(v_ini, cmd, cmd, m_world, m, st.state[0], st.state[1], st.state[2]);
 
   st.state = m_ce.getLastState();
   
@@ -267,13 +263,12 @@ visualization_msgs::Marker SiarModel::getMarker(NodeState& st, int id)
   return m;
 }
 
-visualization_msgs::Marker SiarModel::testIntegration(NodeState& st, bool relaxed)
+visualization_msgs::Marker SiarModel::testIntegration(NodeState& st)
 {
   auto comm = generateRandomCommand();
-  double cost = integrate(st, comm, 0.5, relaxed);
+  double cost = integrate(st, comm, 0.5);
   
   ROS_INFO("SiarModel::testIntegration --> Command = %f, %f --> Cost = %f", comm.linear.x, comm.angular.z, cost);
-  
   
   return m;
 }

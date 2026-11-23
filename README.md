@@ -64,7 +64,7 @@ rosrun siar_planner test_all_algorithms_synthetic.sh <number_of_tests>
 It allows you to execute all the proposed tests in the scenarios a given number of times. E.g, for ten times:
 
 ```
-rosrun siar_planner test_all_algorithms.sh 10
+rosrun siar_planner test_all_algorithms_synthetic.sh 10
 ```
 
 #### Gazebo simulation

@@ -114,21 +114,7 @@ namespace siar_controller {
                                          const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map,
                                          visualization_msgs::Marker& m, double x = 0.0, double y = 0.0, double th = 0.0);
 
-    //! @brief Simulates the trajectory during T and generates a cost according to the cost map
-    //! @retval -1.0 --> Collision  . If not collision --> cost of the trajectory (related to risk and difference with respect the user command)
-    //! @param v_ini Initial velocity of the vehicle
-    //! @param v_command  Effective Command which has to be tested
-    //! @param operator_command User's commanded velocity (to evaluate the cost of the difference v_command and operator_command)
-    //! @param alt_map Perceived altitude map of the environment
-    //! @param m (out) Marker that can be used for representing the trajectory in RViz.
-    double evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command,
-                              const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map,
-                              visualization_msgs::Marker &m, double x = 0.0, double y = 0.0, double th = 0.0);
-
-    // double evaluateTrajectoryTransition(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command,
-    //                                                const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map,
-    //                                                visualization_msgs::Marker& m, double x, double y, double th);
-
+    
     inline double getCostWheelsQnew() const {return cost_wheels;}
 
     //! @brief Destructor
@@ -154,8 +140,6 @@ namespace siar_controller {
     int applyFootprint(double x, double y, double th,
                        const nav_msgs::OccupancyGrid &alt_map,
                        bool &collision, bool apply_collision = false);
-
-    int applyFootprintRelaxed(double x, double y, double th, const nav_msgs::OccupancyGrid& alt_map, bool& collision);
 
     double applyFootprintTransition(double x, double y, double th, const nav_msgs::OccupancyGrid &alt_map, bool &collision, bool &collision_wheels);
 
@@ -215,32 +199,9 @@ namespace siar_controller {
       m_divRes = 1.0 / alt_map.info.resolution;
       width = alt_map.info.width;
       total_points = alt_map.info.height * width;
-//       if (rotate)
-//         ROS_INFO("Set params: Rotated map");
-//       else
-//         ROS_INFO("Set params: Straight map");
     }
 
 
-    // inline int point2index(double x, double y)
-    //     {
-    //       int ret_val;
-
-    //       if (!rotate) {
-    //         int i = (x - origin_x)*m_divRes;
-    //         int j = (y - origin_y)*m_divRes;
-    //         ret_val = MAP_IDX(width, i, j);
-    //       } else {
-    //         // From siar costmap
-    //         ret_val =  ((int)((x-origin_x)*m_divRes))*width + width - (int)((y+origin_y)*m_divRes); //(int)(((x-origin_x)*m_divRes + 1)*width) - (int)((y - origin_y)*m_divRes);
-    //       }
-
-    //       if (ret_val >= total_points) {
-    //         ret_val = -1;
-    //       }
-
-    //       return ret_val;
-    //     }
   };
 
 CommandEvaluator::CommandEvaluator(double w_dist, double w_safe, double T, const RobotCharacteristics &model, double delta_T, SiarFootprint *footprint_p):footprint(NULL), footprint_params(NULL)
@@ -263,8 +224,6 @@ CommandEvaluator::CommandEvaluator(ros::NodeHandle& pn):m_model(pn),footprint(NU
   pn.param("T", m_T, 3.0);
   pn.param("positive_obs", positive_obs, 127);
   pn.param("negative_obs", negative_obs, -127);
-  pn.param("min_wheel_l", min_wheel_left, 0.2); // Minimum fragment of the wheel that has to be without obstacle to be collision-free (in relaxed mode)
-  pn.param("min_wheel_r", min_wheel_right, 0.2); // Minimum fragment of the wheel that has to be without obstacle to be collision-free (in relaxed mode)
   pn.param("consider_two_wheels", consider_two_wheels, true); // If true --> considers the cost of two wheels when turning in a intersection (if not only considers the one that remains in the floor)
   footprint_params = new SiarFootprint(pn);
   orig_m_w_dist = m_w_dist;
@@ -424,70 +383,6 @@ double CommandEvaluator::evaluateTrajectoryMinVelocity(const geometry_msgs::Twis
   return ret;
 }
 
-double CommandEvaluator::evaluateTrajectoryRelaxed(const geometry_msgs::Twist& v_ini, const geometry_msgs::Twist& v_command,
-                                                   const geometry_msgs::Twist& operator_command, const nav_msgs::OccupancyGrid& alt_map,
-                                                   visualization_msgs::Marker& m, double x, double y, double th)
-{
-  double dt = m_delta_T;
-  int steps = std::abs(m_T / m_delta_T);  
-
-  double lv = v_command.linear.x; 
-  double av = v_command.angular.z;
-
-  setParams(alt_map);
-
-  int cont_footprint = 0;
-
-  m.points.clear();
-  // Initialize the footprint if needed and clear marker:
-  initializeFootprint(alt_map, m);
-
-  bool collision = false;
-  bool collision_relax = false;
-  for(int i = 0; i <= steps && !collision; i++)
-  {
-
-    // Integrate the model
-    double lin_dist = lv * dt;
-
-    if (dt > 0){
-      th = th + (av * dt);
-      x = x + lin_dist*cos(th); // Euler 1
-      y = y + lin_dist*sin(th);
-    }
-    else{
-      x = x + lin_dist*cos(th); // Euler 1
-      y = y + lin_dist*sin(th);
-      th = th + (av * dt); 
-    }
-
-    // Represent downsampled
-    if (i % 5 == 0)
-      footprint->addPoints(x, y, th, m, 0, i == 0);
-
-    // Actualize the cost
-    cont_footprint += applyFootprint(x, y, th, alt_map, collision,collision_relax);
-    collision = collision | collision_relax;
-
-    if (!collision )
-      applyFootprint(x, y, th, alt_map, collision, true); // Search for positive collisions too
-  }
-
-  double ret = cont_footprint * m_w_safe + m_w_dist * sqrt(pow(x - operator_command.linear.x * m_T, 2.0) + y*y);
-  if (collision) {
-    m.color.r = 1.0;
-    m.color.g = 0.0;
-    return -1.0;
-  }
-
-  last_state.resize(3);
-  last_state[0] = x;
-  last_state[1] = y;
-  last_state[2] = th;
-
-  return ret;
-}
-
 // Function to check if a point is inside a polygon using
 // the ray-casting algorithm
 bool isPointInPolygon(const std::vector<geometry_msgs::Point>& polygon,
@@ -575,63 +470,6 @@ int CommandEvaluator::applyFootprint(double x, double y, double th,
   return ret_val;
 }
 
-int CommandEvaluator::applyFootprintRelaxed(double x, double y, double th,
-                                     const nav_msgs::OccupancyGrid &alt_map,
-                                     bool &collision)
-{
-  int ret_val = 0;
-
-  FootprintType fp = footprint->getFootprint(x, y, th);
-  FootprintType orig = footprint->getFootprint(0, 0 , 0);
-
-  collision = false;
-
-  int index;
-
-  bool right_wheel = false;
-  bool left_wheel = false;
-  int size = fp.size();
-  int cont_left = (size) / 2;
-  int cont_right = (size) / 2;
-
-
-  for (unsigned int i = 0; i < size && !collision; i++) {
-
-    index = point2index(fp[i].x, fp[i].y);
-//     ROS_INFO("Point2index(%f,%f) = %d,%d. Value = %d", fp.at(i).x, fp.at(i).y,index/alt_map.info.width, index%alt_map.info.width, alt_map.data[index]);
-
-    if (index < 0) {
-      continue;
-    }
-    if (alt_map.data[index] == positive_obs ) {
-      collision = true;
-      ret_val = -1;
-    }
-    else if (alt_map.data[index] == negative_obs || alt_map.data[index] == positive_obs) {
-      if (orig[i].y > 0.0) {
-        left_wheel = true;
-        cont_left--;
-
-        if (min_wheel_left + 0.01 > min_wheel_right || consider_two_wheels) {  //min_wheel_left = min_wheel_right = 0.2
-          ret_val += abs(alt_map.data[index]);
-        }
-      }
-      else {
-        right_wheel = true;
-        cont_right--;
-
-        if (min_wheel_right + 0.01 > min_wheel_left || consider_two_wheels) {
-          ret_val += abs(alt_map.data[index]);
-        }
-      }
-    }
-  }
-
-  collision |= ( (double)cont_left / (double)size * 2.0 ) < min_wheel_left;
-  collision |= ( (double)cont_right / (double)size * 2.0 ) < min_wheel_right;
-
-  return ret_val;
-}
 
 void CommandEvaluator::initializeFootprint(const nav_msgs::OccupancyGrid& alt_map, visualization_msgs::Marker& m)
 {
