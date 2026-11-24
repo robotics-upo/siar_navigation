@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   tf
+  tf2
 )
 
 find_library(ANN_LIB NAMES ann)
@@ -109,7 +110,7 @@ ENDIF()
 catkin_package(
    INCLUDE_DIRS include
    LIBRARIES ann
-   CATKIN_DEPENDS nav_msgs ros_pcl roscpp sensor_msgs tf tf2
+   CATKIN_DEPENDS nav_msgs pcl_ros roscpp sensor_msgs tf tf2
 )
 
 ###########

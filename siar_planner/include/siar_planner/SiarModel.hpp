@@ -219,13 +219,7 @@ double SiarModel::integrate(visualization_msgs::Marker& m, NodeState& st, geomet
 }
 
 double SiarModel::costWheelsQnear(double x, double y, double th){
-
-  bool collision = false;
-  bool collision_wheels=false;
-
-  double cost_wheels_q_near = m_ce.applyFootprint(x,  y, th, m_world, collision, collision_wheels); 
-
-  return cost_wheels_q_near;
+  return m_ce.getWheelObstacleCost(x, y, th, m_world);
 }
 
 geometry_msgs::Twist SiarModel::generateRandomCommand() {

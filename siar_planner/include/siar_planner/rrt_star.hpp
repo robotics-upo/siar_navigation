@@ -12,7 +12,10 @@
 #include "visualization_msgs/MarkerArray.h"
 
 #include <functions/functions.h>
+#include <algorithm>
+#include <cmath>
 #include <math.h>
+#include <vector>
 
 #include <ros/ros.h>
 
@@ -37,17 +40,31 @@ protected:
 
   // rewire
   void rewire(RRTNode* q_new, RRTNode* q_near, double radius);
+  void updateSubtreeCosts(RRTNode* root, double cost_delta);
 
   virtual void clear();
 
   double cost_Qnear, cost_Qnew, cost_wheels_Qnew;
+  double rewire_radius;
+  double safety_weight;
 
   Metrica metrica;
 
 };
 
-RRTStar::RRTStar(ros::NodeHandle &nh, ros::NodeHandle &pnh):RRT(nh,pnh), metrica(nh,pnh)
+RRTStar::RRTStar(ros::NodeHandle &nh, ros::NodeHandle &pnh)
+  : RRT(nh,pnh), safety_weight(0.5), metrica(nh,pnh)
 {
+  if (!pnh.getParam("rewire_radius", rewire_radius)) {
+    rewire_radius = cellsize_m;
+  }
+  pnh.param("rrtstar_safety_weight", safety_weight, safety_weight);
+  if (!std::isfinite(safety_weight) || safety_weight < 0.0 || safety_weight > 1.0) {
+    ROS_WARN("rrtstar_safety_weight must be in [0, 1]; clamping its value");
+    safety_weight = std::isfinite(safety_weight)
+      ? std::max(0.0, std::min(1.0, safety_weight))
+      : 0.5;
+  }
   // tree1_pub = nh.advertise<visualization_msgs::Marker>("tree1_marker", 2, true);
 }
 
@@ -60,11 +77,10 @@ RRTStar::~RRTStar()
 inline void RRTStar::clear()
 {
   RRT::clear();
-  // for (auto n:nodes) {
-  //   delete n;
-  // }
-  // nodes.clear();
-  // got_to_goal = false;
+  goal_node.parent = NULL;
+  goal_node.children.clear();
+  goal_node.cost = 0.0;
+  goal_node.total_cost = 0.0;
 }
 
 
@@ -83,10 +99,9 @@ double RRTStar::resolve(NodeState start, NodeState goal, std::list<RRTNode>& pat
   }
   
   RRTNode start_node;
-  geometry_msgs::Twist command_init=m.generateRandomCommand(); 
-
   start_node.st = start;
-  start_node.cost = m.integrate(start_node.st, command_init, delta_t);
+  start_node.cost = 0.0;
+  start_node.total_cost = 0.0;
   nodes.push_back(new RRTNode(start_node)); 
   goal_node.st = goal;
   
@@ -111,12 +126,7 @@ double RRTStar::resolve(NodeState start, NodeState goal, std::list<RRTNode>& pat
     int cont = 0; 
     while (cont < n_iter && !got_to_goal) { 
     
-      NodeState q_rand;
-      if (!(cont%samp_goal_rate == 0)){
-	      q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
-      } else {
-      	q_rand = goal_node.st; 
-      }     
+      NodeState q_rand = getSampleState(cont);
       RRTNode *q_near = getNearestNode(q_rand);
       if (q_near == NULL){
         q_near = getNearestNode(q_rand, true);  
@@ -141,9 +151,20 @@ double RRTStar::resolve(NodeState start, NodeState goal, std::list<RRTNode>& pat
 
 void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxation_mode){
   RRTNode q_new;
-  double dist = std::numeric_limits<double>::infinity(); 
-  double new_dist;
-  bool is_new_node = false;
+  struct Candidate {
+    NodeState state;
+    double command_lin;
+    double command_ang;
+    double edge_cost;
+    double distance;
+    double wheel_cost;
+  };
+  std::vector<Candidate> candidates;
+  if (K > 0) {
+    candidates.reserve(static_cast<std::size_t>(K));
+  }
+  double min_distance = std::numeric_limits<double>::infinity();
+  double max_distance = 0.0;
   bool ret_transition = false; 
   bool is_dead = true;
   RRTNode q_try;
@@ -151,12 +172,14 @@ void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxatio
     NodeState st = q_near->st;
     geometry_msgs::Twist command = m.generateRandomCommand(); //generate a random command of velocity
     cost_wheels_Qnew = m.integrate(st, command, delta_t);
-    // RRTNode q_try;
-    q_try.st = st;
-    q_try.cost = cost_wheels_Qnew;
     if (cost_wheels_Qnew < 0.0){
       continue;
     }
+    const double wheel_cost = m.costWheelsQnear(
+      st.state[0], st.state[1], st.state[2]);
+    // RRTNode q_try;
+    q_try.st = st;
+    q_try.cost = cost_wheels_Qnew + wheel_cost;
 
     RRTNode *near_ = getNearestNode(st, true);
     double d = 0.2;
@@ -165,17 +188,41 @@ void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxatio
     }
 
     if (d > 0.01) {
+      Candidate candidate;
+      candidate.state = st;
+      candidate.command_lin = command.linear.x;
+      candidate.command_ang = command.angular.z;
+      candidate.edge_cost = q_try.cost;
+      candidate.distance = metrica.metrica3D(q_rand, st);
+      if (!std::isfinite(candidate.distance)) {
+        continue;
+      }
+      candidate.wheel_cost = wheel_cost;
       is_dead = false;
-      is_new_node = true;
-      new_dist = metrica.metrica3D(q_rand,st);
-      if (new_dist<dist) {
-        q_new.st = st; 
-        q_new.command_lin = command.linear.x;
-        q_new.command_ang = command.angular.z;
-        dist = new_dist;
-        q_new.cost = cost_wheels_Qnew;   
-      }    
+      min_distance = std::min(min_distance, candidate.distance);
+      max_distance = std::max(max_distance, candidate.distance);
+      candidates.push_back(candidate);
     } 
+  }
+  bool is_new_node = !candidates.empty();
+  if (is_new_node) {
+    const double distance_range = max_distance - min_distance;
+    double best_score = std::numeric_limits<double>::infinity();
+    for (const Candidate& candidate : candidates) {
+      const double distance_score = distance_range > 0.0
+        ? (candidate.distance - min_distance) / distance_range
+        : 0.0;
+      const double wheel_score = std::max(0.0, std::min(100.0, candidate.wheel_cost)) / 100.0;
+      const double score =
+        (1.0 - safety_weight) * distance_score + safety_weight * wheel_score;
+      if (score < best_score) {
+        best_score = score;
+        q_new.st = candidate.state;
+        q_new.command_lin = candidate.command_lin;
+        q_new.command_ang = candidate.command_ang;
+        q_new.cost = candidate.edge_cost;
+      }
+    }
   }
   if (is_new_node){   //check if there is a new node and add it to the graph (unless its the goal)
     ptree1.x = q_new.st.state[0];
@@ -191,14 +238,16 @@ void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxatio
       goal_node.parent = q_near; 
       goal_node.command_lin = q_new.command_lin; 
       goal_node.command_ang = q_new.command_ang;  
-      // goal_node.cost = q_new.cost + q_near->cost; // New field:cost
+      goal_node.cost = q_new.cost;
+      goal_node.total_cost = q_near->total_cost + q_new.cost;
     }
     else{
       q_new.parent = q_near;
-      // q_new.cost += q_near->cost; // Accumulate the parent cost 
+      q_new.total_cost = q_near->total_cost + q_new.cost;
       RRTNode *new_node = new RRTNode(q_new); 
       q_near->children.push_back(new_node);
-      nodes.push_back(new_node);	
+      nodes.push_back(new_node);
+      rewire(new_node, q_near, rewire_radius);
     }
   } 
   else if (is_dead) {
@@ -214,14 +263,33 @@ void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxatio
 void RRTStar::rewire(RRTNode* q_new, RRTNode* q_near, double radius){
   for (auto n:nodes) {
     if (n != q_near && n != q_new && !n->dead) {
+      bool creates_cycle = false;
+      for (RRTNode* ancestor = q_new; ancestor != NULL; ancestor = ancestor->parent) {
+        if (ancestor == n) {
+          creates_cycle = true;
+          break;
+        }
+      }
+      if (creates_cycle) {
+        continue;
+      }
+
       double d = metrica.metrica3D(n->st, q_new->st);
       if (d < radius) {
         for (auto &command:command_list) {
           auto Qint = q_new->st;
           double cost = m.integrate(Qint, command, delta_t);
+          if (cost <= 0.0) {
+            continue;
+          }
           double d_new = metrica.metrica3D(n->st, Qint);
 
-          if (d_new < 0.05 && d_new < d && cost > 0.0 && cost + q_new->cost < n->cost) {
+          if (d_new >= 0.05 || d_new >= d) {
+            continue;
+          }
+          const double edge_cost = cost + m.costWheelsQnear(
+            Qint.state[0], Qint.state[1], Qint.state[2]);
+          if (q_new->total_cost + edge_cost < n->total_cost) {
             // Rewire
             if (n->parent != NULL) {
               auto it = std::find(n->parent->children.begin(), n->parent->children.end(), n);
@@ -231,12 +299,25 @@ void RRTStar::rewire(RRTNode* q_new, RRTNode* q_near, double radius){
             }
             n->parent = q_new;
             q_new->children.push_back(n);
-            n->cost = cost + q_new->cost;
+            const double cost_delta = q_new->total_cost + edge_cost - n->total_cost;
+            n->cost = edge_cost;
+            n->total_cost = q_new->total_cost + edge_cost;
+            n->command_lin = command.linear.x;
+            n->command_ang = command.angular.z;
+            updateSubtreeCosts(n, cost_delta);
             break;
           }
         }
       }
     }
+  }
+}
+
+void RRTStar::updateSubtreeCosts(RRTNode* root, double cost_delta)
+{
+  for (RRTNode* child : root->children) {
+    child->total_cost += cost_delta;
+    updateSubtreeCosts(child, cost_delta);
   }
 }
 

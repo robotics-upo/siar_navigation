@@ -8,8 +8,8 @@ set(CMAKE_BUILD_TYPE Release)
 
 ## Add support for C++11, supported in ROS Kinetic and newer
  add_definitions(-std=c++11 ) # pg for profiling
- set (CMAKE_CXX_FLAGS -pg)
- set (CMAKE_EXE_LINKER_FLAGS -pg)
+ #set (CMAKE_CXX_FLAGS -pg)
+ #set (CMAKE_EXE_LINKER_FLAGS -pg)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   roscpp
   siar_controller
+  siar_costmap
   genmsg actionlib_msgs actionlib
 )
 
@@ -46,7 +47,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
  INCLUDE_DIRS include
 #  LIBRARIES siar_planner
- CATKIN_DEPENDS geometry_msgs nav_msgs roscpp functions siar_controller
+ CATKIN_DEPENDS geometry_msgs nav_msgs roscpp functions siar_controller siar_costmap
 #  DEPENDS system_lib
 )
 

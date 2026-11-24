@@ -41,6 +41,7 @@ protected:
   
   virtual void expandNode(const NodeState& q_rand, RRTNode* q_near, int relaxation_mode = 0);
   virtual std::list<RRTNode> getPath();
+  virtual NodeState getSampleState(int iteration);
 
   virtual RRTNode* getNearestNode(NodeState q_rand, bool consider_dead = false);
 
@@ -116,13 +117,7 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
     int cont = 0; 
     while (cont < n_iter && !got_to_goal) { // n_iter Max. number of nodes to expand for each round
 
-      NodeState q_rand;
-      if (!(cont%samp_goal_rate == 0)){
-	      q_rand = getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
-      }
-      else{
-	      q_rand = goal_node.st; 
-      }     
+      NodeState q_rand = getSampleState(cont);
       RRTNode *q_near = getNearestNode(q_rand);  
       if (q_near == NULL){
         q_near = getNearestNode(q_rand, true);
@@ -140,6 +135,14 @@ double RRT::resolve(NodeState start, NodeState goal, std::list<RRTNode>& path)
   }
   std::cout << "Numero de nodos en grafo: " << nodes.size() <<std::endl;
   return ret_val; 
+}
+
+NodeState RRT::getSampleState(int iteration)
+{
+  if (samp_goal_rate > 0 && iteration % samp_goal_rate == 0) {
+    return goal_node.st;
+  }
+  return getRandomState(max_x, min_x, max_y, min_y, max_yaw, min_yaw);
 }
 
 

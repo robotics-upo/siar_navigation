@@ -8,15 +8,9 @@ n_iter: 200,                  # number expand calls in each round
 K: 14,                        # number of random commands tried in the expand calls
 
 ## Parameters to set COMMAND EVALUATOR performance
-T: 0.2,                       # total time that trajectories are evaluated
-delta_T: 0.05,                # time step that a trajectory is evaluate in Algorithms RRT 
-delta_t: 0.05,                # time step that a trajectory is evaluate in Algorithm Astar
-
-## Parameters that define SIAR FOOTPRINT performance
-wheel_decrease: 0.05,         # value that wheel decrease in relax mode  
-last_wheel: 0.1,              # Minimum part of the wheel allowed in RRT and bi-RRT in first relaxed iteration
-min_wheel: 0.2,               # Minimum part of the wheel allowed in RRT and bi-RRT in first relaxed iteration
-
+T: 1,                       # total time that trajectories are evaluated
+delta_T: 0.1,                # time step that a trajectory is evaluate in Algorithms RRT 
+delta_t: 0.1,                # time step that a trajectory is evaluate in Algorithm Astar
 
 # Model related parameters
 omega_max: 1.5,               # maximum angular allowed velocity 

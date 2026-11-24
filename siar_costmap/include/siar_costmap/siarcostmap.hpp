@@ -401,7 +401,7 @@ public:
   {
     return m_costmap;
   }
-  
+
   inline float getCost(float x, float y)
   {
     int index;

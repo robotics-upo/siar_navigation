@@ -89,7 +89,7 @@ void SiarPlannerActionServer::passFork(const siar_planner::PassForkGoal_< std::a
   if (goal_msg->direction == 0) {
     // Straight --> just go forward a certain distance? 
     geometry_msgs::PoseStamped pose;
-    pose.header.frame_id = a_star.getModel().getFrameID();
+    pose.header.frame_id = a_star.getFrameID();
   }
 }
 

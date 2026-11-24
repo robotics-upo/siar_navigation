@@ -11,6 +11,7 @@
   <arg name="map" default="test_scenario_$(arg map_number).yaml"/>
   <arg name="planner_type" default="rrt"/>
   <arg name="n_tests" default="1"/>
+  <arg name="rrtstar_safety_weight" default="0.95"/>
 
   <!--Start the map server for the path planner-->
   <node name="map_server" pkg="map_server" type="map_server" args="$(find siar_planner)/test/$(arg map)" output="screen"/>
@@ -31,6 +32,7 @@
     <param name="output_file" type="string" value="$(find siar_planner)/output_files/test_$(arg problem_number)_a_$(arg planner_type)_results.txt" />
     <param name="planner_type" value="$(arg planner_type)"/>
     <param name="n_tests" value="$(arg n_tests)"/>
+    <param name="rrtstar_safety_weight" value="$(arg rrtstar_safety_weight)"/>
   </node>
   <node name="planner_test" pkg="siar_planner" type="planner_test" output="screen" unless="$(arg debug)" required="$(arg required)" >
     <!-- <remap from="/altitude_map" to="/processed_costmap"/> -->
@@ -41,7 +43,7 @@
     <param name="output_file" type="string" value="$(find siar_planner)/output_files/test_$(arg problem_number)_a_$(arg planner_type)_results.txt" />
     <param name="planner_type" value="$(arg planner_type)"/>
     <param name="n_tests" value="$(arg n_tests)"/>
-
+    <param name="rrtstar_safety_weight" value="$(arg rrtstar_safety_weight)"/>  
   </node>
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find siar_planner)/test/test.rviz"/>
    

@@ -63,15 +63,13 @@ SiarFootprint::SiarFootprint(ros::NodeHandle& pn)
   }
   m_x_elec = 1e-4;
   pn.param("wheel_width", m_wheel_width, 0.075);
-  if (!pn.getParam("simple_footprint", m_simplified))
-    m_simplified = true;
   
   init();
 }
 
 
 SiarFootprint::SiarFootprint(double cellsize, double length , double width, double wheel_width, bool simplified, double x_elec):
-m_length(length),m_width(width), m_wheel_width(wheel_width), m_cellsize(cellsize),m_simplified(simplified),m_x_elec(x_elec)
+m_length(length),m_width(width), m_wheel_width(wheel_width), m_cellsize(cellsize),m_x_elec(x_elec)
 {
   init();
 }
@@ -96,25 +94,18 @@ void SiarFootprint::init()
   for (int i = 0; x < m_length/2.0; x += length_third, i++) {
     double y = -m_width/2.0;
     p.x = x;
-    for (int j = 0; y < m_width/2.0; y += m_cellsize, j++) {
-      if (j < n_cel_wheel || n_width - j <= n_cel_wheel ) {
-        p.y = y;
-        if (!m_simplified || i%2 == j%2) {
-          footprint_p.push_back(p); // If simplified, alternate for making the collision detection simpler
+    
+      
+    p.y = y;
+    footprint_p.push_back(p); // If simplified, alternate for making the collision detection simpler
 
-          if (m_simplified) { 
-            p.y += m_width;
-            footprint_p.push_back(p); // Add the point of the other wheel
-            break; // If simplified, only one point per wheel
-          }
-        }
-      }
-    }
+    p.y += m_width;
+    footprint_p.push_back(p); // Add the point of the other wheel
+  
   }
   double y = -m_width/2.0 + m_wheel_width;
   
-  
-  // Then the collision footprint
+  // Then the collision footprint (whole front and rear part of the robot)
   for (int j = 0; y < m_width/2.0 - m_wheel_width; y += m_cellsize, j++) {
     //Front part
     p.y = y;
@@ -146,8 +137,6 @@ void SiarFootprint::init()
 SiarFootprint::~SiarFootprint()
 {
 }
-
-
 
 //! @NOTE The user should NOT free the pointer
 FootprintType SiarFootprint::getFootprint(double x, double y, double yaw)
@@ -222,46 +211,6 @@ void SiarFootprint::resize(double new_width, double new_elec)
   m_x_elec = new_elec;
   init();
 }
-
-
-// void SiarFootprint::addFootprintCollision(double x, double y, double th, ros::Publisher pub, int id)  {
-//   std::vector<geometry_msgs::Point> fp = getFootprintCollision(x, y, th);
-// //   
-//   static visualization_msgs::Marker points;
-// //   
-// //   
-//   points.header.frame_id = "/base_link";
-//   points.header.stamp = ros::Time::now();
-//   points.ns = "footprint";
-//   points.action = visualization_msgs::Marker::ADD;
-//   points.pose.orientation.w = 1.0;
-//   points.id = id;
-//   
-//   geometry_msgs::Point p;
-//   
-//   
-//   points.type = visualization_msgs::Marker::POINTS;
-//   // POINTS markers use x and y scale for width/height respectively
-//   points.scale.x = m_cellsize;
-//   points.scale.y = m_cellsize;
-//   
-//   FootprintType footprint = getFootprintCollision(x, y, th);
-//   
-//   
-//   for (unsigned int i = 0;i < footprint.size(); i++) {
-//     p.x = footprint.at(i).x;
-//     p.y = footprint.at(i).y;
-//     p.z = 0.0;
-//     
-//     points.points.push_back(p);
-//   }
-//   // Collision points are red
-//   points.color.r = 1.0;
-//   points.color.a = 1.0;
-//   
-//   pub.publish(points);
-//   
-// }
 
 }
 

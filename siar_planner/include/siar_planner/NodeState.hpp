@@ -6,8 +6,6 @@
 struct NodeState
 {
   functions::RealVector state;
-  
-  
 };
 
 #endif

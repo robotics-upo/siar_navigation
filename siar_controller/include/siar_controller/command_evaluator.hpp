@@ -4,6 +4,7 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Point.h>
 #include <nav_msgs/OccupancyGrid.h>
+#include <algorithm>
 #include <boost/math/special_functions/sign.hpp>
 #include <math.h>
 #include <functions/RealVector.h>
@@ -140,6 +141,9 @@ namespace siar_controller {
     int applyFootprint(double x, double y, double th,
                        const nav_msgs::OccupancyGrid &alt_map,
                        bool &collision, bool apply_collision = false);
+
+    double getWheelObstacleCost(double x, double y, double th,
+                                const nav_msgs::OccupancyGrid& alt_map);
 
     double applyFootprintTransition(double x, double y, double th, const nav_msgs::OccupancyGrid &alt_map, bool &collision, bool &collision_wheels);
 
@@ -468,6 +472,30 @@ int CommandEvaluator::applyFootprint(double x, double y, double th,
   }
 
   return ret_val;
+}
+
+double CommandEvaluator::getWheelObstacleCost(
+  double x, double y, double th, const nav_msgs::OccupancyGrid& alt_map)
+{
+  setParams(alt_map);
+  initializeFootprint(alt_map);
+  const FootprintType wheels = footprint->getFootprint(x, y, th);
+  if (wheels.empty()) {
+    return 100.0;
+  }
+
+  double total_cost = 0.0;
+  for (const geometry_msgs::Point& wheel : wheels) {
+    const int index = point2index(wheel.x, wheel.y);
+    if (index < 0 || static_cast<std::size_t>(index) >= alt_map.data.size()) {
+      total_cost += 100.0;
+      continue;
+    }
+
+    const int cell_cost = alt_map.data[index];
+    total_cost += cell_cost < 0 ? 100.0 : std::min(cell_cost, 100);
+  }
+  return total_cost / wheels.size();
 }
 
 

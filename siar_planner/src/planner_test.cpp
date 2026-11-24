@@ -1,6 +1,7 @@
 #include "siar_planner/Planner.hpp"
 #include "siar_planner/rrt.hpp"
 #include "siar_planner/rrt_star.hpp"
+#include "siar_planner/astar_guided_rrt_star.hpp"
 #include "ros/ros.h"
 #include <iostream>
 #include <sstream>
@@ -26,7 +27,10 @@ int main(int argc, char** argv){
   std::string planner_type;
   pnh.param("planner_type", planner_type, std::string("rrt"));
   
-  if (planner_type == "rrtstar") {
+  if (planner_type == "astar_rrtstar") {
+      ROS_INFO("Planner type: A*-guided RRTStar");
+      planner = new AStarGuidedRRTStar(nh, pnh);
+  } else if (planner_type == "rrtstar") {
       ROS_INFO("Planner type: RRTStar");
       planner = new RRTStar(nh, pnh);
   } else {

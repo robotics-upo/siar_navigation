@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
   AStar a(nh, pnh);
   
   ROS_INFO("Waiting for map initialization");
-  while (!a.getModel().isInit() && ros::ok()) {
+  while (!a.isInit() && ros::ok()) {
     ros::spinOnce();
     sleep(1);
   }
@@ -47,8 +47,8 @@ int main(int argc, char** argv) {
   ros::Publisher test_pub = nh.advertise<visualization_msgs::Marker>("test_marker", 2, true);
   
   ROS_INFO("Publishing visualization markers (init and goal)");
-  vis_pub.publish(a.getModel().getMarker(init));
-  goal_pub.publish(a.getModel().getMarker(goal, 1));
+  vis_pub.publish(a.getStateMarker(init));
+  goal_pub.publish(a.getStateMarker(goal, 1));
   
   ROS_INFO("Calling to getPath");
   ros::Time t = ros::Time::now();
@@ -62,10 +62,6 @@ int main(int argc, char** argv) {
     m.header.frame_id = "/map";
     test_pub.publish(m);
   } else {
-//     visualization_msgs::Marker m = a.getModel().testIntegration(init, true);
-//     m.header.frame_id = "/map";
-//     ROS_INFO("Points: %d", (int) m.points.size());
-//     test_pub.publish(m);
     ROS_INFO("Could not get a path in %f seconds", (t1 - t).toSec());
   }
   
