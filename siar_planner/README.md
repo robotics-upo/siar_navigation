@@ -21,7 +21,9 @@ uses the package's existing ROS1 A* and kinodynamic RRT* implementations:
    variant add the mean 0-100 cost at the wheel-contact samples to each
    trajectory edge cost, including candidate and rewired edges. New candidate
    states are selected by blending normalized distance to the sample with
-   wheel risk.
+   wheel risk. If no valid motion candidate is produced, RRT* tries stationary
+   width-decrease and width-increase actions, respecting `min_width`,
+   `max_width`, and collision checks.
 
 The hybrid is selected in `planner_test` with:
 
@@ -38,6 +40,7 @@ Parameters:
 | `astar_waypoint_count` | `10` | Maximum number of evenly spaced A* states used for guidance. |
 | `rewire_radius` | `cellsize_m` | Maximum state-space distance for RRT* rewiring. |
 | `rrtstar_safety_weight` | `0.5` | Candidate-selection blend: `0` chooses the closest valid state; `1` chooses the state with lowest wheel cost. |
+| `width_change_step_m` | `0.02` | Requested physical width change for each stationary width action. |
 
 The A* route is required: if A* cannot produce a path, the hybrid returns
 `-4.0` and does not start RRT*. Existing `rrt` and `rrtstar` planner types
@@ -46,5 +49,7 @@ remain available.
 This is an integration with the ROS package's occupancy-grid, motion, and
 collision models, not a feature-for-feature port of
 `Planificador_SIAR/Planificador_A_RRT_estrella.py`. In particular, it does not
-add that script's image-based map segmentation, variable-width state, or
-support-polygon stability checks.
+use that script's image-based map segmentation or width-dependent body-length
+model. It does check static stability: wheel contacts outside negative-obstacle
+cells form a convex support hull, and a state is rejected if the configured
+longitudinal center-of-mass offset falls outside that hull.

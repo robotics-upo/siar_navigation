@@ -90,13 +90,15 @@ double AStarGuidedRRTStar::resolve(
 NodeState AStarGuidedRRTStar::getSampleState(int iteration)
 {
   if (samp_goal_rate > 0 && iteration % samp_goal_rate == 0) {
-    return goal_node.st;
+    return RRTStar::getSampleState(iteration);
   }
 
   if (!guided_states_.empty() && dis(gen) < waypoint_bias_) {
     const std::size_t index = static_cast<std::size_t>(
       dis(gen) * guided_states_.size());
-    return guided_states_[std::min(index, guided_states_.size() - 1)];
+    return withWidthCommand(
+      guided_states_[std::min(index, guided_states_.size() - 1)],
+      sampleWidthCommand());
   }
 
   return RRTStar::getSampleState(iteration);

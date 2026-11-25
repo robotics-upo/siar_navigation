@@ -5,9 +5,11 @@
 #include <geometry_msgs/Point.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <algorithm>
+#include <cmath>
 #include <boost/math/special_functions/sign.hpp>
 #include <math.h>
 #include <functions/RealVector.h>
+#include <vector>
 
 #include "siar_footprint.hpp"
 
@@ -54,15 +56,16 @@ namespace siar_controller {
       m_w_dist = w_d;
 
     }
-    inline void setWidthElec(double width, double new_elec) {
-        double cellsize = footprint_params->m_cellsize;
-        double length = footprint_params->m_length;
-        double w_width = footprint_params->m_wheel_width;
-        bool simplified = footprint_params->m_simplified;
-	delete footprint_params;
-        footprint_params = new SiarFootprint(cellsize, length, width, w_width, simplified, new_elec);
-        delete footprint;
-        footprint = NULL;
+    inline bool setWidthElec(double width, double new_elec) {
+      if (footprint_params == NULL) {
+        ROS_ERROR("CommandEvaluator::setWidthElec: footprint parameters are not initialized");
+        return false;
+      }
+      footprint_params->resize(width, new_elec);
+      if (footprint != NULL) {
+        footprint->resize(width, new_elec);
+      }
+      return true;
     }
 
     inline void setWeightSafe(double w_s) {
@@ -387,52 +390,85 @@ double CommandEvaluator::evaluateTrajectoryMinVelocity(const geometry_msgs::Twis
   return ret;
 }
 
-// Function to check if a point is inside a polygon using
-// the ray-casting algorithm
-bool isPointInPolygon(const std::vector<geometry_msgs::Point>& polygon,
-                      const geometry_msgs::Point& point)
+inline double crossProduct(
+  const geometry_msgs::Point& origin,
+  const geometry_msgs::Point& a,
+  const geometry_msgs::Point& b)
 {
-    // Number of vertices in the polygon
-    int n = polygon.size();
-    // Count of intersections
-    int count = 0;
+  return (a.x - origin.x) * (b.y - origin.y) -
+         (a.y - origin.y) * (b.x - origin.x);
+}
 
-    // Iterate through each edge of the polygon
-    for (int i = 0; i < n; i++) {
-        geometry_msgs::Point p1 = polygon[i];
-        // Ensure the last point connects to the first point
-        geometry_msgs::Point p2 = polygon[(i + 1) % n];
+inline bool isPointInSupportHull(
+  std::vector<geometry_msgs::Point> points,
+  const geometry_msgs::Point& point)
+{
+  if (points.size() < 3) {
+    return false;
+  }
 
-        // Check if the point's y-coordinate is within the
-        // edge's y-range and if the point is to the left of
-        // the edge
-        if ((point.y > std::min(p1.y, p2.y))
-            && (point.y <= std::max(p1.y, p2.y))
-            && (point.x <= std::max(p1.x, p2.x))) {
-            // Calculate the x-coordinate of the
-            // intersection of the edge with a horizontal
-            // line through the point
-            double xIntersect = (point.y - p1.y)
-                                    * (p2.x - p1.x)
-                                    / (p2.y - p1.y)
-                                + p1.x;
-            // If the edge is vertical or the point's
-            // x-coordinate is less than or equal to the
-            // intersection x-coordinate, increment count
-            if (p1.x == p2.x || point.x <= xIntersect) {
-                count++;
-            }
-        }
+  std::sort(points.begin(), points.end(),
+    [](const geometry_msgs::Point& a, const geometry_msgs::Point& b) {
+      return a.x < b.x || (a.x == b.x && a.y < b.y);
+    });
+  points.erase(std::unique(points.begin(), points.end(),
+    [](const geometry_msgs::Point& a, const geometry_msgs::Point& b) {
+      return a.x == b.x && a.y == b.y;
+    }), points.end());
+  if (points.size() < 3) {
+    return false;
+  }
+
+  std::vector<geometry_msgs::Point> hull(points.size() * 2);
+  std::size_t count = 0;
+  for (const geometry_msgs::Point& support : points) {
+    while (count >= 2 &&
+           crossProduct(hull[count - 2], hull[count - 1], support) <= 0.0) {
+      --count;
     }
-    // If the number of intersections is odd, the point is
-    // inside the polygon
-    return count % 2 == 1;
+    hull[count++] = support;
+  }
+
+  const std::size_t lower_hull_size = count;
+  for (int i = static_cast<int>(points.size()) - 2; i >= 0; --i) {
+    const geometry_msgs::Point& support = points[static_cast<std::size_t>(i)];
+    while (count > lower_hull_size &&
+           crossProduct(hull[count - 2], hull[count - 1], support) <= 0.0) {
+      --count;
+    }
+    hull[count++] = support;
+  }
+  if (count > 1) {
+    --count;
+  }
+  hull.resize(count);
+  if (hull.size() < 3) {
+    return false;
+  }
+
+  double twice_area = 0.0;
+  for (std::size_t i = 0; i < hull.size(); ++i) {
+    const geometry_msgs::Point& a = hull[i];
+    const geometry_msgs::Point& b = hull[(i + 1) % hull.size()];
+    twice_area += a.x * b.y - a.y * b.x;
+  }
+  if (std::fabs(twice_area) <= 1e-12) {
+    return false;
+  }
+
+  for (std::size_t i = 0; i < hull.size(); ++i) {
+    if (crossProduct(hull[i], hull[(i + 1) % hull.size()], point) < -1e-9) {
+      return false;
+    }
+  }
+  return true;
 }
 
 int CommandEvaluator::applyFootprint(double x, double y, double th,
                                      const nav_msgs::OccupancyGrid &alt_map,
                                      bool &collision, bool apply_collision)
 {
+  setParams(alt_map);
   int ret_val = 0;
 
   FootprintType fp, polygon;
@@ -452,7 +488,10 @@ int CommandEvaluator::applyFootprint(double x, double y, double th,
     // ROS_INFO("Point2index(%f,%f) = %d,%d. Value = %d", fp.at(i).x, fp.at(i).y,index/alt_map.info.width, index%alt_map.info.width, alt_map.data[index]);
 
 
-    if (index < 0) {
+    if (index < 0 || static_cast<std::size_t>(index) >= alt_map.data.size()) {
+      if (!apply_collision && i < 6) {
+        collision = true;
+      }
       continue;
     }
     if (alt_map.data[index] == positive_obs) {
@@ -465,10 +504,10 @@ int CommandEvaluator::applyFootprint(double x, double y, double th,
   }
 
   if (!apply_collision && !collision) {
-    geometry_msgs::Point p; // TODO incorporate CoM
-    p.x = 0;
-    p.y = 0;
-    collision = isPointInPolygon(polygon, p) < 0.0; // Check if the center of the robot is inside the polygon formed by the wheels
+    geometry_msgs::Point center_of_mass;
+    center_of_mass.x = x + footprint->m_x_elec * std::cos(th);
+    center_of_mass.y = y + footprint->m_x_elec * std::sin(th);
+    collision = !isPointInSupportHull(polygon, center_of_mass);
   }
 
   return ret_val;
@@ -513,7 +552,10 @@ void CommandEvaluator::initializeFootprint(const nav_msgs::OccupancyGrid& alt_ma
        // TODO: CONFIGURABLE FOR VARIABLE WIDTH PROTOTYPE
       footprint = new SiarFootprint(alt_map.info.resolution);
     else
-      footprint = new SiarFootprint(alt_map.info.resolution, footprint_params->m_length, footprint_params->m_width, footprint_params->m_wheel_width, true);
+      footprint = new SiarFootprint(
+        alt_map.info.resolution, footprint_params->m_length, footprint_params->m_width,
+        footprint_params->m_wheel_width, footprint_params->m_simplified,
+        footprint_params->m_x_elec);
 
     ROS_INFO("Alt map: height = %d \t width = %d", alt_map.info.height, alt_map.info.width);
   }

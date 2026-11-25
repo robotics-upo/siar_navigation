@@ -11,7 +11,7 @@
   <arg name="map" default="test_scenario_$(arg map_number).yaml"/>
   <arg name="planner_type" default="rrt"/>
   <arg name="n_tests" default="1"/>
-  <arg name="rrtstar_safety_weight" default="0.95"/>
+  <arg name="rrtstar_safety_weight" default="0.85"/>
 
   <!--Start the map server for the path planner-->
   <node name="map_server" pkg="map_server" type="map_server" args="$(find siar_planner)/test/$(arg map)" output="screen"/>

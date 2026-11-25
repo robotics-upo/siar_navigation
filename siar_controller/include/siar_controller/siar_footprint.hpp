@@ -52,6 +52,7 @@ protected:
 
 SiarFootprint::SiarFootprint(ros::NodeHandle& pn)
 {
+  m_simplified = true;
   if (!pn.getParam("cellsize", m_cellsize)) {
     m_cellsize = 0.02;
   }
@@ -69,7 +70,8 @@ SiarFootprint::SiarFootprint(ros::NodeHandle& pn)
 
 
 SiarFootprint::SiarFootprint(double cellsize, double length , double width, double wheel_width, bool simplified, double x_elec):
-m_length(length),m_width(width), m_wheel_width(wheel_width), m_cellsize(cellsize),m_x_elec(x_elec)
+m_length(length),m_width(width), m_wheel_width(wheel_width), m_simplified(simplified),
+m_cellsize(cellsize),m_x_elec(x_elec)
 {
   init();
 }

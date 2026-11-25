@@ -8,7 +8,7 @@ n_iter: 200,                  # number expand calls in each round
 K: 14,                        # number of random commands tried in the expand calls
 
 ## Parameters to set COMMAND EVALUATOR performance
-T: 1,                       # total time that trajectories are evaluated
+T: 1.0,                       # total time that trajectories are evaluated
 delta_T: 0.1,                # time step that a trajectory is evaluate in Algorithms RRT 
 delta_t: 0.1,                # time step that a trajectory is evaluate in Algorithm Astar
 

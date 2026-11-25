@@ -14,6 +14,7 @@
 #include <functions/functions.h>
 #include <algorithm>
 #include <cmath>
+#include <iterator>
 #include <math.h>
 #include <vector>
 
@@ -37,6 +38,11 @@ protected:
   
   //new functions
   void expandNode(const NodeState& q_rand, RRTNode* q_near, int relaxation_mode = 0);
+  NodeState getSampleState(int iteration) override;
+  RRTNode* getNearestNode(NodeState q_rand, bool consider_dead = false) override;
+  double stateDistance(const NodeState& a, const NodeState& b);
+  double sampleWidthCommand();
+  NodeState withWidthCommand(NodeState state, double command);
 
   // rewire
   void rewire(RRTNode* q_new, RRTNode* q_near, double radius);
@@ -68,6 +74,72 @@ RRTStar::RRTStar(ros::NodeHandle &nh, ros::NodeHandle &pnh)
   // tree1_pub = nh.advertise<visualization_msgs::Marker>("tree1_marker", 2, true);
 }
 
+NodeState RRTStar::getSampleState(int iteration)
+{
+  const bool goal_sample = samp_goal_rate > 0 && iteration % samp_goal_rate == 0;
+  const double width_command = goal_sample
+    ? m.getWidthMotorCommand(goal_node.st)
+    : sampleWidthCommand();
+  if (!m.setWidthMotorRef(width_command)) {
+    ROS_ERROR("RRTStar::getSampleState: invalid sampled width command");
+    return RRT::getSampleState(iteration);
+  }
+
+  return withWidthCommand(RRT::getSampleState(iteration), width_command);
+}
+
+RRTNode* RRTStar::getNearestNode(NodeState q_rand, bool consider_dead)
+{
+  RRTNode* nearest = NULL;
+  double nearest_distance = std::numeric_limits<double>::infinity();
+  for (RRTNode* node : nodes) {
+    if (node->dead && !consider_dead) {
+      continue;
+    }
+
+    const double distance = stateDistance(q_rand, node->st);
+    if (distance < nearest_distance) {
+      nearest = node;
+      nearest_distance = distance;
+    }
+  }
+  return nearest;
+}
+
+double RRTStar::stateDistance(const NodeState& a, const NodeState& b)
+{
+  const double command_a = m.getWidthMotorCommand(a);
+  const double command_b = m.getWidthMotorCommand(b);
+  return metrica.metrica3D(a, b) +
+    std::fabs(m.getWidth(command_a) - m.getWidth(command_b)) +
+    std::fabs(m.getXElec(command_a) - m.getXElec(command_b));
+}
+
+double RRTStar::sampleWidthCommand()
+{
+  if (nodes.empty()) {
+    return 60.0;
+  }
+
+  const std::size_t sample_index = std::min(
+    static_cast<std::size_t>(dis(gen) * nodes.size()), nodes.size() - 1);
+  auto node = nodes.begin();
+  std::advance(node, sample_index);
+  return m.getWidthMotorCommand((*node)->st);
+}
+
+NodeState RRTStar::withWidthCommand(NodeState state, double command)
+{
+  if (!m.setWidthMotorRef(command)) {
+    return state;
+  }
+  if (state.state.size() < 4) {
+    state.state.resize(4);
+  }
+  state.state[3] = command;
+  return state;
+}
+
 RRTStar::~RRTStar()
 {
   clear();
@@ -93,17 +165,40 @@ double RRTStar::resolve(NodeState start, NodeState goal, std::list<RRTNode>& pat
     return -2.0;
   }
 
-  if (m.isCollision(goal) || m.isCollision(start)) {
+  if (start.state.size() < 3 || goal.state.size() < 3) {
+    ROS_ERROR("RRTStar::resolve --> start and goal must include x, y, and yaw");
+    return -2.0;
+  }
+
+  const double start_width_command = m.getWidthMotorCommand(start);
+  const double goal_width_command = goal.state.size() > 3
+    ? m.getWidthMotorCommand(goal) : start_width_command;
+  if (!m.setWidthMotorRef(start_width_command) ||
+      m.isCollision(start) ||
+      !m.setWidthMotorRef(goal_width_command) ||
+      m.isCollision(goal)) {
     ROS_ERROR("RRTStar::resolve --> The goal or the starting point is not valid");
     return -3.0;
+  }
+  m.setWidthMotorRef(start_width_command);
+
+  if (start.state.size() < 4) {
+    start.state.resize(4);
+    start.state[3] = start_width_command;
+  }
+  if (goal.state.size() < 4) {
+    goal.state.resize(4);
+    goal.state[3] = goal_width_command;
   }
   
   RRTNode start_node;
   start_node.st = start;
   start_node.cost = 0.0;
   start_node.total_cost = 0.0;
+  start_node.command_mot = start_width_command;
   nodes.push_back(new RRTNode(start_node)); 
   goal_node.st = goal;
+  goal_node.command_mot = goal_width_command;
   
   double ret_val = -1.0; 
   int relax = 0;
@@ -155,6 +250,7 @@ void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxatio
     NodeState state;
     double command_lin;
     double command_ang;
+    double command_mot;
     double edge_cost;
     double distance;
     double wheel_cost;
@@ -184,7 +280,7 @@ void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxatio
     RRTNode *near_ = getNearestNode(st, true);
     double d = 0.2;
     if (near_ != NULL) {
-      d = metrica.metrica3D(near_->st, st);
+      d = stateDistance(near_->st, st);
     }
 
     if (d > 0.01) {
@@ -192,8 +288,9 @@ void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxatio
       candidate.state = st;
       candidate.command_lin = command.linear.x;
       candidate.command_ang = command.angular.z;
+      candidate.command_mot = m.getWidthMotorCommand(st);
       candidate.edge_cost = q_try.cost;
-      candidate.distance = metrica.metrica3D(q_rand, st);
+      candidate.distance = stateDistance(q_rand, st);
       if (!std::isfinite(candidate.distance)) {
         continue;
       }
@@ -203,6 +300,38 @@ void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxatio
       max_distance = std::max(max_distance, candidate.distance);
       candidates.push_back(candidate);
     } 
+  }
+  if (candidates.empty()) {
+    const bool width_directions[] = {false, true};
+    for (bool increase_width : width_directions) {
+      NodeState st = q_near->st;
+      if (!m.changeWidthCommand(st, increase_width, min_width, max_width)) {
+        continue;
+      }
+
+      RRTNode* near_ = getNearestNode(st, true);
+      if (near_ != NULL && stateDistance(near_->st, st) <= 0.01) {
+        continue;
+      }
+
+      const double wheel_cost = m.costWheelsQnear(
+        st.state[0], st.state[1], st.state[2]);
+      Candidate candidate;
+      candidate.state = st;
+      candidate.command_lin = 0.0;
+      candidate.command_ang = 0.0;
+      candidate.command_mot = m.getWidthMotorCommand(st);
+      candidate.edge_cost = wheel_cost;
+      candidate.distance = stateDistance(q_rand, st);
+      candidate.wheel_cost = wheel_cost;
+      if (!std::isfinite(candidate.distance)) {
+        continue;
+      }
+      is_dead = false;
+      min_distance = std::min(min_distance, candidate.distance);
+      max_distance = std::max(max_distance, candidate.distance);
+      candidates.push_back(candidate);
+    }
   }
   bool is_new_node = !candidates.empty();
   if (is_new_node) {
@@ -220,6 +349,7 @@ void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxatio
         q_new.st = candidate.state;
         q_new.command_lin = candidate.command_lin;
         q_new.command_ang = candidate.command_ang;
+        q_new.command_mot = candidate.command_mot;
         q_new.cost = candidate.edge_cost;
       }
     }
@@ -238,6 +368,8 @@ void RRTStar::expandNode(const NodeState &q_rand, RRTNode *q_near, int relaxatio
       goal_node.parent = q_near; 
       goal_node.command_lin = q_new.command_lin; 
       goal_node.command_ang = q_new.command_ang;  
+      goal_node.command_mot = q_new.command_mot;
+      goal_node.st.state[3] = q_new.command_mot;
       goal_node.cost = q_new.cost;
       goal_node.total_cost = q_near->total_cost + q_new.cost;
     }
@@ -274,7 +406,11 @@ void RRTStar::rewire(RRTNode* q_new, RRTNode* q_near, double radius){
         continue;
       }
 
-      double d = metrica.metrica3D(n->st, q_new->st);
+      if (std::fabs(
+            m.getWidthMotorCommand(n->st) - m.getWidthMotorCommand(q_new->st)) > 1e-6) {
+        continue;
+      }
+      double d = stateDistance(n->st, q_new->st);
       if (d < radius) {
         for (auto &command:command_list) {
           auto Qint = q_new->st;
@@ -282,7 +418,7 @@ void RRTStar::rewire(RRTNode* q_new, RRTNode* q_near, double radius){
           if (cost <= 0.0) {
             continue;
           }
-          double d_new = metrica.metrica3D(n->st, Qint);
+          double d_new = stateDistance(n->st, Qint);
 
           if (d_new >= 0.05 || d_new >= d) {
             continue;

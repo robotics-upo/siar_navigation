@@ -5,6 +5,9 @@
 #include "siar_planner/NodeState.hpp"
 #include "ros/ros.h"
 #include <nav_msgs/OccupancyGrid.h>
+#include <algorithm>
+#include <cmath>
+#include <limits>
 #include <random>
 
 class SiarModel 
@@ -131,8 +134,79 @@ public:
     return -0.14;
   }
 
-  inline void setWidthMotorRef(double command) {
-    m_ce.setWidthElec(getWidth(command), getXElec(command));
+  double getWidthMotorCommand(const NodeState& state) const {
+    return state.state.size() > 3 ? state.state[3] : 60.0;
+  }
+
+  bool setWidthMotorRef(double command) {
+    if (!std::isfinite(command) || command < 0.0 || command > 150.0) {
+      ROS_ERROR("SiarModel::setWidthMotorRef: invalid width command %.3f", command);
+      return false;
+    }
+    return m_ce.setWidthElec(getWidth(command), getXElec(command));
+  }
+
+  bool changeWidthCommand(
+    NodeState& state, bool increase, double minimum_width, double maximum_width)
+  {
+    if (!map_init || state.state.size() < 3 ||
+        !std::isfinite(minimum_width) || !std::isfinite(maximum_width) ||
+        minimum_width > maximum_width) {
+      return false;
+    }
+
+    const double current_command = getWidthMotorCommand(state);
+    if (!std::isfinite(current_command) ||
+        current_command < 0.0 || current_command > 150.0) {
+      return false;
+    }
+
+    const double current_width = getWidth(current_command);
+    const double direction = increase ? 1.0 : -1.0;
+    const double desired_width = std::max(
+      minimum_width,
+      std::min(maximum_width, current_width + direction * width_change_step_m_));
+    if ((increase && desired_width <= current_width) ||
+        (!increase && desired_width >= current_width)) {
+      return false;
+    }
+
+    int best_command = -1;
+    double best_error = std::numeric_limits<double>::infinity();
+    for (int command = 0; command <= 150; ++command) {
+      const double candidate_width = getWidth(command);
+      if (candidate_width < minimum_width || candidate_width > maximum_width ||
+          (increase && candidate_width <= current_width) ||
+          (!increase && candidate_width >= current_width)) {
+        continue;
+      }
+
+      const double error = std::fabs(candidate_width - desired_width);
+      if (error < best_error) {
+        best_error = error;
+        best_command = command;
+      }
+    }
+    if (best_command < 0) {
+      return false;
+    }
+
+    NodeState candidate = state;
+    if (candidate.state.size() < 4) {
+      candidate.state.resize(4);
+      candidate.state[3] = current_command;
+    }
+    candidate.state[3] = best_command;
+    if (!setWidthMotorRef(best_command)) {
+      return false;
+    }
+    if (isCollision(candidate)) {
+      setWidthMotorRef(current_command);
+      return false;
+    }
+
+    state = candidate;
+    return true;
   }
   
   inline void setMinWheel(double v) {
@@ -156,7 +230,7 @@ protected:
   // nav_msgs::OccupancyGrid m_world;
   // siar_controller::CommandEvaluator m_ce;
   double cost_wheels, cost_wheels_q_near;
-  
+  double width_change_step_m_;
   bool map_init;
   
   template< class RealType = double > class uniform_real_distribution;
@@ -171,8 +245,15 @@ protected:
   visualization_msgs::Marker m;
 };
 
-SiarModel::SiarModel(ros::NodeHandle &nh, ros::NodeHandle& pn):m_ce(pn), map_init(false), gen(rd()), dis(-m_ce.getCharacteristics().theta_dot_max, m_ce.getCharacteristics().theta_dot_max)
+SiarModel::SiarModel(ros::NodeHandle &nh, ros::NodeHandle& pn)
+  : m_ce(pn), width_change_step_m_(0.02), map_init(false), gen(rd()),
+    dis(-m_ce.getCharacteristics().theta_dot_max, m_ce.getCharacteristics().theta_dot_max)
 {
+  pn.param("width_change_step_m", width_change_step_m_, width_change_step_m_);
+  if (!std::isfinite(width_change_step_m_) || width_change_step_m_ <= 0.0) {
+    ROS_WARN("width_change_step_m must be positive; using 0.02 m");
+    width_change_step_m_ = 0.02;
+  }
   map_sub = nh.subscribe("/altitude_map", 2, &SiarModel::occupancyGridCallback, this);
 }
 
@@ -195,8 +276,10 @@ double SiarModel::integrate(visualization_msgs::Marker& m, NodeState& st, geomet
   v_ini.linear.x = m_ce.getCharacteristics().v_max;
 
 
-  double command_mot = st.state.size() > 3 ? st.state[3] : 60.0;
-  setWidthMotorRef(command_mot);
+  const double command_mot = getWidthMotorCommand(st);
+  if (!setWidthMotorRef(command_mot)) {
+    return -1.0;
+  }
   
   
   if (st.state.size() < 3) {
